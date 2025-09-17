@@ -1,0 +1,267 @@
+import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
+
+// Define the base URL for your API
+const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
+
+const baseQuery = fetchBaseQuery({
+  baseUrl,
+  prepareHeaders: (headers, { getState }) => {
+    // Get the token from the auth state
+    const token = getState().auth.token;
+    
+    // If we have a token, set the authorization header
+    if (token) {
+      headers.set('authorization', `Bearer ${token}`);
+    }
+    
+    headers.set('content-type', 'application/json');
+    return headers;
+  },
+});
+
+// Base query with re-authentication
+const baseQueryWithReauth = async (args, api, extraOptions) => {
+  let result = await baseQuery(args, api, extraOptions);
+  
+  // If we get a 401, the token might be expired
+  if (result.error && result.error.status === 401) {
+    // Try to refresh the token or logout
+    api.dispatch({ type: 'auth/logout' });
+  }
+  
+  return result;
+};
+
+export const apiSlice = createApi({
+  reducerPath: 'api',
+  baseQuery: baseQueryWithReauth,
+  tagTypes: ['User', 'Payroll', 'Attendance', 'Report', 'Settings'],
+  endpoints: (builder) => ({
+    // Auth endpoints
+    login: builder.mutation({
+      query: (credentials) => ({
+        url: '/auth/login',
+        method: 'POST',
+        body: credentials,
+      }),
+    }),
+    
+    // User endpoints
+    getUsers: builder.query({
+      query: ({ page = 1, limit = 10, search = '', status = 'all' } = {}) => ({
+        url: `/users?page=${page}&limit=${limit}&search=${search}&status=${status}`,
+      }),
+      providesTags: ['User'],
+    }),
+    
+    getUserById: builder.query({
+      query: (id) => `/users/${id}`,
+      providesTags: (result, error, id) => [{ type: 'User', id }],
+    }),
+    
+    createUser: builder.mutation({
+      query: (userData) => ({
+        url: '/users',
+        method: 'POST',
+        body: userData,
+      }),
+      invalidatesTags: ['User'],
+    }),
+    
+    updateUser: builder.mutation({
+      query: ({ id, ...userData }) => ({
+        url: `/users/${id}`,
+        method: 'PUT',
+        body: userData,
+      }),
+      invalidatesTags: (result, error, { id }) => [{ type: 'User', id }],
+    }),
+    
+    deleteUser: builder.mutation({
+      query: (id) => ({
+        url: `/users/${id}`,
+        method: 'DELETE',
+      }),
+      invalidatesTags: ['User'],
+    }),
+    
+    getPendingUsers: builder.query({
+      query: () => '/users/pending',
+      providesTags: ['User'],
+    }),
+    
+    approveUser: builder.mutation({
+      query: (id) => ({
+        url: `/users/${id}/approve`,
+        method: 'POST',
+      }),
+      invalidatesTags: ['User'],
+    }),
+    
+    rejectUser: builder.mutation({
+      query: (id) => ({
+        url: `/users/${id}/reject`,
+        method: 'POST',
+      }),
+      invalidatesTags: ['User'],
+    }),
+    
+    // Payroll endpoints
+    getPayrolls: builder.query({
+      query: ({ month, year, department = 'all' } = {}) => ({
+        url: `/payroll?month=${month}&year=${year}&department=${department}`,
+      }),
+      providesTags: ['Payroll'],
+    }),
+    
+    getPayrollById: builder.query({
+      query: (id) => `/payroll/${id}`,
+      providesTags: (result, error, id) => [{ type: 'Payroll', id }],
+    }),
+    
+    createPayroll: builder.mutation({
+      query: (payrollData) => ({
+        url: '/payroll',
+        method: 'POST',
+        body: payrollData,
+      }),
+      invalidatesTags: ['Payroll'],
+    }),
+    
+    updatePayroll: builder.mutation({
+      query: ({ id, ...payrollData }) => ({
+        url: `/payroll/${id}`,
+        method: 'PUT',
+        body: payrollData,
+      }),
+      invalidatesTags: (result, error, { id }) => [{ type: 'Payroll', id }],
+    }),
+    
+    processPayroll: builder.mutation({
+      query: (payrollIds) => ({
+        url: '/payroll/process',
+        method: 'POST',
+        body: { payrollIds },
+      }),
+      invalidatesTags: ['Payroll'],
+    }),
+    
+    // Attendance endpoints
+    getLiveAttendance: builder.query({
+      query: ({ date = new Date().toISOString().split('T')[0] } = {}) => ({
+        url: `/attendance/live?date=${date}`,
+      }),
+      providesTags: ['Attendance'],
+    }),
+    
+    getAttendanceHistory: builder.query({
+      query: ({ startDate, endDate, userId } = {}) => ({
+        url: `/attendance/history?startDate=${startDate}&endDate=${endDate}&userId=${userId || ''}`,
+      }),
+      providesTags: ['Attendance'],
+    }),
+    
+    markAttendance: builder.mutation({
+      query: ({ userId, status }) => ({
+        url: '/attendance/mark',
+        method: 'POST',
+        body: { userId, status },
+      }),
+      invalidatesTags: ['Attendance'],
+    }),
+    
+    getAttendanceStats: builder.query({
+      query: ({ date = new Date().toISOString().split('T')[0] } = {}) => ({
+        url: `/attendance/stats?date=${date}`,
+      }),
+      providesTags: ['Attendance'],
+    }),
+    
+    // Report endpoints
+    getReports: builder.query({
+      query: ({ type = 'all', startDate, endDate } = {}) => ({
+        url: `/reports?type=${type}&startDate=${startDate || ''}&endDate=${endDate || ''}`,
+      }),
+      providesTags: ['Report'],
+    }),
+    
+    generateReport: builder.mutation({
+      query: (reportConfig) => ({
+        url: '/reports/generate',
+        method: 'POST',
+        body: reportConfig,
+      }),
+      invalidatesTags: ['Report'],
+    }),
+    
+    exportReport: builder.mutation({
+      query: ({ reportId, format = 'pdf' }) => ({
+        url: `/reports/${reportId}/export?format=${format}`,
+        method: 'GET',
+        responseHandler: (response) => response.blob(),
+      }),
+    }),
+    
+    // Settings endpoints
+    getSettings: builder.query({
+      query: () => '/settings',
+      providesTags: ['Settings'],
+    }),
+    
+    updateSettings: builder.mutation({
+      query: (settings) => ({
+        url: '/settings',
+        method: 'PUT',
+        body: settings,
+      }),
+      invalidatesTags: ['Settings'],
+    }),
+    
+    createBackup: builder.mutation({
+      query: () => ({
+        url: '/settings/backup',
+        method: 'POST',
+      }),
+      invalidatesTags: ['Settings'],
+    }),
+  }),
+});
+
+// Export hooks for usage in functional components
+export const {
+  // Auth hooks
+  useLoginMutation,
+  
+  // User hooks
+  useGetUsersQuery,
+  useGetUserByIdQuery,
+  useCreateUserMutation,
+  useUpdateUserMutation,
+  useDeleteUserMutation,
+  useGetPendingUsersQuery,
+  useApproveUserMutation,
+  useRejectUserMutation,
+  
+  // Payroll hooks
+  useGetPayrollsQuery,
+  useGetPayrollByIdQuery,
+  useCreatePayrollMutation,
+  useUpdatePayrollMutation,
+  useProcessPayrollMutation,
+  
+  // Attendance hooks
+  useGetLiveAttendanceQuery,
+  useGetAttendanceHistoryQuery,
+  useMarkAttendanceMutation,
+  useGetAttendanceStatsQuery,
+  
+  // Report hooks
+  useGetReportsQuery,
+  useGenerateReportMutation,
+  useExportReportMutation,
+  
+  // Settings hooks
+  useGetSettingsQuery,
+  useUpdateSettingsMutation,
+  useCreateBackupMutation,
+} = apiSlice;
