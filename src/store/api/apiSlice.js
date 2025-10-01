@@ -1,13 +1,13 @@
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
 
 // Define the base URL for your API
-const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
+const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1';
 
 const baseQuery = fetchBaseQuery({
   baseUrl,
   prepareHeaders: (headers, { getState }) => {
-    // Get the token from the auth state
-    const token = getState().auth.token;
+    // Get the token from the auth state or localStorage
+    const token = getState().auth.access_token || localStorage.getItem('access_token');
     
     // If we have a token, set the authorization header
     if (token) {
@@ -23,10 +23,38 @@ const baseQuery = fetchBaseQuery({
 const baseQueryWithReauth = async (args, api, extraOptions) => {
   let result = await baseQuery(args, api, extraOptions);
   
-  // If we get a 401, the token might be expired
+  // If we get a 401, try to refresh the token
   if (result.error && result.error.status === 401) {
-    // Try to refresh the token or logout
-    api.dispatch({ type: 'auth/logout' });
+    const refreshToken = localStorage.getItem('refresh_token');
+    
+    if (refreshToken) {
+      // Try to refresh the token
+      const refreshResult = await baseQuery(
+        {
+          url: '/auth/refresh',
+          method: 'POST',
+          body: { refresh_token: refreshToken },
+        },
+        api,
+        extraOptions
+      );
+      
+      if (refreshResult.data) {
+        // Store the new token
+        const { access_token } = refreshResult.data;
+        localStorage.setItem('access_token', access_token);
+        api.dispatch({ type: 'auth/setToken', payload: access_token });
+        
+        // Retry the original query with new token
+        result = await baseQuery(args, api, extraOptions);
+      } else {
+        // Refresh failed, logout user
+        api.dispatch({ type: 'auth/logout' });
+      }
+    } else {
+      // No refresh token, logout user
+      api.dispatch({ type: 'auth/logout' });
+    }
   }
   
   return result;
@@ -35,7 +63,7 @@ const baseQueryWithReauth = async (args, api, extraOptions) => {
 export const apiSlice = createApi({
   reducerPath: 'api',
   baseQuery: baseQueryWithReauth,
-  tagTypes: ['User', 'Payroll', 'Attendance', 'Report', 'Settings'],
+  tagTypes: ['User', 'Employee', 'Payroll', 'Attendance', 'Report', 'Settings'],
   endpoints: (builder) => ({
     // Auth endpoints
     login: builder.mutation({
@@ -44,6 +72,16 @@ export const apiSlice = createApi({
         method: 'POST',
         body: credentials,
       }),
+      transformResponse: (response) => {
+        // Store tokens in localStorage
+        if (response.access_token) {
+          localStorage.setItem('access_token', response.access_token);
+        }
+        if (response.refresh_token) {
+          localStorage.setItem('refresh_token', response.refresh_token);
+        }
+        return response;
+      },
     }),
     
     // User endpoints
@@ -52,6 +90,49 @@ export const apiSlice = createApi({
         url: `/users?page=${page}&limit=${limit}&search=${search}&status=${status}`,
       }),
       providesTags: ['User'],
+    }),
+
+    // Employee endpoints
+    getEmployees: builder.query({
+      query: ({ page = 1, limit = 10, search = '', department = 'all', is_active = true } = {}) => ({
+        url: `/employees/?page=${page}&limit=${limit}&search=${search}&department=${department}&is_active=${is_active}`,
+      }),
+      providesTags: ['Employee'],
+    }),
+
+    getEmployeeById: builder.query({
+      query: (id) => `/employees/${id}/`,
+      providesTags: (result, error, id) => [{ type: 'Employee', id }],
+    }),
+
+    createEmployee: builder.mutation({
+      query: (employeeData) => ({
+        url: '/employees/',
+        method: 'POST',
+        body: employeeData,
+      }),
+      transformResponse: (response) => {
+        // The API returns the created employee directly
+        return response;
+      },
+      invalidatesTags: ['Employee'],
+    }),
+
+    updateEmployee: builder.mutation({
+      query: ({ id, ...employeeData }) => ({
+        url: `/employees/${id}/`,
+        method: 'PUT',
+        body: employeeData,
+      }),
+      invalidatesTags: (result, error, { id }) => [{ type: 'Employee', id }],
+    }),
+
+    deleteEmployee: builder.mutation({
+      query: (id) => ({
+        url: `/employees/${id}/`,
+        method: 'DELETE',
+      }),
+      invalidatesTags: ['Employee'],
     }),
     
     getUserById: builder.query({
@@ -202,24 +283,38 @@ export const apiSlice = createApi({
       }),
     }),
     
-    // Settings endpoints
+    // Organization Settings endpoints
     getSettings: builder.query({
-      query: () => '/settings',
+      query: () => '/organization/settings',
       providesTags: ['Settings'],
     }),
     
     updateSettings: builder.mutation({
       query: (settings) => ({
-        url: '/settings',
+        url: '/organization/settings',
         method: 'PUT',
         body: settings,
       }),
       invalidatesTags: ['Settings'],
     }),
     
+    getAttendanceRules: builder.query({
+      query: () => '/organization/attendance-rules',
+      providesTags: ['Settings'],
+    }),
+    
+    updateAttendanceRules: builder.mutation({
+      query: (rulesData) => ({
+        url: '/organization/attendance-rules',
+        method: 'PUT',
+        body: rulesData,
+      }),
+      invalidatesTags: ['Settings'],
+    }),
+    
     createBackup: builder.mutation({
       query: () => ({
-        url: '/settings/backup',
+        url: '/organization/backup',
         method: 'POST',
       }),
       invalidatesTags: ['Settings'],
@@ -241,6 +336,13 @@ export const {
   useGetPendingUsersQuery,
   useApproveUserMutation,
   useRejectUserMutation,
+
+  // Employee hooks
+  useGetEmployeesQuery,
+  useGetEmployeeByIdQuery,
+  useCreateEmployeeMutation,
+  useUpdateEmployeeMutation,
+  useDeleteEmployeeMutation,
   
   // Payroll hooks
   useGetPayrollsQuery,
@@ -260,8 +362,10 @@ export const {
   useGenerateReportMutation,
   useExportReportMutation,
   
-  // Settings hooks
+  // Organization Settings hooks
   useGetSettingsQuery,
   useUpdateSettingsMutation,
+  useGetAttendanceRulesQuery,
+  useUpdateAttendanceRulesMutation,
   useCreateBackupMutation,
 } = apiSlice;

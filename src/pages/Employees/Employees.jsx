@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
-import { EmployeeTable, FilterSort, EmployeeModal } from '../../components/pages/employees';
-import { Pagination } from '../../components/common';
+import { EmployeeTable, FilterSort, EmployeeModal, EmployeeEditModal } from '../../components/pages/employees';
+import { Pagination, ConfirmationDialog } from '../../components/common';
+import { useGetEmployeesQuery, useCreateEmployeeMutation, useUpdateEmployeeMutation, useDeleteEmployeeMutation } from '../../store/api';
+import { toast } from 'react-toastify';
 
 const Employees = () => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -8,166 +10,169 @@ const Employees = () => {
   const [employeesPerPage] = useState(10);
   const [filterDepartment, setFilterDepartment] = useState('all');
   const [sortBy, setSortBy] = useState('name');
+  const [showActiveEmployees, setShowActiveEmployees] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isConfirmDialogOpen, setIsConfirmDialogOpen] = useState(false);
+  const [selectedEmployee, setSelectedEmployee] = useState(null);
+  const [employeeToDeactivate, setEmployeeToDeactivate] = useState(null);
 
-  // Boilerplate test data
-  const employees = [
-    {
-      id: 'EMP001',
-      photo: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&h=100&fit=crop&crop=face',
-      name: 'Ethan Carter',
-      email: 'ethan.carter@example.com',
-      department: 'Engineering',
-      position: 'Software Engineer',
-      status: 'Active',
-      joinDate: '2023-01-15',
-      salary: 75000
-    },
-    {
-      id: 'EMP002',
-      photo: 'https://images.unsplash.com/photo-1494790108755-2616b612b786?w=100&h=100&fit=crop&crop=face',
-      name: 'Olivia Bennett',
-      email: 'olivia.bennett@example.com',
-      department: 'Marketing',
-      position: 'Marketing Specialist',
-      status: 'Active',
-      joinDate: '2023-02-20',
-      salary: 65000
-    },
-    {
-      id: 'EMP003',
-      photo: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop&crop=face',
-      name: 'Liam Harper',
-      email: 'liam.harper@example.com',
-      department: 'Sales',
-      position: 'Sales Manager',
-      status: 'Active',
-      joinDate: '2023-03-10',
-      salary: 80000
-    },
-    {
-      id: 'EMP004',
-      photo: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=100&h=100&fit=crop&crop=face',
-      name: 'Sophia Martinez',
-      email: 'sophia.martinez@example.com',
-      department: 'HR',
-      position: 'HR Manager',
-      status: 'Active',
-      joinDate: '2023-01-05',
-      salary: 70000
-    },
-    {
-      id: 'EMP005',
-      photo: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&h=100&fit=crop&crop=face',
-      name: 'Noah Thompson',
-      email: 'noah.thompson@example.com',
-      department: 'Engineering',
-      position: 'Senior Developer',
-      status: 'Active',
-      joinDate: '2022-11-15',
-      salary: 95000
-    },
-    {
-      id: 'EMP006',
-      photo: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=100&h=100&fit=crop&crop=face',
-      name: 'Emma Wilson',
-      email: 'emma.wilson@example.com',
-      department: 'Design',
-      position: 'UI/UX Designer',
-      status: 'Active',
-      joinDate: '2023-04-01',
-      salary: 68000
-    },
-    {
-      id: 'EMP007',
-      photo: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&h=100&fit=crop&crop=face',
-      name: 'James Anderson',
-      email: 'james.anderson@example.com',
-      department: 'Finance',
-      position: 'Financial Analyst',
-      status: 'Inactive',
-      joinDate: '2022-08-20',
-      salary: 72000
-    },
-    {
-      id: 'EMP008',
-      photo: 'https://images.unsplash.com/photo-1494790108755-2616b612b786?w=100&h=100&fit=crop&crop=face',
-      name: 'Ava Garcia',
-      email: 'ava.garcia@example.com',
-      department: 'Operations',
-      position: 'Operations Manager',
-      status: 'Active',
-      joinDate: '2023-01-30',
-      salary: 78000
-    },
-    {
-      id: 'EMP009',
-      photo: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop&crop=face',
-      name: 'William Brown',
-      email: 'william.brown@example.com',
-      department: 'Engineering',
-      position: 'DevOps Engineer',
-      status: 'Active',
-      joinDate: '2023-02-15',
-      salary: 85000
-    },
-    {
-      id: 'EMP010',
-      photo: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=100&h=100&fit=crop&crop=face',
-      name: 'Isabella Davis',
-      email: 'isabella.davis@example.com',
-      department: 'Marketing',
-      position: 'Content Manager',
-      status: 'Active',
-      joinDate: '2023-03-25',
-      salary: 62000
-    }
-  ];
-
-  // Filter and search employees
-  const filteredEmployees = employees.filter(employee => {
-    const matchesSearch = employee.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         employee.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         employee.department.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesDepartment = filterDepartment === 'all' || employee.department === filterDepartment;
-    return matchesSearch && matchesDepartment;
+  // RTK Query hooks
+  const {
+    data: employeesData,
+    isLoading,
+    isError,
+    error,
+    refetch
+  } = useGetEmployeesQuery({
+    page: currentPage,
+    limit: employeesPerPage,
+    search: searchTerm,
+    department: filterDepartment,
+    is_active: showActiveEmployees
   });
 
-  // Sort employees
-  const sortedEmployees = [...filteredEmployees].sort((a, b) => {
-    switch (sortBy) {
-      case 'name':
-        return a.name.localeCompare(b.name);
-      case 'department':
-        return a.department.localeCompare(b.department);
-      case 'status':
-        return a.status.localeCompare(b.status);
-      case 'joinDate':
-        return new Date(b.joinDate) - new Date(a.joinDate);
-      default:
-        return 0;
-    }
-  });
+  const [createEmployee, { isLoading: isCreating }] = useCreateEmployeeMutation();
+  const [updateEmployee, { isLoading: isUpdating }] = useUpdateEmployeeMutation();
+  const [deleteEmployee, { isLoading: isDeleting }] = useDeleteEmployeeMutation();
 
-  // Pagination
-  const indexOfLastEmployee = currentPage * employeesPerPage;
-  const indexOfFirstEmployee = indexOfLastEmployee - employeesPerPage;
-  const currentEmployees = sortedEmployees.slice(indexOfFirstEmployee, indexOfLastEmployee);
-  const totalPages = Math.ceil(sortedEmployees.length / employeesPerPage);
+  // Extract employees array from API response
+  const employees = employeesData || [];
+
+  // Client-side filtering and sorting (since API might not support all filters)
+  const processedEmployees = React.useMemo(() => {
+    if (!employees.length) return [];
+    
+    let filtered = [...employees];
+    
+    // Apply sorting
+    filtered.sort((a, b) => {
+      switch (sortBy) {
+        case 'name':
+          return a.name.localeCompare(b.name);
+        case 'department':
+          return a.department.localeCompare(b.department);
+        case 'status':
+          return (a.is_active ? 'Active' : 'Inactive').localeCompare(b.is_active ? 'Active' : 'Inactive');
+        case 'created_at':
+          return new Date(b.created_at) - new Date(a.created_at);
+        case 'training_status':
+          return (a.training_status || 'not_started').localeCompare(b.training_status || 'not_started');
+        default:
+          return 0;
+      }
+    });
+
+    return filtered;
+  }, [employees, sortBy]);
+
+  // For pagination display (since API handles pagination)
+  const totalPages = Math.ceil(employees.length / employeesPerPage);
 
   const handleAddEmployee = () => {
     setIsModalOpen(true);
   };
 
-  const handleSaveEmployee = (employeeData) => {
-    // TODO: Implement save employee functionality
-    console.log('Saving employee:', employeeData);
-    setIsModalOpen(false);
+  const handleSaveEmployee = async (employeeData) => {
+    try {
+      await createEmployee(employeeData).unwrap();
+      toast.success('Employee created successfully!');
+      setIsModalOpen(false);
+      refetch(); // Refresh the employee list
+    } catch (error) {
+      toast.error(error?.data?.message || 'Failed to create employee');
+    }
   };
 
   const handleCloseModal = () => {
     setIsModalOpen(false);
   };
+
+  const handleEditEmployee = (employee) => {
+    setSelectedEmployee(employee);
+    setIsEditModalOpen(true);
+  };
+
+  const handleUpdateEmployee = async (employeeData) => {
+    try {
+      await updateEmployee(employeeData).unwrap();
+      toast.success('Employee updated successfully!');
+      setIsEditModalOpen(false);
+      setSelectedEmployee(null);
+      refetch();
+    } catch (error) {
+      toast.error(error?.data?.message || 'Failed to update employee');
+    }
+  };
+
+  const handleCloseEditModal = () => {
+    setIsEditModalOpen(false);
+    setSelectedEmployee(null);
+  };
+
+  const handleDeactivateEmployee = (employee) => {
+    setEmployeeToDeactivate(employee);
+    setIsConfirmDialogOpen(true);
+  };
+
+  const confirmDeactivation = async () => {
+    if (!employeeToDeactivate) return;
+
+    try {
+      await deleteEmployee(employeeToDeactivate.id).unwrap();
+      toast.success(`${employeeToDeactivate.name} has been deactivated successfully!`);
+      setIsConfirmDialogOpen(false);
+      setEmployeeToDeactivate(null);
+      refetch();
+    } catch (error) {
+      toast.error(error?.data?.message || 'Failed to deactivate employee');
+    }
+  };
+
+  const handleCloseConfirmDialog = () => {
+    setIsConfirmDialogOpen(false);
+    setEmployeeToDeactivate(null);
+  };
+
+  const handleToggleEmployeeStatus = () => {
+    setShowActiveEmployees(!showActiveEmployees);
+    setCurrentPage(1); // Reset to first page when switching views
+  };
+
+  // Handle loading state
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading employees...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Handle error state
+  if (isError) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="text-red-500 mb-4">
+            <svg className="mx-auto h-12 w-12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          </div>
+          <h3 className="text-lg font-medium text-gray-900 mb-2">Failed to load employees</h3>
+          <p className="text-gray-600 mb-4">{error?.data?.message || 'Something went wrong'}</p>
+          <button
+            onClick={() => refetch()}
+            className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700"
+          >
+            Try Again
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -176,8 +181,15 @@ const Employees = () => {
         <div className="mb-8">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
             <div>
-              <h1 className="text-3xl font-bold text-gray-900 tracking-tight mb-2">Employees</h1>
-              <p className="text-gray-600">Manage your team members and their information</p>
+              <h1 className="text-3xl font-bold text-gray-900 tracking-tight mb-2">
+                {showActiveEmployees ? 'Active Employees' : 'Deactivated Employees'}
+              </h1>
+              <p className="text-gray-600">
+                {showActiveEmployees 
+                  ? 'Manage your active team members and their information' 
+                  : 'View and manage deactivated employees'
+                }
+              </p>
             </div>
             
             <div className="flex flex-col sm:flex-row sm:items-center space-y-4 sm:space-y-0 sm:space-x-4 mt-6 sm:mt-0">
@@ -197,16 +209,45 @@ const Employees = () => {
                 />
               </div>
 
-              {/* Add Employee Button */}
+              {/* Toggle Active/Deactivated Button */}
               <button
-                onClick={handleAddEmployee}
-                className="inline-flex items-center px-6 py-3 border border-transparent rounded-xl shadow-sm text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-200 hover:shadow-md"
+                onClick={handleToggleEmployeeStatus}
+                className={`inline-flex items-center px-4 py-3 border border-gray-300 rounded-xl shadow-sm text-sm font-semibold transition-all duration-200 hover:shadow-md ${
+                  showActiveEmployees 
+                    ? 'text-gray-700 bg-white hover:bg-gray-50' 
+                    : 'text-white bg-gray-600 hover:bg-gray-700'
+                }`}
               >
-                <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                </svg>
-                Add Employee
+                {showActiveEmployees ? (
+                  <>
+                    <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.878 9.878L8.464 8.464M9.878 9.878a3 3 0 00-.007 4.243m4.242-4.242L15.536 8.464M14.12 14.12a3 3 0 01-.007-4.243M14.12 14.12l1.415 1.415M14.12 14.12a3 3 0 004.243.007M8.464 8.464L6.05 6.05M15.536 8.464L17.95 6.05" />
+                    </svg>
+                    View Deactivated
+                  </>
+                ) : (
+                  <>
+                    <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                    </svg>
+                    View Active
+                  </>
+                )}
               </button>
+
+              {/* Add Employee Button - Only show for active employees view */}
+              {showActiveEmployees && (
+                <button
+                  onClick={handleAddEmployee}
+                  className="inline-flex items-center px-6 py-3 border border-transparent rounded-xl shadow-sm text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-200 hover:shadow-md"
+                >
+                  <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                  </svg>
+                  Add Employee
+                </button>
+              )}
             </div>
           </div>
 
@@ -222,9 +263,16 @@ const Employees = () => {
         </div>
 
         {/* Employee Table */}
-        <div className="bg-white shadow-sm rounded-lg border border-gray-200">
-          <EmployeeTable employees={currentEmployees} />
-        </div>
+            <div className="bg-white shadow-sm rounded-lg border border-gray-200">
+              <EmployeeTable 
+                employees={processedEmployees} 
+                isLoading={isLoading}
+                onRefresh={refetch}
+                onEdit={handleEditEmployee}
+                onDeactivate={handleDeactivateEmployee}
+                showActiveEmployees={showActiveEmployees}
+              />
+            </div>
 
         {/* Pagination */}
         <div className="mt-6">
@@ -232,18 +280,41 @@ const Employees = () => {
             currentPage={currentPage}
             totalPages={totalPages}
             onPageChange={setCurrentPage}
-            totalItems={sortedEmployees.length}
+            totalItems={employees.length}
             itemsPerPage={employeesPerPage}
           />
         </div>
       </div>
 
       {/* Employee Modal */}
-      <EmployeeModal
-        isOpen={isModalOpen}
-        onClose={handleCloseModal}
-        onSave={handleSaveEmployee}
-      />
+          <EmployeeModal
+            isOpen={isModalOpen}
+            onClose={handleCloseModal}
+            onSave={handleSaveEmployee}
+            isLoading={isCreating}
+          />
+
+          <EmployeeEditModal
+            isOpen={isEditModalOpen}
+            onClose={handleCloseEditModal}
+            onSave={handleUpdateEmployee}
+            employee={selectedEmployee}
+            isLoading={isUpdating}
+          />
+
+          <ConfirmationDialog
+            isOpen={isConfirmDialogOpen}
+            onClose={handleCloseConfirmDialog}
+            onConfirm={confirmDeactivation}
+            title="Deactivate Employee"
+            message={employeeToDeactivate ? 
+              `Are you sure you want to deactivate ${employeeToDeactivate.name}?\n\nThis will:\n• Remove them from active employee lists\n• Disable their face recognition access\n• Clear their cache data\n\nThis action can be reversed by reactivating the employee.` 
+              : ''
+            }
+            confirmText="Deactivate Employee"
+            cancelText="Cancel"
+            isLoading={isDeleting}
+          />
     </div>
   );
 };

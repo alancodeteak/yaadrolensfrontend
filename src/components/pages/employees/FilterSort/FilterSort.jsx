@@ -9,7 +9,8 @@ const FilterSort = ({ filterDepartment, setFilterDepartment, sortBy, setSortBy }
     { value: 'name', label: 'Name' },
     { value: 'department', label: 'Department' },
     { value: 'status', label: 'Status' },
-    { value: 'joinDate', label: 'Join Date' }
+    { value: 'created_at', label: 'Date Added' },
+    { value: 'training_status', label: 'Training Status' }
   ];
 
   return (

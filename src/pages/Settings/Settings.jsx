@@ -1,7 +1,7 @@
 import React from 'react';
 import { useSelector } from 'react-redux';
 import { Routes, Route, Navigate } from 'react-router-dom';
-import { SettingsSidebar, DepartmentManagement, AttendanceRules, PositionManagement, CameraDeviceManagement } from '../../components/pages/settings';
+import { SettingsSidebar, DepartmentManagement, AttendanceRules, PositionManagement, CameraDeviceManagement, SalaryManagement, JobPositionManagement } from '../../components/pages/settings';
 
 // Placeholder components for other settings sections
 const GeneralSettings = () => (
@@ -64,9 +64,10 @@ const Settings = () => {
           <Route path="account" element={<AccountSettings />} />
           <Route path="attendance" element={<AttendanceRules />} />
           <Route path="departments" element={<DepartmentManagement />} />
-          <Route path="positions" element={<PositionManagement />} />
+          <Route path="positions" element={<JobPositionManagement />} />
           <Route path="users" element={<UserManagement />} />
           <Route path="cameras" element={<CameraDeviceManagement />} />
+          <Route path="salary" element={<SalaryManagement />} />
           <Route path="*" element={<Navigate to="/admin/settings/departments" replace />} />
         </Routes>
       </div>

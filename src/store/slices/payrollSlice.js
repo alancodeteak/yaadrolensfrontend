@@ -12,10 +12,15 @@ const initialState = {
   loading: false,
   error: null,
   filters: {
-    month: new Date().getMonth() + 1,
-    year: new Date().getFullYear(),
+    month: new Date().getMonth() + 1, // Current month (1-12)
+    year: new Date().getFullYear(),   // Current year
     department: 'all',
     status: 'all',
+  },
+  currentPeriod: {
+    month: new Date().getMonth() + 1,
+    year: new Date().getFullYear(),
+    monthName: new Date().toLocaleString('en-US', { month: 'long' })
   },
 };
 
@@ -79,11 +84,27 @@ const payrollSlice = createSlice({
       state.filters = { ...state.filters, ...action.payload };
     },
     resetFilters: (state) => {
+      const currentDate = new Date();
       state.filters = {
-        month: new Date().getMonth() + 1,
-        year: new Date().getFullYear(),
+        month: currentDate.getMonth() + 1,
+        year: currentDate.getFullYear(),
         department: 'all',
         status: 'all',
+      };
+      state.currentPeriod = {
+        month: currentDate.getMonth() + 1,
+        year: currentDate.getFullYear(),
+        monthName: currentDate.toLocaleString('en-US', { month: 'long' })
+      };
+    },
+    
+    // Set current period
+    setCurrentPeriod: (state, action) => {
+      const { month, year } = action.payload;
+      state.currentPeriod = {
+        month,
+        year,
+        monthName: new Date(year, month - 1).toLocaleString('en-US', { month: 'long' })
       };
     },
   },
@@ -102,6 +123,7 @@ export const {
   processPayroll,
   setFilters,
   resetFilters,
+  setCurrentPeriod,
 } = payrollSlice.actions;
 
 export default payrollSlice.reducer;

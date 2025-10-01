@@ -1,26 +1,60 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
+import {
+  useApprovePayrollMutation,
+  useMarkPayrollPaidMutation,
+  useUpdatePayrollMutation
+} from '../../../../store/api/payrollApi';
 
-const PayrollTable = ({ payrolls }) => {
+const PayrollTable = ({ payrolls, onRefresh }) => {
   const navigate = useNavigate();
+  
+  // API mutations
+  const [approvePayroll, { isLoading: isApproving }] = useApprovePayrollMutation();
+  const [markPayrollPaid, { isLoading: isMarkingPaid }] = useMarkPayrollPaidMutation();
+  const [updatePayroll] = useUpdatePayrollMutation();
 
-  const handleView = (payrollId) => {
-    navigate(`/admin/payroll/${payrollId}`);
+  const handleView = (payroll) => {
+    navigate(`/admin/payroll/${payroll.payrollId || payroll.id}`);
   };
 
-  const handleEdit = (payrollId) => {
-    console.log('Edit payroll:', payrollId);
-    // TODO: Implement edit functionality
+  const handleEdit = (payroll) => {
+    // For now, navigate to details page for editing
+    navigate(`/admin/payroll/${payroll.payrollId || payroll.id}`);
   };
 
-  const handleApprove = (payrollId) => {
-    console.log('Approve payroll:', payrollId);
-    // TODO: Implement approve functionality
+  const handleApprove = async (payroll) => {
+    if (isApproving) return;
+    
+    if (!confirm(`Are you sure you want to approve payroll for ${payroll.name}?`)) {
+      return;
+    }
+
+    try {
+      await approvePayroll(payroll.payrollId || payroll.id).unwrap();
+      alert('Payroll approved successfully');
+      if (onRefresh) onRefresh();
+    } catch (error) {
+      console.error('Approve failed:', error);
+      alert('Failed to approve payroll');
+    }
   };
 
-  const handleMarkPaid = (payrollId) => {
-    console.log('Mark payroll as paid:', payrollId);
-    // TODO: Implement mark paid functionality
+  const handleMarkPaid = async (payroll) => {
+    if (isMarkingPaid) return;
+    
+    if (!confirm(`Are you sure you want to mark payroll for ${payroll.name} as paid?`)) {
+      return;
+    }
+
+    try {
+      await markPayrollPaid(payroll.payrollId || payroll.id).unwrap();
+      alert('Payroll marked as paid successfully');
+      if (onRefresh) onRefresh();
+    } catch (error) {
+      console.error('Mark paid failed:', error);
+      alert('Failed to mark payroll as paid');
+    }
   };
 
   const getStatusBadge = (status) => {
@@ -43,24 +77,25 @@ const PayrollTable = ({ payrolls }) => {
         return (
           <>
             <button
-              onClick={() => handleView(payroll.id)}
+              onClick={() => handleView(payroll)}
               className="text-blue-600 hover:text-blue-800 font-medium"
             >
               View
             </button>
             <span className="text-gray-300">|</span>
             <button
-              onClick={() => handleEdit(payroll.id)}
+              onClick={() => handleEdit(payroll)}
               className="text-gray-600 hover:text-gray-800 font-medium"
             >
               Edit
             </button>
             <span className="text-gray-300">|</span>
             <button
-              onClick={() => handleApprove(payroll.id)}
-              className="text-gray-600 hover:text-gray-800 font-medium"
+              onClick={() => handleApprove(payroll)}
+              disabled={isApproving}
+              className="text-gray-600 hover:text-gray-800 font-medium disabled:opacity-50"
             >
-              Approve
+              {isApproving ? 'Approving...' : 'Approve'}
             </button>
           </>
         );
@@ -68,24 +103,25 @@ const PayrollTable = ({ payrolls }) => {
         return (
           <>
             <button
-              onClick={() => handleView(payroll.id)}
+              onClick={() => handleView(payroll)}
               className="text-blue-600 hover:text-blue-800 font-medium"
             >
               View
             </button>
             <span className="text-gray-300">|</span>
             <button
-              onClick={() => handleEdit(payroll.id)}
+              onClick={() => handleEdit(payroll)}
               className="text-gray-600 hover:text-gray-800 font-medium"
             >
               Edit
             </button>
             <span className="text-gray-300">|</span>
             <button
-              onClick={() => handleMarkPaid(payroll.id)}
-              className="text-green-600 hover:text-green-800 font-medium"
+              onClick={() => handleMarkPaid(payroll)}
+              disabled={isMarkingPaid}
+              className="text-green-600 hover:text-green-800 font-medium disabled:opacity-50"
             >
-              Mark Paid
+              {isMarkingPaid ? 'Marking...' : 'Mark Paid'}
             </button>
           </>
         );
@@ -93,24 +129,25 @@ const PayrollTable = ({ payrolls }) => {
         return (
           <>
             <button
-              onClick={() => handleView(payroll.id)}
+              onClick={() => handleView(payroll)}
               className="text-blue-600 hover:text-blue-800 font-medium"
             >
               View
             </button>
             <span className="text-gray-300">|</span>
             <button
-              onClick={() => handleEdit(payroll.id)}
+              onClick={() => handleEdit(payroll)}
               className="text-gray-600 hover:text-gray-800 font-medium"
             >
               Edit
             </button>
             <span className="text-gray-300">|</span>
             <button
-              onClick={() => handleApprove(payroll.id)}
-              className="text-blue-600 hover:text-blue-800 font-medium"
+              onClick={() => handleApprove(payroll)}
+              disabled={isApproving}
+              className="text-blue-600 hover:text-blue-800 font-medium disabled:opacity-50"
             >
-              Approve
+              {isApproving ? 'Approving...' : 'Approve'}
             </button>
           </>
         );
@@ -118,14 +155,14 @@ const PayrollTable = ({ payrolls }) => {
         return (
           <>
             <button
-              onClick={() => handleView(payroll.id)}
+              onClick={() => handleView(payroll)}
               className="text-blue-600 hover:text-blue-800 font-medium"
             >
               View
             </button>
             <span className="text-gray-300">|</span>
             <button
-              onClick={() => handleEdit(payroll.id)}
+              onClick={() => handleEdit(payroll)}
               className="text-gray-600 hover:text-gray-800 font-medium"
             >
               Edit

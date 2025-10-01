@@ -1,11 +1,11 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { useDispatch } from 'react-redux';
-import { login } from '../../store/slices/authSlice';
+import React, { useState, useEffect } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
+import { useDispatch, useSelector } from 'react-redux';
+import { login } from '../../store/slices';
 
 const AdminLogin = () => {
   const [formData, setFormData] = useState({
-    shopOwnerId: '',
+    shop_code: '',
     password: ''
   });
   const [showPassword, setShowPassword] = useState(false);
@@ -13,7 +13,17 @@ const AdminLogin = () => {
   const [error, setError] = useState('');
 
   const navigate = useNavigate();
+  const location = useLocation();
   const dispatch = useDispatch();
+  const { isAuthenticated } = useSelector((state) => state.auth);
+
+  // Redirect if already authenticated
+  useEffect(() => {
+    if (isAuthenticated) {
+      const from = location.state?.from?.pathname || '/admin/dashboard';
+      navigate(from, { replace: true });
+    }
+  }, [isAuthenticated, navigate, location]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -32,7 +42,9 @@ const AdminLogin = () => {
 
     try {
       await dispatch(login(formData)).unwrap();
-      navigate('/admin/dashboard');
+      // Navigate to the page user was trying to access, or dashboard
+      const from = location.state?.from?.pathname || '/admin/dashboard';
+      navigate(from, { replace: true });
     } catch (err) {
       setError(err.message || 'Login failed. Please try again.');
     } finally {
@@ -77,18 +89,18 @@ const AdminLogin = () => {
 
             {/* Login Form */}
             <form onSubmit={handleSubmit} className="space-y-6">
-              {/* Shop Owner ID Field */}
+              {/* Shop Code Field */}
               <div>
-                <label htmlFor="shopOwnerId" className="block text-sm font-medium text-gray-700 mb-2">
-                  Shop Owner ID
+                <label htmlFor="shop_code" className="block text-sm font-medium text-gray-700 mb-2">
+                  Shop Code
                 </label>
                 <input
                   type="text"
-                  id="shopOwnerId"
-                  name="shopOwnerId"
-                  value={formData.shopOwnerId}
+                  id="shop_code"
+                  name="shop_code"
+                  value={formData.shop_code}
                   onChange={handleInputChange}
-                  placeholder="Your Id"
+                  placeholder="Enter shop code"
                   className="w-full px-4 py-3 bg-white border border-gray-200 rounded-2xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 hover:border-gray-300 transition-all duration-200 outline-none shadow-sm"
                   required
                 />

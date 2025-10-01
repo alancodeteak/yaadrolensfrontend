@@ -34,6 +34,30 @@ export const ATTENDANCE_STATUS = {
   LEAVE: 'leave',
 };
 
+// Live Activity Types
+export const ACTIVITY_TYPES = {
+  FACE_SCAN: 'Face Scan',
+  MOVEMENT_DETECTED: 'Movement Detected',
+  CLOCK_IN: 'Clock In',
+  CLOCK_OUT: 'Clock Out',
+};
+
+// Live Activity Status Colors
+export const ACTIVITY_STATUS_COLORS = {
+  'Present': 'bg-green-50 text-green-700 ring-1 ring-green-200',
+  'Present (Late)': 'bg-yellow-50 text-yellow-700 ring-1 ring-yellow-200',
+  'Absent': 'bg-red-50 text-red-700 ring-1 ring-red-200',
+  'On Leave': 'bg-blue-50 text-blue-700 ring-1 ring-blue-200',
+};
+
+// Live Activity Status Dot Colors
+export const ACTIVITY_DOT_COLORS = {
+  'Present': 'bg-green-500',
+  'Present (Late)': 'bg-yellow-500',
+  'Absent': 'bg-red-500',
+  'On Leave': 'bg-blue-500',
+};
+
 // Payroll Status
 export const PAYROLL_STATUS = {
   DRAFT: 'draft',
@@ -80,7 +104,8 @@ export const PAGINATION = {
 
 // Local Storage Keys
 export const STORAGE_KEYS = {
-  TOKEN: 'token',
+  ACCESS_TOKEN: 'access_token',
+  REFRESH_TOKEN: 'refresh_token',
   USER: 'user',
   THEME: 'theme',
   PREFERENCES: 'preferences',

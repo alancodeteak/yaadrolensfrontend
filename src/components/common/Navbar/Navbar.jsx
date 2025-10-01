@@ -1,16 +1,38 @@
 import React, { useState } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { useDispatch, useSelector } from 'react-redux';
+import { logout } from '../../../store/slices';
+import { useGetCurrentUserQuery } from '../../../store/api';
 
 const Navbar = () => {
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const location = useLocation();
+  const navigate = useNavigate();
+  const dispatch = useDispatch();
+  const { user } = useSelector((state) => state.auth);
+  
+  // Get current user from API
+  const { data: currentUser, isLoading: userLoading } = useGetCurrentUserQuery();
+  
+  // Use API user data if available, fallback to Redux state
+  const displayUser = currentUser || user;
+
+  const handleLogout = () => {
+    dispatch(logout());
+    navigate('/login', { replace: true });
+  };
 
   const navigation = [
     { name: 'Dashboard', href: '/admin/dashboard', current: location.pathname === '/admin/dashboard' },
     { name: 'Employees', href: '/admin/employees', current: location.pathname === '/admin/employees' },
     { name: 'Payroll', href: '/admin/payroll', current: location.pathname === '/admin/payroll' },
     { name: 'Attendance', href: '/admin/attendance', current: location.pathname === '/admin/attendance' },
+    { name: 'Attendance Analytics', href: '/admin/attendance-dashboard', current: location.pathname === '/admin/attendance-dashboard' },
+    { name: 'Advanced Analytics', href: '/admin/analytics', current: location.pathname === '/admin/analytics' },
+    { name: 'Mobile Dashboard', href: '/admin/mobile', current: location.pathname === '/admin/mobile' },
     { name: 'Reports', href: '/admin/reports', current: location.pathname === '/admin/reports' },
+    { name: 'Users', href: '/admin/users', current: location.pathname === '/admin/users' },
+    { name: 'System', href: '/admin/system', current: location.pathname === '/admin/system' },
     { name: 'Settings', href: '/admin/settings', current: location.pathname === '/admin/settings' },
   ];
 
@@ -62,9 +84,14 @@ const Navbar = () => {
                 className="flex items-center space-x-3 p-2 rounded-xl hover:bg-gray-50 transition-all duration-200 group"
               >
                 <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center shadow-sm">
-                  <span className="text-white font-medium text-sm">A</span>
+                  <span className="text-white font-medium text-sm">
+                    {displayUser?.first_name ? displayUser.first_name.charAt(0).toUpperCase() : 
+                     displayUser?.name ? displayUser.name.charAt(0).toUpperCase() : 'U'}
+                  </span>
                 </div>
-                <span className="hidden md:block text-sm font-medium text-gray-700">Admin</span>
+                <span className="hidden md:block text-sm font-medium text-gray-700">
+                  {displayUser?.first_name || displayUser?.name || displayUser?.email || 'User'}
+                </span>
                 <svg className="w-4 h-4 text-gray-400 group-hover:text-gray-600 transition-colors duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                 </svg>
@@ -73,16 +100,26 @@ const Navbar = () => {
               {/* Dropdown Menu */}
               {isProfileOpen && (
                 <div className="absolute right-0 mt-2 w-48 bg-white/95 backdrop-blur-md rounded-xl shadow-lg border border-gray-100 py-2 z-50">
-                  <a href="#" className="block px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors duration-150">
-                    Profile
-                  </a>
-                  <a href="#" className="block px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors duration-150">
+                  <div className="px-4 py-2.5 border-b border-gray-100">
+                    <p className="text-sm font-medium text-gray-900">
+                      {displayUser?.first_name || displayUser?.name || 'User'}
+                    </p>
+                    <p className="text-xs text-gray-500">{displayUser?.email}</p>
+                  </div>
+                  <Link 
+                    to="/admin/settings" 
+                    className="block px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors duration-150"
+                    onClick={() => setIsProfileOpen(false)}
+                  >
                     Settings
-                  </a>
+                  </Link>
                   <hr className="my-2 border-gray-100" />
-                  <a href="#" className="block px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors duration-150">
+                  <button 
+                    onClick={handleLogout}
+                    className="block w-full text-left px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 transition-colors duration-150"
+                  >
                     Sign out
-                  </a>
+                  </button>
                 </div>
               )}
             </div>

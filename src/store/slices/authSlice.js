@@ -1,37 +1,49 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
+import API from '../../services/api';
 
 // Async thunk for login
 export const login = createAsyncThunk(
   'auth/login',
   async (credentials, { rejectWithValue }) => {
     try {
-      // TODO: Replace with actual API call
-      // For now, simulate API call with timeout
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      const response = await API.post('/auth/login', {
+        shop_code: credentials.shop_code,
+        password: credentials.password
+      });
       
-      // Mock successful login for demo purposes
-      if (credentials.shopOwnerId && credentials.password) {
-        return {
-          user: {
-            id: credentials.shopOwnerId,
-            name: 'Shop Owner',
-            email: `${credentials.shopOwnerId}@yaadrolens.com`
-          },
-          token: 'mock-jwt-token-' + Date.now()
-        };
-      } else {
-        throw new Error('Invalid credentials');
-      }
+      const { access_token, refresh_token, token_type } = response.data;
+      
+      // Store tokens in localStorage
+      localStorage.setItem('access_token', access_token);
+      localStorage.setItem('refresh_token', refresh_token);
+      
+      // Create a basic user object from shop_code
+      // In a real app, you might get user info from a separate endpoint
+      const user = {
+        shop_code: credentials.shop_code,
+        name: credentials.shop_code, // Use shop_code as name for now
+      };
+      
+      localStorage.setItem('user', JSON.stringify(user));
+      
+      return {
+        user,
+        access_token,
+        refresh_token,
+        token_type
+      };
     } catch (error) {
-      return rejectWithValue(error.message || 'Login failed');
+      const message = error.response?.data?.detail || error.message || 'Login failed';
+      return rejectWithValue(message);
     }
   }
 );
 
 const initialState = {
-  user: null,
-  token: localStorage.getItem('token'),
-  isAuthenticated: false,
+  user: localStorage.getItem('user') ? JSON.parse(localStorage.getItem('user')) : null,
+  access_token: localStorage.getItem('access_token'),
+  refresh_token: localStorage.getItem('refresh_token'),
+  isAuthenticated: !!localStorage.getItem('access_token'),
   loading: false,
   error: null,
 };
@@ -48,24 +60,37 @@ const authSlice = createSlice({
       state.loading = false;
       state.isAuthenticated = true;
       state.user = action.payload.user;
-      state.token = action.payload.token;
+      state.access_token = action.payload.access_token;
+      state.refresh_token = action.payload.refresh_token;
       state.error = null;
-      localStorage.setItem('token', action.payload.token);
+      localStorage.setItem('access_token', action.payload.access_token);
+      localStorage.setItem('refresh_token', action.payload.refresh_token);
+      localStorage.setItem('user', JSON.stringify(action.payload.user));
     },
     loginFailure: (state, action) => {
       state.loading = false;
       state.isAuthenticated = false;
       state.user = null;
-      state.token = null;
+      state.access_token = null;
+      state.refresh_token = null;
       state.error = action.payload;
-      localStorage.removeItem('token');
+      localStorage.removeItem('access_token');
+      localStorage.removeItem('refresh_token');
+      localStorage.removeItem('user');
     },
     logout: (state) => {
       state.user = null;
-      state.token = null;
+      state.access_token = null;
+      state.refresh_token = null;
       state.isAuthenticated = false;
       state.error = null;
-      localStorage.removeItem('token');
+      localStorage.removeItem('access_token');
+      localStorage.removeItem('refresh_token');
+      localStorage.removeItem('user');
+    },
+    setToken: (state, action) => {
+      state.access_token = action.payload;
+      localStorage.setItem('access_token', action.payload);
     },
     clearError: (state) => {
       state.error = null;
@@ -81,17 +106,20 @@ const authSlice = createSlice({
         state.loading = false;
         state.isAuthenticated = true;
         state.user = action.payload.user;
-        state.token = action.payload.token;
+        state.access_token = action.payload.access_token;
+        state.refresh_token = action.payload.refresh_token;
         state.error = null;
-        localStorage.setItem('token', action.payload.token);
       })
       .addCase(login.rejected, (state, action) => {
         state.loading = false;
         state.isAuthenticated = false;
         state.user = null;
-        state.token = null;
+        state.access_token = null;
+        state.refresh_token = null;
         state.error = action.payload;
-        localStorage.removeItem('token');
+        localStorage.removeItem('access_token');
+        localStorage.removeItem('refresh_token');
+        localStorage.removeItem('user');
       });
   },
 });
@@ -101,6 +129,7 @@ export const {
   loginSuccess,
   loginFailure,
   logout,
+  setToken,
   clearError,
 } = authSlice.actions;
 

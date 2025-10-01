@@ -1,11 +1,59 @@
 import React, { useState, useEffect } from 'react';
 import Card from '../../../common/Card/Card';
+import { 
+  useGetAttendanceLogsQuery,
+  useGetLiveAttendanceQuery 
+} from '../../../../store/api/attendanceApi';
+import { useGetEmployeesQuery } from '../../../../store/api/employeeApi';
+import { 
+  ACTIVITY_STATUS_COLORS, 
+  ACTIVITY_DOT_COLORS 
+} from '../../../../utils/constants';
 
 const LiveAttendanceMonitoring = () => {
   const [currentTime, setCurrentTime] = useState(new Date());
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedDepartment, setSelectedDepartment] = useState('All Departments');
   const [selectedStatus, setSelectedStatus] = useState('All Status');
+  const [dateRange, setDateRange] = useState({
+    start_date: new Date().toISOString().split('T')[0] + 'T00:00:00Z',
+    end_date: new Date().toISOString().split('T')[0] + 'T23:59:59Z'
+  });
+
+  // API hooks for real data
+  const { data: attendanceLogs = [], isLoading: logsLoading, error: logsError } = useGetAttendanceLogsQuery({
+    start_date: dateRange.start_date,
+    end_date: dateRange.end_date,
+    skip: 0,
+    limit: 100
+  });
+  
+  const { data: liveAttendanceData = [], isLoading: attendanceLoading, error: attendanceError } = useGetLiveAttendanceQuery();
+  
+  // Fetch all active employees
+  const { data: employeesData = [], isLoading: employeesLoading, error: employeesError } = useGetEmployeesQuery({
+    page: 1,
+    limit: 1000, // Get all employees
+    is_active: true
+  });
+
+  // Process attendance logs for live activity display
+  const processedLiveActivity = React.useMemo(() => {
+    if (!attendanceLogs || attendanceLogs.length === 0) return [];
+    
+    return attendanceLogs.slice(0, 10).map(log => ({
+      id: log.id,
+      employee: log.employee_name,
+      event: log.type === 'IN' ? 'Clock In' : 'Clock Out',
+      timestamp: new Date(log.timestamp).toLocaleTimeString('en-US', { 
+        hour: '2-digit', 
+        minute: '2-digit',
+        hour12: true 
+      }),
+      confidence: Math.round(parseFloat(log.confidence_score) * 100),
+      avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(log.employee_name)}&background=3b82f6&color=fff&size=32`
+    }));
+  }, [attendanceLogs]);
 
   // Update time every second
   useEffect(() => {
@@ -16,119 +64,112 @@ const LiveAttendanceMonitoring = () => {
     return () => clearInterval(timer);
   }, []);
 
-  // Mock data for summary cards
-  const summaryData = {
-    currentlyPresent: 4,
-    currentlyAbsent: 1,
-    lateArrivalsToday: 2,
-    totalEmployees: 6
+
+  // Generate attendance status for employees based on today's attendance logs
+  const generateEmployeeStatus = (employee, todaysLogs) => {
+    const employeeLogs = todaysLogs.filter(log => log.employee_id === employee.id);
+    
+    if (employeeLogs.length === 0) {
+      return {
+        ...employee,
+        status: 'Absent',
+        clockIn: null,
+        lastSeen: 'Not seen today',
+        confidence: null,
+        avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(employee.name)}&background=3b82f6&color=fff&size=48`
+      };
+    }
+    
+    // Sort logs by timestamp to get the latest
+    const sortedLogs = employeeLogs.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+    const latestLog = sortedLogs[0];
+    const firstInLog = employeeLogs.find(log => log.type === 'IN');
+    
+    // Determine status based on clock-in time and current status
+    let status = 'Present';
+    let clockIn = null;
+    
+    if (firstInLog) {
+      const clockInTime = new Date(firstInLog.timestamp);
+      const clockInTimeString = clockInTime.toLocaleTimeString('en-US', { 
+        hour: '2-digit', 
+        minute: '2-digit',
+        hour12: true 
+      });
+      clockIn = clockInTimeString;
+      
+      // Check if late (assuming 9:00 AM is the standard time)
+      const standardTime = new Date(clockInTime);
+      standardTime.setHours(9, 0, 0, 0);
+      
+      if (clockInTime > standardTime) {
+        status = 'Present (Late)';
+      }
+    }
+    
+    // Check if employee has clocked out (last log is OUT)
+    if (latestLog.type === 'OUT') {
+      status = 'Clocked Out';
+    }
+    
+    const lastSeenTime = new Date(latestLog.timestamp).toLocaleTimeString('en-US', { 
+      hour: '2-digit', 
+      minute: '2-digit',
+      hour12: true 
+    });
+    
+    return {
+      ...employee,
+      status,
+      clockIn,
+      lastSeen: lastSeenTime,
+      confidence: latestLog.confidence_score ? Math.round(parseFloat(latestLog.confidence_score) * 100) : null,
+      avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(employee.name)}&background=3b82f6&color=fff&size=48`
+    };
   };
 
-  // Mock data for employees
-  const employees = [
-    {
-      id: 'EMP001',
-      name: 'Ethan Carter',
-      department: 'Engineering',
-      position: 'Software Engineer',
-      status: 'Present',
-      clockIn: '09:00 AM',
-      lastSeen: '10:45 AM',
-      confidence: 98,
-      avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&h=100&fit=crop&crop=face'
-    },
-    {
-      id: 'EMP002',
-      name: 'Olivia Bennett',
-      department: 'Marketing',
-      position: 'Marketing Specialist',
-      status: 'Present (Late)',
-      clockIn: '09:15 AM',
-      lastSeen: '11:20 AM',
-      confidence: 95,
-      avatar: 'https://images.unsplash.com/photo-1494790108755-2616b612b786?w=100&h=100&fit=crop&crop=face'
-    },
-    {
-      id: 'EMP003',
-      name: 'Liam Harper',
-      department: 'Sales',
-      position: 'Sales Manager',
-      status: 'Absent',
-      clockIn: null,
-      lastSeen: 'Yesterday 5:30 PM',
-      confidence: null,
-      avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop&crop=face'
-    },
-    {
-      id: 'EMP004',
-      name: 'Sophia Rodriguez',
-      department: 'HR',
-      position: 'HR Manager',
-      status: 'Present',
-      clockIn: '08:45 AM',
-      lastSeen: '11:45 AM',
-      confidence: 97,
-      avatar: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=100&h=100&fit=crop&crop=face'
-    },
-    {
-      id: 'EMP005',
-      name: 'James Wilson',
-      department: 'Finance',
-      position: 'Financial Analyst',
-      status: 'On Leave',
-      clockIn: null,
-      lastSeen: 'On Leave',
-      confidence: null,
-      avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&h=100&fit=crop&crop=face'
-    },
-    {
-      id: 'EMP006',
-      name: 'Emma Thompson',
-      department: 'Engineering',
-      position: 'Senior Developer',
-      status: 'Present (Late)',
-      clockIn: '09:30 AM',
-      lastSeen: '12:00 PM',
-      confidence: 99,
-      avatar: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=100&h=100&fit=crop&crop=face'
+  // Process employees with their attendance status
+  const employees = React.useMemo(() => {
+    if (employeesLoading || !employeesData) {
+      return [];
     }
-  ];
+    
+    // Generate attendance status for each employee based on today's logs
+    return employeesData.map(employee => generateEmployeeStatus(employee, attendanceLogs || []));
+  }, [employeesData, attendanceLogs, employeesLoading]);
 
-  // Mock data for live activity
-  const liveActivity = [
-    {
-      id: 1,
-      employee: 'Olivia Bennett',
-      event: 'Face Scan',
-      timestamp: '05:25 PM',
-      confidence: 97,
-      avatar: 'https://images.unsplash.com/photo-1494790108755-2616b612b786?w=100&h=100&fit=crop&crop=face'
-    },
-    {
-      id: 2,
-      employee: 'Olivia Bennett',
-      event: 'Movement Detected',
-      timestamp: '05:25 PM',
-      confidence: 95,
-      avatar: 'https://images.unsplash.com/photo-1494790108755-2616b612b786?w=100&h=100&fit=crop&crop=face'
-    },
-    {
-      id: 3,
-      employee: 'Emma Thompson',
-      event: 'Movement Detected',
-      timestamp: '05:24 PM',
-      confidence: 99,
-      avatar: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=100&h=100&fit=crop&crop=face'
-    },
-    {
-      id: 4,
-      employee: 'Liam Harper',
-      event: 'Movement Detected',
-      timestamp: '05:24 PM',
-      confidence: 90,
-      avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop&crop=face'
+  // Calculate summary data from processed employees
+  const summaryData = React.useMemo(() => {
+    if (!employees || employees.length === 0) {
+      return {
+        currentlyPresent: 0,
+        currentlyAbsent: 0,
+        lateArrivalsToday: 0,
+        totalEmployees: 0
+      };
     }
-  ];
+
+    const currentlyPresent = employees.filter(emp => 
+      emp.status === 'Present' || emp.status === 'Present (Late)'
+    ).length;
+    
+    const currentlyAbsent = employees.filter(emp => 
+      emp.status === 'Absent'
+    ).length;
+    
+    const lateArrivalsToday = employees.filter(emp => 
+      emp.status === 'Present (Late)'
+    ).length;
+    
+    return {
+      currentlyPresent,
+      currentlyAbsent,
+      lateArrivalsToday,
+      totalEmployees: employees.length
+    };
+  }, [employees]);
+
+  // Live activity data is now processed from attendance logs above
 
   const departments = ['All Departments', 'Engineering', 'Marketing', 'Sales', 'HR', 'Finance', 'Operations'];
   const statuses = ['All Status', 'Present', 'Present (Late)', 'Absent', 'On Leave'];
@@ -156,19 +197,19 @@ const LiveAttendanceMonitoring = () => {
     return date.toLocaleDateString('en-US', options);
   };
 
+
   const getStatusBadge = (status) => {
-    const statusStyles = {
-      'Present': 'bg-green-50 text-green-700 ring-1 ring-green-200',
-      'Present (Late)': 'bg-yellow-50 text-yellow-700 ring-1 ring-yellow-200',
-      'Absent': 'bg-red-50 text-red-700 ring-1 ring-red-200',
-      'On Leave': 'bg-blue-50 text-blue-700 ring-1 ring-blue-200'
-    };
+    const statusClass = ACTIVITY_STATUS_COLORS[status] || 'bg-gray-50 text-gray-700 ring-1 ring-gray-200';
 
     return (
-      <span className={`inline-flex px-2 py-0.5 text-xs font-semibold rounded-full ${statusStyles[status] || 'bg-gray-50 text-gray-700 ring-1 ring-gray-200'}`}>
+      <span className={`inline-flex px-2 py-0.5 text-xs font-semibold rounded-full ${statusClass}`}>
         {status}
       </span>
     );
+  };
+
+  const getStatusDotColor = (status) => {
+    return ACTIVITY_DOT_COLORS[status] || 'bg-gray-500';
   };
 
   const handleViewDetails = (employeeId) => {
@@ -178,8 +219,51 @@ const LiveAttendanceMonitoring = () => {
 
   const handleRefresh = () => {
     console.log('Refreshing attendance data...');
-    // TODO: Implement refresh functionality
+    // Refresh the current page to reload data
+    window.location.reload();
   };
+
+  const handleDateRangeChange = (newDateRange) => {
+    setDateRange(newDateRange);
+  };
+
+  // Show loading state if critical APIs are loading
+  if (logsLoading || employeesLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading attendance data...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Show error state if critical APIs fail
+  if (logsError || employeesError) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="text-red-600 mb-4">
+            <svg className="w-12 h-12 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          </div>
+          <h3 className="text-lg font-medium text-gray-900 mb-2">Error Loading Data</h3>
+          <p className="text-gray-600 mb-4">
+            {employeesError ? 'Failed to load employee data.' : 'Failed to load attendance logs.'}
+            {' '}Please try refreshing the page.
+          </p>
+          <button
+            onClick={handleRefresh}
+            className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700"
+          >
+            Retry
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -188,6 +272,43 @@ const LiveAttendanceMonitoring = () => {
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900 mb-2">Live Attendance Monitoring</h1>
           <p className="text-gray-600">{formatDateTime(currentTime)}</p>
+          
+          {/* API Status Notification */}
+          {attendanceError && (
+            <div className="mt-4 bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+              <div className="flex items-center">
+                <svg className="w-5 h-5 text-yellow-400 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                </svg>
+                <div>
+                  <p className="text-sm font-medium text-yellow-800">
+                    Live attendance monitoring API unavailable
+                  </p>
+                  <p className="text-sm text-yellow-700">
+                    Showing real employee data with attendance status calculated from attendance logs. Some real-time features may be limited.
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+          
+          {employees.length > 0 && (
+            <div className="mt-4 bg-blue-50 border border-blue-200 rounded-lg p-4">
+              <div className="flex items-center">
+                <svg className="w-5 h-5 text-blue-400 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <div>
+                  <p className="text-sm font-medium text-blue-800">
+                    Showing {employees.length} active employees
+                  </p>
+                  <p className="text-sm text-blue-700">
+                    Employee attendance status is calculated from today's attendance logs. Status updates in real-time based on clock-in/out activity.
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Summary Cards */}
@@ -252,6 +373,19 @@ const LiveAttendanceMonitoring = () => {
         {/* Filters and Refresh */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-8 space-y-4 sm:space-y-0">
           <div className="flex flex-col sm:flex-row sm:items-center space-y-4 sm:space-y-0 sm:space-x-4">
+            {/* Date Range Filter */}
+            <div className="flex items-center space-x-2">
+              <label className="text-sm font-medium text-gray-700">Date:</label>
+              <input
+                type="date"
+                value={dateRange.start_date.split('T')[0]}
+                onChange={(e) => handleDateRangeChange({
+                  start_date: e.target.value + 'T00:00:00Z',
+                  end_date: e.target.value + 'T23:59:59Z'
+                })}
+                className="border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
             {/* Search Input */}
             <div className="relative">
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -327,9 +461,45 @@ const LiveAttendanceMonitoring = () => {
         <div className="flex flex-col lg:flex-row gap-6">
           {/* Left Container - Users Listing (70% width) */}
           <div className="w-full lg:w-[70%]">
-            <h2 className="text-xl font-semibold text-gray-900 mb-6">Employee Status</h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
-              {filteredEmployees.map((employee) => (
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-xl font-semibold text-gray-900">Employee Status</h2>
+              <div className="flex items-center text-sm text-gray-500">
+                <span>{filteredEmployees.length} of {employees.length} employees</span>
+                {attendanceError && (
+                  <span className="ml-3 px-2 py-1 bg-yellow-100 text-yellow-700 rounded-full text-xs">
+                    Limited Features
+                  </span>
+                )}
+              </div>
+            </div>
+            
+            {filteredEmployees.length === 0 ? (
+              <div className="text-center py-12">
+                <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                </svg>
+                <h3 className="mt-2 text-sm font-medium text-gray-900">No employees found</h3>
+                <p className="mt-1 text-sm text-gray-500">
+                  {searchTerm || selectedDepartment !== 'All Departments' || selectedStatus !== 'All Status' 
+                    ? 'Try adjusting your search criteria or filters.'
+                    : 'No employee data available at the moment.'}
+                </p>
+                {(searchTerm || selectedDepartment !== 'All Departments' || selectedStatus !== 'All Status') && (
+                  <button
+                    onClick={() => {
+                      setSearchTerm('');
+                      setSelectedDepartment('All Departments');
+                      setSelectedStatus('All Status');
+                    }}
+                    className="mt-3 inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700"
+                  >
+                    Clear Filters
+                  </button>
+                )}
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+                {filteredEmployees.map((employee) => (
                 <Card key={employee.id} variant="flat" className="h-full">
                   <div className="p-4 h-full flex flex-col">
                     {/* Avatar with Status Dot */}
@@ -343,12 +513,7 @@ const LiveAttendanceMonitoring = () => {
                         }}
                       />
                       {/* Status Dot */}
-                      <div className={`absolute -bottom-1 -right-1 w-4 h-4 rounded-full border-2 border-white ${
-                        employee.status === 'Present' ? 'bg-green-500' :
-                        employee.status === 'Present (Late)' ? 'bg-yellow-500' :
-                        employee.status === 'Absent' ? 'bg-red-500' :
-                        'bg-blue-500'
-                      }`}></div>
+                      <div className={`absolute -bottom-1 -right-1 w-4 h-4 rounded-full border-2 border-white ${getStatusDotColor(employee.status)}`}></div>
                     </div>
 
                     {/* Employee Info */}
@@ -399,8 +564,9 @@ const LiveAttendanceMonitoring = () => {
                     </button>
                   </div>
                 </Card>
-              ))}
-            </div>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* Right Container - Activity Feed (30% width) */}
@@ -408,30 +574,42 @@ const LiveAttendanceMonitoring = () => {
             <h2 className="text-xl font-semibold text-gray-900 mb-6">Live Activity</h2>
             <Card className="h-full">
               <div className="p-4 h-full overflow-y-auto">
-                <div className="space-y-3">
-                  {liveActivity.map((activity) => (
-                    <div key={activity.id} className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg h-16">
-                      <img
-                        className="w-8 h-8 rounded-full object-cover flex-shrink-0"
-                        src={activity.avatar}
-                        alt={activity.employee}
-                        onError={(e) => {
-                          e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(activity.employee)}&background=3b82f6&color=fff&size=32`;
-                        }}
-                      />
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center justify-between">
-                          <h4 className="text-sm font-semibold text-gray-900 truncate">{activity.employee}</h4>
-                          <span className="text-xs text-gray-500">{activity.timestamp}</span>
-                        </div>
-                        <p className="text-xs text-gray-600 truncate">{activity.event}</p>
-                        <div className="text-right">
-                          <span className="text-sm font-semibold text-gray-900">{activity.confidence}%</span>
+                {processedLiveActivity.length === 0 ? (
+                  <div className="text-center py-8 text-gray-500">
+                    <svg className="w-12 h-12 mx-auto mb-4 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <p>No recent activity</p>
+                    <p className="text-xs mt-1">Attendance logs for the selected date will appear here</p>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {processedLiveActivity.map((activity) => (
+                      <div key={activity.id} className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg min-h-[64px]">
+                        <img
+                          className="w-8 h-8 rounded-full object-cover flex-shrink-0"
+                          src={activity.avatar}
+                          alt={activity.employee}
+                          onError={(e) => {
+                            e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(activity.employee)}&background=3b82f6&color=fff&size=32`;
+                          }}
+                        />
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center justify-between">
+                            <h4 className="text-sm font-semibold text-gray-900 truncate">{activity.employee}</h4>
+                            <span className="text-xs text-gray-500">{activity.timestamp}</span>
+                          </div>
+                          <p className="text-xs text-gray-600 truncate">{activity.event}</p>
+                          {activity.confidence > 0 && (
+                            <div className="text-right">
+                              <span className="text-sm font-semibold text-gray-900">{activity.confidence}%</span>
+                            </div>
+                          )}
                         </div>
                       </div>
-                    </div>
-                  ))}
-                </div>
+                    ))}
+                  </div>
+                )}
               </div>
             </Card>
           </div>

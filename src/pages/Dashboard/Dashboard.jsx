@@ -1,9 +1,51 @@
 import React from 'react';
+import { 
+  useGetCurrentUserQuery,
+  useGetDailySummaryQuery,
+  useGetAttendanceStatsQuery,
+  useGetEmployeesQuery
+} from '../../store/api';
 
 const Dashboard = () => {
+  // API hooks
+  const { data: currentUser, isLoading: userLoading } = useGetCurrentUserQuery();
+  const { data: dailySummary, isLoading: summaryLoading } = useGetDailySummaryQuery();
+  const { data: attendanceStats, isLoading: statsLoading } = useGetAttendanceStatsQuery();
+  const { data: employeesData, isLoading: employeesLoading } = useGetEmployeesQuery({ 
+    limit: 1000, 
+    is_active: true 
+  });
+
+  // Calculate today's date for display
+  const today = new Date().toISOString().split('T')[0];
+
+  // Extract data with fallbacks
+  const employees = employeesData?.data || [];
+  const totalEmployees = employees.length;
+  const activeEmployees = employees.filter(emp => emp.is_active).length;
+  const departments = [...new Set(employees.map(emp => emp.department).filter(Boolean))].length;
+
+  // Daily summary data
+  const presentCount = dailySummary?.present_count || 0;
+  const absentCount = dailySummary?.absent_count || 0;
+  const lateCount = dailySummary?.late_count || 0;
+  const presentRate = dailySummary?.summary?.present_rate || 0;
+
+  // Attendance stats
+  const avgAttendanceRate = attendanceStats?.stats?.average_attendance_rate || 0;
+  const avgPunctualityRate = attendanceStats?.stats?.average_punctuality_rate || 0;
+  const totalHoursWorked = attendanceStats?.stats?.total_hours_worked || 0;
+
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <h1 className="text-3xl font-bold text-gray-900 mb-8">Dashboard</h1>
+      <div className="flex items-center justify-between mb-8">
+        <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
+        {currentUser && (
+          <div className="text-sm text-gray-600">
+            Welcome back, <span className="font-medium">{currentUser.first_name || currentUser.email}</span>
+          </div>
+        )}
+      </div>
       
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
         {/* Stats Cards */}
@@ -20,7 +62,9 @@ const Dashboard = () => {
               <div className="ml-5 w-0 flex-1">
                 <dl>
                   <dt className="text-sm font-medium text-gray-500 truncate">Total Employees</dt>
-                  <dd className="text-lg font-medium text-gray-900">97</dd>
+                  <dd className="text-lg font-medium text-gray-900">
+                    {employeesLoading ? '...' : totalEmployees}
+                  </dd>
                 </dl>
               </div>
             </div>
@@ -39,8 +83,10 @@ const Dashboard = () => {
               </div>
               <div className="ml-5 w-0 flex-1">
                 <dl>
-                  <dt className="text-sm font-medium text-gray-500 truncate">Active Employees</dt>
-                  <dd className="text-lg font-medium text-gray-900">89</dd>
+                  <dt className="text-sm font-medium text-gray-500 truncate">Present Today</dt>
+                  <dd className="text-lg font-medium text-gray-900">
+                    {summaryLoading ? '...' : presentCount}
+                  </dd>
                 </dl>
               </div>
             </div>
@@ -59,8 +105,10 @@ const Dashboard = () => {
               </div>
               <div className="ml-5 w-0 flex-1">
                 <dl>
-                  <dt className="text-sm font-medium text-gray-500 truncate">Pending Requests</dt>
-                  <dd className="text-lg font-medium text-gray-900">12</dd>
+                  <dt className="text-sm font-medium text-gray-500 truncate">Late Arrivals</dt>
+                  <dd className="text-lg font-medium text-gray-900">
+                    {summaryLoading ? '...' : lateCount}
+                  </dd>
                 </dl>
               </div>
             </div>
@@ -79,14 +127,37 @@ const Dashboard = () => {
               </div>
               <div className="ml-5 w-0 flex-1">
                 <dl>
-                  <dt className="text-sm font-medium text-gray-500 truncate">Departments</dt>
-                  <dd className="text-lg font-medium text-gray-900">8</dd>
+                  <dt className="text-sm font-medium text-gray-500 truncate">Attendance Rate</dt>
+                  <dd className="text-lg font-medium text-gray-900">
+                    {statsLoading ? '...' : `${avgAttendanceRate.toFixed(1)}%`}
+                  </dd>
                 </dl>
               </div>
             </div>
           </div>
         </div>
       </div>
+
+      {/* Today's Summary */}
+      {dailySummary && (
+        <div className="bg-white shadow rounded-lg p-6 mb-8">
+          <h2 className="text-lg font-medium text-gray-900 mb-4">Today's Attendance Summary</h2>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="text-center">
+              <div className="text-2xl font-bold text-green-600">{presentCount}</div>
+              <div className="text-sm text-gray-500">Present</div>
+            </div>
+            <div className="text-center">
+              <div className="text-2xl font-bold text-red-600">{absentCount}</div>
+              <div className="text-sm text-gray-500">Absent</div>
+            </div>
+            <div className="text-center">
+              <div className="text-2xl font-bold text-blue-600">{presentRate.toFixed(1)}%</div>
+              <div className="text-sm text-gray-500">Present Rate</div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Quick Actions */}
       <div className="bg-white shadow rounded-lg p-6">
