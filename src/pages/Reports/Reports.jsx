@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Card, Pagination } from '../../components/common';
+import { Card, Pagination, LoadingScreen, LottieLoader } from '../../components/common';
 import Chart from 'react-apexcharts';
 import { 
   useGetReportsQuery,
@@ -460,14 +460,7 @@ const Reports = () => {
 
   // Show loading state only if both are loading
   if (statsLoading && reportsLoading) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading reports data...</p>
-        </div>
-      </div>
-    );
+    return <LoadingScreen message="Loading reports data..." />;
   }
 
   return (
@@ -672,7 +665,7 @@ const Reports = () => {
                     >
                       {isGenerating ? (
                         <div className="flex items-center">
-                          <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-white mr-2"></div>
+                          <LottieLoader size="xs" className="mr-2" />
                           Generating...
                         </div>
                       ) : (

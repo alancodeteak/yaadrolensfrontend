@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import Card from '../../../common/Card/Card';
+import { LoadingScreen } from '../../../common';
 import { toast } from 'react-toastify';
 import {
   useGetJobPositionsQuery,
@@ -183,10 +184,7 @@ const JobPositionManagement = ({ departmentId = null, departmentName = null }) =
   if (isLoading) {
     return (
       <div className="p-6">
-        <div className="flex items-center justify-center h-64">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-          <p className="ml-4 text-gray-600">Loading job positions...</p>
-        </div>
+        <LoadingScreen message="Loading job positions..." fullScreen={false} size="md" />
       </div>
     );
   }

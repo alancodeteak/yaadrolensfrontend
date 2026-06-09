@@ -1,319 +1,296 @@
-import React, { useState } from 'react';
-import { 
-  useGetDailySummaryQuery,
-  useGetAttendanceStatsQuery,
-  useGetAttendanceLogsQuery
-} from '../../store/api';
-import Card from '../../components/common/Card/Card';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
+import {
+  ANALYTICS_GUIDE_STEPS,
+  DashboardDatePicker,
+  LoadingScreen,
+  PageInfoOverlay,
+  PageTourButtons,
+  usePageTour,
+} from '../../components/common';
+import {
+  ActivityRingsChart,
+  AttendanceMonthCalendar,
+  DashboardWidgetCard,
+} from '../../components/pages/dashboard';
+import { AttendanceAnalyticsCharts, DailyPresenceTrend } from '../../components/pages/analytics';
+import { useGetDashboardSummaryQuery } from '../../store/api';
+import { useGetAttendanceStatsQuery } from '../../store/api/attendanceApi';
+import {
+  USE_DUMMY_ANALYTICS,
+  DUMMY_MONTH_STATS,
+  DUMMY_TODAY_STATS,
+} from '../../components/pages/analytics/analyticsDummy';
+
+const ACCENT = {
+  blue: '#007AFF',
+  green: '#34C759',
+  orange: '#FF9500',
+  purple: '#5856D6',
+  red: '#FF3B30',
+};
+
+const today = () => new Date().toISOString().split('T')[0];
+
+function shiftMonth(iso, delta) {
+  const d = new Date(`${iso}T12:00:00`);
+  d.setDate(1);
+  d.setMonth(d.getMonth() + delta);
+  return d.toISOString().split('T')[0];
+}
+
+function formatMonthLabel(iso) {
+  return new Date(`${iso}T12:00:00`).toLocaleDateString('en-US', {
+    month: 'long',
+    year: 'numeric',
+  });
+}
 
 const AttendanceDashboard = () => {
-  const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
-  const [dateRange, setDateRange] = useState({
-    start_date: new Date(new Date().setDate(new Date().getDate() - 7)).toISOString().split('T')[0],
-    end_date: new Date().toISOString().split('T')[0]
+  const [selectedDay, setSelectedDay] = useState(today());
+  const heatmapRef = useRef(null);
+  const [heatmapHeight, setHeatmapHeight] = useState(null);
+  const { infoOpen, startTutorial, startInfo, closeInfo } = usePageTour(
+    ANALYTICS_GUIDE_STEPS,
+    'analytics_tour_completed'
+  );
+
+  const {
+    data: summary,
+    isLoading: summaryLoading,
+    isError: summaryError,
+    refetch,
+  } = useGetDashboardSummaryQuery({ day: selectedDay });
+
+  const { data: monthlyReport, isLoading: monthlyLoading } = useGetAttendanceStatsQuery({
+    end_date: selectedDay,
   });
 
-  // API hooks
-  const { data: dailySummary, isLoading: summaryLoading } = useGetDailySummaryQuery({ 
-    date: selectedDate 
-  });
-  const { data: attendanceStats, isLoading: statsLoading } = useGetAttendanceStatsQuery({
-    start_date: dateRange.start_date,
-    end_date: dateRange.end_date
-  });
-  const { data: attendanceLogs, isLoading: logsLoading } = useGetAttendanceLogsQuery({
-    start_date: dateRange.start_date,
-    end_date: dateRange.end_date,
-    limit: 50
-  });
+  const loading = summaryLoading || monthlyLoading;
 
-  const handleDateChange = (field, value) => {
-    if (field === 'selectedDate') {
-      setSelectedDate(value);
-    } else {
-      setDateRange(prev => ({
-        ...prev,
-        [field]: value
-      }));
-    }
-  };
+  const month = summary?.month;
+  const todayStats = summary?.today;
+  const calendar = month?.calendar || [];
+  const monthlyRows = monthlyReport?.rows || [];
 
-  const getStatusBadge = (type) => {
-    const statusConfig = {
-      'IN': { color: 'bg-green-100 text-green-800', text: 'Clock In' },
-      'OUT': { color: 'bg-red-100 text-red-800', text: 'Clock Out' }
-    };
-    
-    const config = statusConfig[type] || { color: 'bg-gray-100 text-gray-800', text: type };
+  useEffect(() => {
+    const el = heatmapRef.current;
+    if (!el) return undefined;
+
+    const updateHeight = () => setHeatmapHeight(el.offsetHeight);
+    updateHeight();
+
+    const observer = new ResizeObserver(updateHeight);
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [summaryLoading, month, calendar, selectedDay]);
+
+  const useDummyMonth =
+    USE_DUMMY_ANALYTICS && !loading && !month?.avg_attendance_rate && !monthlyRows.length;
+
+  const monthKpis = useMemo(() => {
+    const m = useDummyMonth ? DUMMY_MONTH_STATS : month;
+    if (!m) return [];
+    return [
+      {
+        label: 'Avg attendance',
+        value: `${Number(m.avg_attendance_rate || 0).toFixed(1)}%`,
+        accent: ACCENT.blue,
+      },
+      {
+        label: 'Punctuality',
+        value: `${Number(m.punctuality_rate || 0).toFixed(1)}%`,
+        accent: ACCENT.green,
+      },
+      {
+        label: 'Total hours',
+        value: Number(m.total_hours || 0).toFixed(0),
+        accent: ACCENT.purple,
+      },
+      {
+        label: 'Total late',
+        value: m.total_late ?? 0,
+        accent: ACCENT.orange,
+      },
+    ];
+  }, [month, useDummyMonth]);
+
+  const snapshotKpis = useMemo(() => {
+    const t = useDummyMonth ? DUMMY_TODAY_STATS : todayStats;
+    if (!t) return [];
+    return [
+      { label: 'Present', value: t.present ?? 0, accent: ACCENT.green },
+      { label: 'Absent', value: t.absent ?? 0, accent: ACCENT.red },
+      { label: 'Late', value: t.late ?? 0, accent: ACCENT.orange },
+      {
+        label: 'Present rate',
+        value: `${Number(t.present_rate || 0).toFixed(1)}%`,
+        accent: ACCENT.blue,
+      },
+    ];
+  }, [todayStats, useDummyMonth]);
+
+  const activityRings = useMemo(() => {
+    const m = useDummyMonth ? DUMMY_MONTH_STATS : month;
+    const rows = monthlyRows.length ? monthlyRows : [];
+    if (!m) return [];
+    const hoursUtil =
+      rows.length > 0
+        ? Math.min(100, (Number(m.total_hours || 0) / (rows.length * 160)) * 100)
+        : Number(m.avg_attendance_rate || 0);
+    return [
+      { label: 'Avg attendance', value: Number(m.avg_attendance_rate || 0), color: ACCENT.blue },
+      { label: 'Punctuality', value: Number(m.punctuality_rate || 0), color: ACCENT.green },
+      { label: 'Hours logged', value: hoursUtil, color: ACCENT.purple },
+    ];
+  }, [month, monthlyRows, useDummyMonth]);
+
+  if (summaryLoading && !summary) {
+    return <LoadingScreen message="Loading analytics..." />;
+  }
+
+  if (summaryError) {
     return (
-      <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${config.color}`}>
-        {config.text}
-      </span>
+      <div className="flex min-h-[50vh] items-center justify-center px-4">
+        <div className="text-center">
+          <h3 className="text-lg font-medium text-gray-900">Failed to load analytics</h3>
+          <p className="mt-1 text-sm text-gray-500">Could not load dashboard summary.</p>
+          <button
+            type="button"
+            onClick={() => refetch()}
+            className="mt-4 rounded-xl bg-[#007AFF] px-4 py-2 text-sm font-semibold text-white hover:bg-[#0066DD]"
+          >
+            Try again
+          </button>
+        </div>
+      </div>
     );
-  };
-
-  const formatTime = (timestamp) => {
-    return new Date(timestamp).toLocaleTimeString('en-US', {
-      hour: '2-digit',
-      minute: '2-digit',
-      hour12: true
-    });
-  };
-
-  const formatDate = (timestamp) => {
-    return new Date(timestamp).toLocaleDateString('en-US', {
-      month: 'short',
-      day: 'numeric',
-      year: 'numeric'
-    });
-  };
+  }
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      {/* Header */}
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900">Attendance Dashboard</h1>
-        <p className="text-gray-600 mt-2">Monitor and analyze employee attendance patterns</p>
+    <div className="mx-auto max-w-7xl space-y-4 px-4 py-8 sm:px-6 lg:px-8">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">Analytics</h1>
+          <p className="text-sm text-gray-500">{formatMonthLabel(selectedDay)}</p>
+        </div>
+        <PageTourButtons onTutorial={startTutorial} onInfo={startInfo} />
       </div>
 
-      {/* Date Selectors */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-        <Card>
-          <div className="p-6">
-            <h2 className="text-lg font-semibold text-gray-900 mb-4">Today's Summary</h2>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Select Date</label>
-              <input
-                type="date"
-                value={selectedDate}
-                onChange={(e) => handleDateChange('selectedDate', e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              />
-            </div>
+      <div
+        data-tour="month-picker"
+        data-info="month-picker"
+        className="rounded-2xl border border-gray-200/60 bg-white px-4 py-3 shadow-[0_2px_16px_rgba(0,0,0,0.06)]"
+      >
+        <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
+          <span className="shrink-0 text-xs font-medium text-gray-500">Month</span>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setSelectedDay((d) => shiftMonth(d, -1))}
+              className="rounded-xl border border-gray-200/60 p-2 text-gray-600 shadow-[0_2px_16px_rgba(0,0,0,0.04)] transition-colors hover:bg-gray-50"
+              aria-label="Previous month"
+            >
+              <ChevronLeft className="h-4 w-4" strokeWidth={2} />
+            </button>
+            <DashboardDatePicker
+              id="analytics-month"
+              label="Analytics month"
+              value={selectedDay}
+              onChange={setSelectedDay}
+              maxDate={today()}
+            />
+            <button
+              type="button"
+              onClick={() => setSelectedDay((d) => shiftMonth(d, 1))}
+              disabled={shiftMonth(selectedDay, 1) > today()}
+              className="rounded-xl border border-gray-200/60 p-2 text-gray-600 shadow-[0_2px_16px_rgba(0,0,0,0.04)] transition-colors hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-40"
+              aria-label="Next month"
+            >
+              <ChevronRight className="h-4 w-4" strokeWidth={2} />
+            </button>
           </div>
-        </Card>
-
-        <Card>
-          <div className="p-6">
-            <h2 className="text-lg font-semibold text-gray-900 mb-4">Period Analysis</h2>
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Start Date</label>
-                <input
-                  type="date"
-                  value={dateRange.start_date}
-                  onChange={(e) => handleDateChange('start_date', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">End Date</label>
-                <input
-                  type="date"
-                  value={dateRange.end_date}
-                  onChange={(e) => handleDateChange('end_date', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                />
-              </div>
-            </div>
-          </div>
-        </Card>
+        </div>
       </div>
 
-      {/* Today's Summary Cards */}
-      {dailySummary && (
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-          <Card>
-            <div className="p-6">
-              <div className="flex items-center">
-                <div className="flex-shrink-0">
-                  <div className="w-8 h-8 bg-blue-500 rounded-md flex items-center justify-center">
-                    <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-                    </svg>
-                  </div>
-                </div>
-                <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-500">Total Employees</p>
-                  <p className="text-2xl font-semibold text-gray-900">{dailySummary.total_employees}</p>
-                </div>
-              </div>
-            </div>
-          </Card>
-
-          <Card>
-            <div className="p-6">
-              <div className="flex items-center">
-                <div className="flex-shrink-0">
-                  <div className="w-8 h-8 bg-green-500 rounded-md flex items-center justify-center">
-                    <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                  </div>
-                </div>
-                <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-500">Present</p>
-                  <p className="text-2xl font-semibold text-gray-900">{dailySummary.present_count}</p>
-                </div>
-              </div>
-            </div>
-          </Card>
-
-          <Card>
-            <div className="p-6">
-              <div className="flex items-center">
-                <div className="flex-shrink-0">
-                  <div className="w-8 h-8 bg-red-500 rounded-md flex items-center justify-center">
-                    <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                    </svg>
-                  </div>
-                </div>
-                <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-500">Absent</p>
-                  <p className="text-2xl font-semibold text-gray-900">{dailySummary.absent_count}</p>
-                </div>
-              </div>
-            </div>
-          </Card>
-
-          <Card>
-            <div className="p-6">
-              <div className="flex items-center">
-                <div className="flex-shrink-0">
-                  <div className="w-8 h-8 bg-yellow-500 rounded-md flex items-center justify-center">
-                    <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                  </div>
-                </div>
-                <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-500">Late</p>
-                  <p className="text-2xl font-semibold text-gray-900">{dailySummary.late_count}</p>
-                </div>
-              </div>
-            </div>
-          </Card>
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+        <div data-tour="kpi-month" data-info="kpi-month">
+          <DashboardWidgetCard
+            title={useDummyMonth ? 'This month · sample' : 'This month'}
+            stats={monthKpis}
+            loading={loading}
+          />
         </div>
+        <div data-tour="kpi-snapshot" data-info="kpi-snapshot">
+          <DashboardWidgetCard
+            title={`Snapshot · ${new Date(`${selectedDay}T12:00:00`).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`}
+            stats={snapshotKpis}
+            loading={loading}
+          />
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 gap-4 xl:grid-cols-3">
+        <div ref={heatmapRef} data-tour="heatmap" data-info="heatmap" className="h-fit">
+          <AttendanceMonthCalendar
+            month={month}
+            calendar={calendar}
+            loading={summaryLoading}
+            summaryDate={summary?.date || selectedDay}
+            useSampleData={false}
+            title="Month heatmap"
+          />
+        </div>
+
+        <div
+          data-tour="month-overview"
+          data-info="month-overview"
+          className="flex flex-col overflow-hidden rounded-2xl border border-gray-200/60 bg-white shadow-[0_2px_16px_rgba(0,0,0,0.06)]"
+          style={heatmapHeight ? { height: heatmapHeight } : undefined}
+        >
+          <div className="shrink-0 border-b border-gray-100 px-4 py-3">
+            <div className="flex flex-wrap items-center gap-2">
+              <h2 className="text-sm font-semibold text-gray-900">Month overview</h2>
+              {useDummyMonth && (
+                <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[9px] font-medium text-amber-800">
+                  Sample data
+                </span>
+              )}
+            </div>
+            <p className="text-[11px] text-gray-500">Attendance, punctuality & hours</p>
+          </div>
+          <div className="flex min-h-0 flex-1 items-center justify-center px-3 py-2">
+            <ActivityRingsChart
+              rings={activityRings}
+              loading={loading && !useDummyMonth}
+              compact
+              hideTitle
+            />
+          </div>
+        </div>
+
+        <div data-tour="daily-trend" data-info="daily-trend">
+          <DailyPresenceTrend
+            calendar={calendar}
+            month={month}
+            summaryDate={summary?.date || selectedDay}
+            loading={summaryLoading}
+            panelHeight={heatmapHeight}
+          />
+        </div>
+      </div>
+
+      <AttendanceAnalyticsCharts monthlyRows={monthlyRows} loading={monthlyLoading} />
+
+      {infoOpen && (
+        <PageInfoOverlay
+          steps={ANALYTICS_GUIDE_STEPS}
+          onClose={closeInfo}
+          pageLabel="Analytics"
+        />
       )}
-
-      {/* Statistics Overview */}
-      {attendanceStats && (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          <Card>
-            <div className="p-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Attendance Rate</h3>
-              <div className="text-center">
-                <div className="text-3xl font-bold text-blue-600 mb-2">
-                  {attendanceStats.stats?.average_attendance_rate?.toFixed(1)}%
-                </div>
-                <p className="text-sm text-gray-500">Average attendance rate</p>
-              </div>
-            </div>
-          </Card>
-
-          <Card>
-            <div className="p-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Punctuality Rate</h3>
-              <div className="text-center">
-                <div className="text-3xl font-bold text-green-600 mb-2">
-                  {attendanceStats.stats?.average_punctuality_rate?.toFixed(1)}%
-                </div>
-                <p className="text-sm text-gray-500">On-time arrivals</p>
-              </div>
-            </div>
-          </Card>
-
-          <Card>
-            <div className="p-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Total Hours</h3>
-              <div className="text-center">
-                <div className="text-3xl font-bold text-purple-600 mb-2">
-                  {attendanceStats.stats?.total_hours_worked?.toFixed(1)}
-                </div>
-                <p className="text-sm text-gray-500">Hours worked this period</p>
-              </div>
-            </div>
-          </Card>
-        </div>
-      )}
-
-      {/* Recent Activity */}
-      <Card>
-        <div className="p-6">
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">Recent Attendance Activity</h2>
-          
-          {logsLoading ? (
-            <div className="animate-pulse">
-              <div className="space-y-3">
-                {[1, 2, 3, 4, 5].map(i => (
-                  <div key={i} className="h-16 bg-gray-200 rounded"></div>
-                ))}
-              </div>
-            </div>
-          ) : attendanceLogs && attendanceLogs.length > 0 ? (
-            <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Employee</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Time</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Confidence</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
-                  {attendanceLogs.slice(0, 20).map((log) => (
-                    <tr key={log.id} className="hover:bg-gray-50">
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="flex items-center">
-                          <div className="flex-shrink-0 h-8 w-8">
-                            <div className="h-8 w-8 rounded-full bg-blue-100 flex items-center justify-center">
-                              <span className="text-sm font-medium text-blue-600">
-                                {log.employee_name?.charAt(0)}
-                              </span>
-                            </div>
-                          </div>
-                          <div className="ml-4">
-                            <div className="text-sm font-medium text-gray-900">{log.employee_name}</div>
-                            <div className="text-sm text-gray-500">{log.employee_department}</div>
-                          </div>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        {getStatusBadge(log.type)}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {formatTime(log.timestamp)}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {log.confidence_score ? `${(parseFloat(log.confidence_score) * 100).toFixed(1)}%` : '-'}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {formatDate(log.timestamp)}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          ) : (
-            <div className="text-center py-12">
-              <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-              </svg>
-              <h3 className="mt-2 text-sm font-medium text-gray-900">No attendance records</h3>
-              <p className="mt-1 text-sm text-gray-500">
-                No attendance records found for the selected period.
-              </p>
-            </div>
-          )}
-        </div>
-      </Card>
     </div>
   );
 };
 
 export default AttendanceDashboard;
-

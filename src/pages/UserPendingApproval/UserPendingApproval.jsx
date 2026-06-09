@@ -2,6 +2,7 @@ import React from 'react';
 import { useDispatch } from 'react-redux';
 import { useGetPendingUsersQuery, useApproveUserMutation, useRejectUserMutation } from '../../store/api/apiSlice';
 import { approveUser, rejectUser } from '../../store/slices/userSlice';
+import { LoadingScreen, UserAvatar } from '../../components/common';
 
 const UserPendingApproval = () => {
   const dispatch = useDispatch();
@@ -30,11 +31,7 @@ const UserPendingApproval = () => {
   };
 
   if (isLoading) {
-    return (
-      <div className="flex justify-center items-center min-h-screen">
-        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-indigo-500"></div>
-      </div>
-    );
+    return <LoadingScreen message="Loading pending approvals..." size="xl" />;
   }
 
   return (
@@ -60,10 +57,11 @@ const UserPendingApproval = () => {
           {pendingUsers?.map((user) => (
             <div key={user.id} className="bg-white shadow-md rounded-lg p-6">
               <div className="flex items-center mb-4">
-                <img
+                <UserAvatar
                   className="h-12 w-12 rounded-full"
-                  src={user.avatar || `https://ui-avatars.com/api/?name=${user.name}`}
-                  alt=""
+                  src={user.avatar}
+                  name={user.name}
+                  seed={user.id}
                 />
                 <div className="ml-4">
                   <h3 className="text-lg font-semibold text-gray-900">{user.name}</h3>

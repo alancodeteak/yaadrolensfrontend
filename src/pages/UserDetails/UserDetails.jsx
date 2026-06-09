@@ -1,17 +1,14 @@
 import React from 'react';
 import { useParams } from 'react-router-dom';
 import { useGetUserByIdQuery } from '../../store/api/apiSlice';
+import { LoadingScreen, UserAvatar } from '../../components/common';
 
 const UserDetails = () => {
   const { id } = useParams();
   const { data: user, error, isLoading } = useGetUserByIdQuery(id);
 
   if (isLoading) {
-    return (
-      <div className="flex justify-center items-center min-h-screen">
-        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-indigo-500"></div>
-      </div>
-    );
+    return <LoadingScreen message="Loading user details..." size="xl" />;
   }
 
   if (error) {
@@ -31,10 +28,11 @@ const UserDetails = () => {
       {user && (
         <div className="bg-white shadow-md rounded-lg p-6">
           <div className="flex items-center mb-6">
-            <img
+            <UserAvatar
               className="h-20 w-20 rounded-full"
-              src={user.avatar || `https://ui-avatars.com/api/?name=${user.name}`}
-              alt=""
+              src={user.avatar}
+              name={user.name}
+              seed={user.id}
             />
             <div className="ml-6">
               <h2 className="text-2xl font-bold text-gray-900">{user.name}</h2>

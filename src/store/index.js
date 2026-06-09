@@ -1,5 +1,8 @@
 import { configureStore } from '@reduxjs/toolkit';
 import { baseApi } from './api';
+import './api/authApi';
+import './api/employeeApi';
+import './api/settingsApi';
 import { 
   authReducer,
   employeeReducer,

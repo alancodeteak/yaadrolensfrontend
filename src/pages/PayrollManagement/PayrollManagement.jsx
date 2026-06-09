@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { PayrollTable } from '../../components/pages/payroll';
-import { Pagination, Card } from '../../components/common';
+import { Pagination, Card, LoadingScreen } from '../../components/common';
 import {
   useGetPayrollsQuery,
   useCreatePayrollMutation,
@@ -72,7 +72,7 @@ const PayrollManagement = () => {
       deductions: parseFloat(payroll.deductions || 0),
       netPay: parseFloat(payroll.net_salary || 0),
       status: payroll.status || 'Pending',
-      photo: `https://ui-avatars.com/api/?name=${encodeURIComponent(payroll.employee_name)}&background=3b82f6&color=fff&size=100`,
+      photo: null,
       month: payroll.month,
       year: payroll.year
     }));
@@ -277,14 +277,7 @@ const PayrollManagement = () => {
 
   // Show loading state
   if (payrollsLoading) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading payroll data...</p>
-        </div>
-      </div>
-    );
+    return <LoadingScreen message="Loading payroll data..." />;
   }
 
   // Show error state

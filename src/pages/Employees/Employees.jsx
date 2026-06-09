@@ -1,10 +1,30 @@
 import React, { useState } from 'react';
 import { EmployeeTable, FilterSort, EmployeeModal, EmployeeEditModal } from '../../components/pages/employees';
-import { Pagination, ConfirmationDialog } from '../../components/common';
-import { useGetEmployeesQuery, useCreateEmployeeMutation, useUpdateEmployeeMutation, useDeleteEmployeeMutation } from '../../store/api';
-import { toast } from 'react-toastify';
+import {
+  EMPLOYEES_GUIDE_STEPS,
+  Pagination,
+  ConfirmationDialog,
+  LoadingScreen,
+  PageInfoOverlay,
+  PageTourButtons,
+  usePageTour,
+  dashboardToast,
+} from '../../components/common';
+import {
+  useGetEmployeesQuery,
+  useCreateEmployeeMutation,
+  useUpdateEmployeeMutation,
+  useDeleteEmployeeMutation,
+  useUploadEmployeeProfilePhotoMutation,
+  useDeleteEmployeeProfilePhotoMutation,
+} from '../../store/api';
+import { useGetDepartmentsQuery } from '../../store/api/settingsApi';
 
 const Employees = () => {
+  const { infoOpen, startTutorial, startInfo, closeInfo } = usePageTour(
+    EMPLOYEES_GUIDE_STEPS,
+    'employees_tour_completed'
+  );
   const [searchTerm, setSearchTerm] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [employeesPerPage] = useState(10);
@@ -32,9 +52,13 @@ const Employees = () => {
     is_active: showActiveEmployees
   });
 
+  const { data: departmentOptions = [] } = useGetDepartmentsQuery({ active_only: true });
+
   const [createEmployee, { isLoading: isCreating }] = useCreateEmployeeMutation();
   const [updateEmployee, { isLoading: isUpdating }] = useUpdateEmployeeMutation();
   const [deleteEmployee, { isLoading: isDeleting }] = useDeleteEmployeeMutation();
+  const [uploadProfilePhoto] = useUploadEmployeeProfilePhotoMutation();
+  const [deleteProfilePhoto] = useDeleteEmployeeProfilePhotoMutation();
 
   // Extract employees array from API response
   const employees = employeesData || [];
@@ -51,7 +75,7 @@ const Employees = () => {
         case 'name':
           return a.name.localeCompare(b.name);
         case 'department':
-          return a.department.localeCompare(b.department);
+          return (a.department || '').localeCompare(b.department || '');
         case 'status':
           return (a.is_active ? 'Active' : 'Inactive').localeCompare(b.is_active ? 'Active' : 'Inactive');
         case 'created_at':
@@ -73,14 +97,24 @@ const Employees = () => {
     setIsModalOpen(true);
   };
 
-  const handleSaveEmployee = async (employeeData) => {
+  const handleSaveEmployee = async (employeeData, photoOptions = {}) => {
     try {
-      await createEmployee(employeeData).unwrap();
-      toast.success('Employee created successfully!');
+      const created = await createEmployee(employeeData).unwrap();
+      if (photoOptions.photoFile) {
+        await uploadProfilePhoto({ id: created.id, file: photoOptions.photoFile }).unwrap();
+      }
+      dashboardToast.success(
+        `${employeeData.name} has been added to your team.`,
+        'Employee created'
+      );
       setIsModalOpen(false);
-      refetch(); // Refresh the employee list
+      refetch();
     } catch (error) {
-      toast.error(error?.data?.message || 'Failed to create employee');
+      dashboardToast.error(
+        error?.data?.message || 'Could not create employee. Please try again.',
+        'Create failed'
+      );
+      throw error;
     }
   };
 
@@ -93,15 +127,27 @@ const Employees = () => {
     setIsEditModalOpen(true);
   };
 
-  const handleUpdateEmployee = async (employeeData) => {
+  const handleUpdateEmployee = async (employeeData, photoOptions = {}) => {
     try {
       await updateEmployee(employeeData).unwrap();
-      toast.success('Employee updated successfully!');
+      if (photoOptions.removePhoto) {
+        await deleteProfilePhoto(employeeData.id).unwrap();
+      } else if (photoOptions.photoFile) {
+        await uploadProfilePhoto({ id: employeeData.id, file: photoOptions.photoFile }).unwrap();
+      }
+      dashboardToast.success(
+        `${selectedEmployee?.name || 'Employee'} details were updated.`,
+        'Changes saved'
+      );
       setIsEditModalOpen(false);
       setSelectedEmployee(null);
       refetch();
     } catch (error) {
-      toast.error(error?.data?.message || 'Failed to update employee');
+      dashboardToast.error(
+        error?.data?.message || 'Could not update employee. Please try again.',
+        'Update failed'
+      );
+      throw error;
     }
   };
 
@@ -120,12 +166,18 @@ const Employees = () => {
 
     try {
       await deleteEmployee(employeeToDeactivate.id).unwrap();
-      toast.success(`${employeeToDeactivate.name} has been deactivated successfully!`);
+      dashboardToast.success(
+        `${employeeToDeactivate.name} has been deactivated.`,
+        'Employee deactivated'
+      );
       setIsConfirmDialogOpen(false);
       setEmployeeToDeactivate(null);
       refetch();
     } catch (error) {
-      toast.error(error?.data?.message || 'Failed to deactivate employee');
+      dashboardToast.error(
+        error?.data?.message || 'Could not deactivate employee. Please try again.',
+        'Deactivation failed'
+      );
     }
   };
 
@@ -141,14 +193,7 @@ const Employees = () => {
 
   // Handle loading state
   if (isLoading) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading employees...</p>
-        </div>
-      </div>
-    );
+    return <LoadingScreen message="Loading employees..." />;
   }
 
   // Handle error state
@@ -175,28 +220,26 @@ const Employees = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="max-w-7xl mx-auto px-6 lg:px-8 py-8">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Page Header */}
         <div className="mb-8">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-6">
             <div>
-              <h1 className="text-3xl font-bold text-gray-900 tracking-tight mb-2">
+              <h1 className="text-3xl font-bold text-gray-900">
                 {showActiveEmployees ? 'Active Employees' : 'Deactivated Employees'}
               </h1>
-              <p className="text-gray-600">
-                {showActiveEmployees 
-                  ? 'Manage your active team members and their information' 
-                  : 'View and manage deactivated employees'
-                }
+              <p className="mt-1 text-sm text-gray-500">
+                {showActiveEmployees
+                  ? 'Manage your active team members and their information'
+                  : 'View and manage deactivated employees'}
               </p>
             </div>
-            
-            <div className="flex flex-col sm:flex-row sm:items-center space-y-4 sm:space-y-0 sm:space-x-4 mt-6 sm:mt-0">
+
+            <div className="flex flex-col sm:flex-row sm:items-center gap-3" data-tour="header-actions">
               {/* Search Bar */}
               <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+                  <svg className="h-4 w-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                   </svg>
                 </div>
@@ -205,17 +248,17 @@ const Employees = () => {
                   placeholder="Search employees..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="block w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 sm:text-sm transition-all duration-200"
+                  className="block w-full rounded-xl border border-gray-200/60 bg-white py-2.5 pl-9 pr-4 text-sm text-gray-900 shadow-[0_2px_16px_rgba(0,0,0,0.04)] placeholder:text-gray-400 focus:border-[#007AFF] focus:outline-none focus:ring-2 focus:ring-[#007AFF]/20 sm:w-64"
                 />
               </div>
 
               {/* Toggle Active/Deactivated Button */}
               <button
                 onClick={handleToggleEmployeeStatus}
-                className={`inline-flex items-center px-4 py-3 border border-gray-300 rounded-xl shadow-sm text-sm font-semibold transition-all duration-200 hover:shadow-md ${
-                  showActiveEmployees 
-                    ? 'text-gray-700 bg-white hover:bg-gray-50' 
-                    : 'text-white bg-gray-600 hover:bg-gray-700'
+                className={`inline-flex items-center rounded-xl border px-4 py-2.5 text-sm font-medium transition-colors duration-200 ${
+                  showActiveEmployees
+                    ? 'border-gray-200/60 bg-white text-gray-700 shadow-[0_2px_16px_rgba(0,0,0,0.04)] hover:bg-gray-50'
+                    : 'border-gray-700 bg-gray-700 text-white hover:bg-gray-800'
                 }`}
               >
                 {showActiveEmployees ? (
@@ -240,7 +283,7 @@ const Employees = () => {
               {showActiveEmployees && (
                 <button
                   onClick={handleAddEmployee}
-                  className="inline-flex items-center px-6 py-3 border border-transparent rounded-xl shadow-sm text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-200 hover:shadow-md"
+                  className="inline-flex items-center rounded-xl bg-[#007AFF] px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors duration-200 hover:bg-[#0066DD] focus:outline-none focus:ring-2 focus:ring-[#007AFF]/30"
                 >
                   <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
@@ -248,34 +291,36 @@ const Employees = () => {
                   Add Employee
                 </button>
               )}
+              <PageTourButtons onTutorial={startTutorial} onInfo={startInfo} />
             </div>
           </div>
 
           {/* Filter and Sort Controls */}
-          <div className="mt-6">
+          <div className="mt-6" data-tour="filter-sort">
             <FilterSort
               filterDepartment={filterDepartment}
               setFilterDepartment={setFilterDepartment}
               sortBy={sortBy}
               setSortBy={setSortBy}
+              departmentOptions={departmentOptions}
             />
           </div>
         </div>
 
         {/* Employee Table */}
-            <div className="bg-white shadow-sm rounded-lg border border-gray-200">
-              <EmployeeTable 
-                employees={processedEmployees} 
-                isLoading={isLoading}
-                onRefresh={refetch}
-                onEdit={handleEditEmployee}
-                onDeactivate={handleDeactivateEmployee}
-                showActiveEmployees={showActiveEmployees}
-              />
-            </div>
+        <div data-tour="employee-table">
+        <EmployeeTable
+          employees={processedEmployees}
+          isLoading={isLoading}
+          onRefresh={refetch}
+          onEdit={handleEditEmployee}
+          onDeactivate={handleDeactivateEmployee}
+          showActiveEmployees={showActiveEmployees}
+        />
+        </div>
 
         {/* Pagination */}
-        <div className="mt-6">
+        <div className="mt-6" data-tour="pagination">
           <Pagination
             currentPage={currentPage}
             totalPages={totalPages}
@@ -284,37 +329,45 @@ const Employees = () => {
             itemsPerPage={employeesPerPage}
           />
         </div>
-      </div>
 
       {/* Employee Modal */}
-          <EmployeeModal
+      <EmployeeModal
             isOpen={isModalOpen}
             onClose={handleCloseModal}
             onSave={handleSaveEmployee}
             isLoading={isCreating}
-          />
+      />
 
-          <EmployeeEditModal
-            isOpen={isEditModalOpen}
-            onClose={handleCloseEditModal}
-            onSave={handleUpdateEmployee}
-            employee={selectedEmployee}
-            isLoading={isUpdating}
-          />
+      <EmployeeEditModal
+        isOpen={isEditModalOpen}
+        onClose={handleCloseEditModal}
+        onSave={handleUpdateEmployee}
+        employee={selectedEmployee}
+        isLoading={isUpdating}
+      />
 
-          <ConfirmationDialog
-            isOpen={isConfirmDialogOpen}
-            onClose={handleCloseConfirmDialog}
-            onConfirm={confirmDeactivation}
-            title="Deactivate Employee"
-            message={employeeToDeactivate ? 
-              `Are you sure you want to deactivate ${employeeToDeactivate.name}?\n\nThis will:\n• Remove them from active employee lists\n• Disable their face recognition access\n• Clear their cache data\n\nThis action can be reversed by reactivating the employee.` 
-              : ''
-            }
-            confirmText="Deactivate Employee"
-            cancelText="Cancel"
-            isLoading={isDeleting}
-          />
+      <ConfirmationDialog
+        isOpen={isConfirmDialogOpen}
+        onClose={handleCloseConfirmDialog}
+        onConfirm={confirmDeactivation}
+        title="Deactivate Employee"
+        message={
+          employeeToDeactivate
+            ? `Are you sure you want to deactivate ${employeeToDeactivate.name}?\n\nThis will:\n• Remove them from active employee lists\n• Disable their face recognition access\n• Clear their cache data\n\nThis action can be reversed by reactivating the employee.`
+            : ''
+        }
+        confirmText="Deactivate Employee"
+        cancelText="Cancel"
+        isLoading={isDeleting}
+      />
+
+      {infoOpen && (
+        <PageInfoOverlay
+          steps={EMPLOYEES_GUIDE_STEPS}
+          onClose={closeInfo}
+          pageLabel="Employees"
+        />
+      )}
     </div>
   );
 };

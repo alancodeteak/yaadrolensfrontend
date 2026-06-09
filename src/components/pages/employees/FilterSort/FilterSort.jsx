@@ -1,82 +1,88 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
+import clsx from 'clsx';
+import { ChevronDown, ArrowUpDown, Filter } from 'lucide-react';
 
-const FilterSort = ({ filterDepartment, setFilterDepartment, sortBy, setSortBy }) => {
+const menuClass =
+  'absolute z-10 mt-2 w-48 overflow-hidden rounded-2xl border border-gray-200/60 bg-white py-1 shadow-[0_2px_16px_rgba(0,0,0,0.06)]';
+
+const menuItemClass = (active) =>
+  clsx(
+    'block w-full px-4 py-2 text-left text-sm transition-colors duration-150',
+    active ? 'bg-blue-50 font-medium text-[#007AFF]' : 'text-gray-700 hover:bg-gray-50'
+  );
+
+const triggerClass =
+  'inline-flex items-center gap-2 rounded-xl border border-gray-200/60 bg-white px-3 py-2 text-sm font-medium text-gray-700 shadow-[0_2px_16px_rgba(0,0,0,0.04)] transition-colors duration-200 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-[#007AFF]/20';
+
+const FilterSort = ({
+  filterDepartment,
+  setFilterDepartment,
+  sortBy,
+  setSortBy,
+  departmentOptions = [],
+}) => {
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [isSortOpen, setIsSortOpen] = useState(false);
 
-  const departments = ['all', 'Engineering', 'Marketing', 'Sales', 'HR', 'Design', 'Finance', 'Operations'];
+  const departments = [
+    { value: 'all', label: 'All departments' },
+    ...departmentOptions.map((dept) => ({ value: dept.name, label: dept.name })),
+  ];
+
   const sortOptions = [
     { value: 'name', label: 'Name' },
     { value: 'department', label: 'Department' },
     { value: 'status', label: 'Status' },
-    { value: 'created_at', label: 'Date Added' },
-    { value: 'training_status', label: 'Training Status' }
+    { value: 'created_at', label: 'Date added' },
+    { value: 'training_status', label: 'Training status' },
   ];
 
   return (
-    <div className="flex items-center space-x-4">
-      {/* Filter Dropdown */}
+    <div className="flex flex-wrap items-center gap-3">
       <div className="relative">
-        <button
-          onClick={() => setIsFilterOpen(!isFilterOpen)}
-          className="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-200"
-        >
-          <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
-          </svg>
+        <button type="button" onClick={() => setIsFilterOpen(!isFilterOpen)} className={triggerClass}>
+          <Filter className="h-4 w-4 text-gray-500" strokeWidth={2} />
           Filter
-          <svg className="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-          </svg>
+          <ChevronDown className="h-4 w-4 text-gray-400" strokeWidth={2} />
         </button>
 
         {isFilterOpen && (
-          <div className="absolute z-10 mt-2 w-48 bg-white rounded-md shadow-lg border border-gray-200 py-1">
+          <div className={menuClass}>
             {departments.map((dept) => (
               <button
-                key={dept}
+                key={dept.value}
+                type="button"
                 onClick={() => {
-                  setFilterDepartment(dept);
+                  setFilterDepartment(dept.value);
                   setIsFilterOpen(false);
                 }}
-                className={`block w-full text-left px-4 py-2 text-sm hover:bg-gray-100 transition-colors duration-150 ${
-                  filterDepartment === dept ? 'text-blue-600 bg-blue-50' : 'text-gray-700'
-                }`}
+                className={menuItemClass(filterDepartment === dept.value)}
               >
-                {dept === 'all' ? 'All Departments' : dept}
+                {dept.label}
               </button>
             ))}
           </div>
         )}
       </div>
 
-      {/* Sort Dropdown */}
       <div className="relative">
-        <button
-          onClick={() => setIsSortOpen(!isSortOpen)}
-          className="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-200"
-        >
-          <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" />
-          </svg>
+        <button type="button" onClick={() => setIsSortOpen(!isSortOpen)} className={triggerClass}>
+          <ArrowUpDown className="h-4 w-4 text-gray-500" strokeWidth={2} />
           Sort
-          <svg className="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-          </svg>
+          <ChevronDown className="h-4 w-4 text-gray-400" strokeWidth={2} />
         </button>
 
         {isSortOpen && (
-          <div className="absolute z-10 mt-2 w-48 bg-white rounded-md shadow-lg border border-gray-200 py-1">
+          <div className={menuClass}>
             {sortOptions.map((option) => (
               <button
                 key={option.value}
+                type="button"
                 onClick={() => {
                   setSortBy(option.value);
                   setIsSortOpen(false);
                 }}
-                className={`block w-full text-left px-4 py-2 text-sm hover:bg-gray-100 transition-colors duration-150 ${
-                  sortBy === option.value ? 'text-blue-600 bg-blue-50' : 'text-gray-700'
-                }`}
+                className={menuItemClass(sortBy === option.value)}
               >
                 {option.label}
               </button>

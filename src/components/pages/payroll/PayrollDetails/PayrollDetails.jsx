@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import Card from '../../../common/Card/Card';
+import { LoadingScreen, UserAvatar } from '../../../common';
 import {
   useGetPayrollByIdQuery,
   useUpdatePayrollMutation,
@@ -147,14 +148,7 @@ const PayrollDetails = ({ employee: propEmployee }) => {
 
   // Show loading state
   if (payrollLoading) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading payroll details...</p>
-        </div>
-      </div>
-    );
+    return <LoadingScreen message="Loading payroll details..." />;
   }
 
   // Show error state
@@ -221,13 +215,11 @@ const PayrollDetails = ({ employee: propEmployee }) => {
             {/* Employee Information */}
             <Card title="Employee Information">
               <div className="flex items-center space-x-6">
-                <img
-                  className="h-20 w-20 rounded-full object-cover ring-4 ring-gray-100"
+                <UserAvatar
+                  className="h-20 w-20 rounded-full ring-4 ring-gray-100"
                   src={employee.photo}
-                  alt={employee.name}
-                  onError={(e) => {
-                    e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(employee.name)}&background=3b82f6&color=fff&size=80`;
-                  }}
+                  name={employee.name || payrollData.employee_name}
+                  seed={employee.id || payrollData.employee_id}
                 />
                 <div>
                   <h3 className="text-2xl font-bold text-gray-900">{employee.name || payrollData.employee_name}</h3>

@@ -1,5 +1,6 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
+import { UserAvatar } from '../../../common';
 import {
   useApprovePayrollMutation,
   useMarkPayrollPaidMutation,
@@ -209,13 +210,11 @@ const PayrollTable = ({ payrolls, onRefresh }) => {
               <td className="px-6 py-4 whitespace-nowrap">
                 <div className="flex items-center">
                   <div className="flex-shrink-0 h-10 w-10">
-                    <img
-                      className="h-10 w-10 rounded-full object-cover ring-1 ring-gray-100 group-hover:ring-gray-200 transition-all duration-200"
+                    <UserAvatar
+                      className="h-10 w-10 rounded-full ring-1 ring-gray-100 group-hover:ring-gray-200 transition-all duration-200"
                       src={payroll.photo}
-                      alt={payroll.name}
-                      onError={(e) => {
-                        e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(payroll.name)}&background=3b82f6&color=fff&size=40`;
-                      }}
+                      name={payroll.name}
+                      seed={payroll.id}
                     />
                   </div>
                   <div className="ml-4">

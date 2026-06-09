@@ -9,3 +9,5 @@ export * from './payrollApi';
 export * from './attendanceApi';
 export * from './reportsApi';
 export * from './settingsApi';
+export * from './systemAdminApi';
+export * from './dashboardApi';

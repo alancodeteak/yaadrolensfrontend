@@ -1,39 +1,37 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import API from '../../services/api';
+import { authApi } from '../api/authApi';
+import { buildUserFromToken } from '../api/transforms';
 
-// Async thunk for login
 export const login = createAsyncThunk(
   'auth/login',
-  async (credentials, { rejectWithValue }) => {
+  async (credentials, { dispatch, rejectWithValue }) => {
     try {
-      const response = await API.post('/auth/login', {
-        shop_code: credentials.shop_code,
-        password: credentials.password
-      });
-      
-      const { access_token, refresh_token, token_type } = response.data;
-      
-      // Store tokens in localStorage
+      const result = await dispatch(
+        authApi.endpoints.orgAdminLogin.initiate(credentials)
+      ).unwrap();
+
+      const { access_token, refresh_token, token_type } = result;
+
       localStorage.setItem('access_token', access_token);
       localStorage.setItem('refresh_token', refresh_token);
-      
-      // Create a basic user object from shop_code
-      // In a real app, you might get user info from a separate endpoint
-      const user = {
-        shop_code: credentials.shop_code,
-        name: credentials.shop_code, // Use shop_code as name for now
-      };
-      
+
+      const user = buildUserFromToken(access_token, credentials);
       localStorage.setItem('user', JSON.stringify(user));
-      
+
       return {
         user,
         access_token,
         refresh_token,
-        token_type
+        token_type: token_type || 'bearer',
       };
     } catch (error) {
-      const message = error.response?.data?.detail || error.message || 'Login failed';
+      if (error?.status === 'FETCH_ERROR' || error?.status === undefined) {
+        return rejectWithValue(
+          'Cannot reach the server. Check that the backend is running.'
+        );
+      }
+      const detail = error?.data?.detail;
+      const message = typeof detail === 'string' ? detail : 'Invalid user ID or password';
       return rejectWithValue(message);
     }
   }
@@ -90,6 +88,15 @@ const authSlice = createSlice({
     },
     setToken: (state, action) => {
       state.access_token = action.payload;
+      state.isAuthenticated = true;
+      const user = localStorage.getItem('user');
+      if (user) {
+        try {
+          state.user = JSON.parse(user);
+        } catch {
+          state.user = null;
+        }
+      }
       localStorage.setItem('access_token', action.payload);
     },
     clearError: (state) => {

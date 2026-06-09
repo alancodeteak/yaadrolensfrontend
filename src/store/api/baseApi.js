@@ -5,16 +5,18 @@ const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1';
 
 const baseQuery = fetchBaseQuery({
   baseUrl,
-  prepareHeaders: (headers, { getState }) => {
-    // Get the token from the auth state or localStorage
+  prepareHeaders: (headers, { getState, endpoint }) => {
     const token = getState().auth.access_token || localStorage.getItem('access_token');
-    
-    // If we have a token, set the authorization header
+
     if (token) {
       headers.set('authorization', `Bearer ${token}`);
     }
-    
-    headers.set('content-type', 'application/json');
+
+    const skipJsonContentType = endpoint === 'uploadEmployeeProfilePhoto';
+    if (!skipJsonContentType) {
+      headers.set('content-type', 'application/json');
+    }
+
     return headers;
   },
 });
@@ -40,9 +42,11 @@ const baseQueryWithReauth = async (args, api, extraOptions) => {
       );
       
       if (refreshResult.data) {
-        // Store the new token
-        const { access_token } = refreshResult.data;
+        const { access_token, refresh_token } = refreshResult.data;
         localStorage.setItem('access_token', access_token);
+        if (refresh_token) {
+          localStorage.setItem('refresh_token', refresh_token);
+        }
         
         // Update the auth state
         api.dispatch({ type: 'auth/setToken', payload: access_token });
@@ -66,7 +70,7 @@ const baseQueryWithReauth = async (args, api, extraOptions) => {
 export const baseApi = createApi({
   reducerPath: 'api',
   baseQuery: baseQueryWithReauth,
-  tagTypes: ['User', 'Employee', 'Payroll', 'Attendance', 'Report', 'Settings'],
+  tagTypes: ['User', 'Employee', 'Payroll', 'Attendance', 'Report', 'Settings', 'Department', 'Dashboard'],
   endpoints: () => ({}),
 });
 

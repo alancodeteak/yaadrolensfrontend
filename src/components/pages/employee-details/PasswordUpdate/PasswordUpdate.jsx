@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import Card from '../../../common/Card/Card';
+import { LottieLoader, UserAvatar } from '../../../common';
 
 const PasswordUpdate = () => {
   const [activeTab, setActiveTab] = useState('settings');
@@ -98,18 +99,16 @@ const PasswordUpdate = () => {
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Profile Summary Header */}
-        <Card className="mb-6">
+        <Card variant="panel">
           <div className="p-6">
             <div className="flex flex-col sm:flex-row sm:items-center sm:space-x-6">
               {/* Avatar */}
               <div className="flex-shrink-0 mb-4 sm:mb-0">
-                <img
-                  className="w-20 h-20 rounded-full object-cover ring-4 ring-white shadow-lg"
+                <UserAvatar
+                  className="w-20 h-20 rounded-full ring-4 ring-white shadow-lg"
                   src={employeeData.avatar}
-                  alt={employeeData.name}
-                  onError={(e) => {
-                    e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(employeeData.name)}&background=2563EB&color=fff&size=80`;
-                  }}
+                  name={employeeData.name}
+                  seed={employeeData.id}
                 />
               </div>
 
@@ -137,7 +136,7 @@ const PasswordUpdate = () => {
         </Card>
 
         {/* Navigation Tabs */}
-        <div className="mb-6">
+        <div className="mb-4">
           <div className="border-b border-gray-200">
             <nav className="-mb-px flex space-x-8 overflow-x-auto">
               {tabs.map((tab) => (
@@ -158,7 +157,7 @@ const PasswordUpdate = () => {
         </div>
 
         {/* Content Section */}
-        <Card>
+        <Card variant="panel">
           <div className="p-6">
             {activeTab === 'settings' && (
               <div>
@@ -220,10 +219,7 @@ const PasswordUpdate = () => {
                   >
                     {isLoading ? (
                       <div className="flex items-center justify-center">
-                        <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                        </svg>
+                        <LottieLoader size="xs" className="mr-3" />
                         Updating...
                       </div>
                     ) : (

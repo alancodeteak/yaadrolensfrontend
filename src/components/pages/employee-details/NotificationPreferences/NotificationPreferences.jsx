@@ -15,8 +15,8 @@ const NotificationPreferences = () => {
   };
 
   return (
-    <Card title="Notification Preferences">
-      <div className="space-y-6">
+    <Card title="Notification preferences" variant="panel">
+      <div className="space-y-4">
         {/* Email Notifications */}
         <div className="flex items-center justify-between">
           <div className="flex-1">
@@ -25,8 +25,8 @@ const NotificationPreferences = () => {
           </div>
           <button
             onClick={() => handleToggle('emailNotifications')}
-            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${
-              preferences.emailNotifications ? 'bg-blue-600' : 'bg-gray-200'
+            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-[#007AFF]/30 ${
+              preferences.emailNotifications ? 'bg-[#007AFF]' : 'bg-gray-200'
             }`}
           >
             <span
@@ -45,8 +45,8 @@ const NotificationPreferences = () => {
           </div>
           <button
             onClick={() => handleToggle('mobileNotifications')}
-            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${
-              preferences.mobileNotifications ? 'bg-blue-600' : 'bg-gray-200'
+            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-[#007AFF]/30 ${
+              preferences.mobileNotifications ? 'bg-[#007AFF]' : 'bg-gray-200'
             }`}
           >
             <span
