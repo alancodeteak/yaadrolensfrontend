@@ -2,7 +2,9 @@ import { configureStore } from '@reduxjs/toolkit';
 import { baseApi } from './api';
 import './api/authApi';
 import './api/employeeApi';
+import './api/salaryApi';
 import './api/settingsApi';
+import './api/payrollApi';
 import { 
   authReducer,
   employeeReducer,

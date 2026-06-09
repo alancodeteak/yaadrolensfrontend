@@ -186,6 +186,66 @@ export function transformSettingsResponse(settings) {
   };
 }
 
+export function normalizeSalaryRow(row) {
+  if (!row) return row;
+  return {
+    ...row,
+    id: row.employee_id,
+    is_active: row.status === 'active',
+    department: row.department_name || '',
+    current_salary:
+      row.current_salary != null && row.current_salary !== ''
+        ? Number(row.current_salary)
+        : null,
+    last_changed_at: row.last_changed_at || null,
+    salary_set: row.salary_set ?? row.current_salary != null,
+  };
+}
+
+export function normalizeSalaries(list) {
+  return (list || []).map(normalizeSalaryRow);
+}
+
+export function normalizeSalaryHistory(response) {
+  if (!response) return { items: [], total: 0, skip: 0, limit: 50 };
+  return {
+    ...response,
+    items: (response.items || []).map((item) => ({
+      ...item,
+      previous_amount:
+        item.previous_amount != null ? Number(item.previous_amount) : null,
+      new_amount: Number(item.new_amount),
+    })),
+  };
+}
+
+export function toSalaryUpdatePayload(data) {
+  const payload = {
+    new_amount: Number(data.new_amount),
+    effective_date: data.effective_date,
+  };
+  if (data.reason !== undefined && data.reason !== null && data.reason !== '') {
+    payload.reason = data.reason;
+  }
+  return payload;
+}
+
+export function normalizePayrollRun(run) {
+  if (!run) return run;
+  return {
+    ...run,
+    gross_pay: run.gross_pay != null ? Number(run.gross_pay) : 0,
+    net_pay: run.net_pay != null ? Number(run.net_pay) : 0,
+    deductions: run.deductions != null ? Number(run.deductions) : 0,
+    salary: run.salary != null ? Number(run.salary) : 0,
+    net_salary: run.net_salary != null ? Number(run.net_salary) : 0,
+  };
+}
+
+export function normalizePayrollRuns(list) {
+  return (list || []).map(normalizePayrollRun);
+}
+
 export function buildUserFromToken(accessToken, loginData) {
   try {
     const payload = JSON.parse(atob(accessToken.split('.')[1]));

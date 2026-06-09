@@ -26,14 +26,14 @@ const NAV_ITEMS = [
   { name: 'Employees', href: '/admin/employees', icon: Users, match: (path) => path.startsWith('/admin/employees') },
   { name: 'Attendance', href: '/admin/attendance', icon: CalendarCheck, match: (path) => path === '/admin/attendance' },
   { name: 'Analytics', href: '/admin/attendance-dashboard', icon: BarChart3, match: (path) => path === '/admin/attendance-dashboard' },
+  { name: 'Salary', href: '/admin/salary', icon: Banknote, match: (path) => path.startsWith('/admin/salary') },
+  { name: 'Payment', href: '/admin/payroll', icon: CreditCard, match: (path) => path.startsWith('/admin/payroll') },
   { name: 'Get Started', href: '/docs/getting-started', icon: GraduationCap, match: (path) => path.startsWith('/docs') },
   { name: 'Settings', href: '/admin/settings', icon: Settings, match: (path) => path.startsWith('/admin/settings') },
 ];
 
 const COMING_SOON_ITEMS = [
   { name: 'Report', icon: FileText },
-  { name: 'Payment', icon: CreditCard },
-  { name: 'Salary', icon: Banknote },
   { name: 'Tax', icon: Receipt },
   { name: 'Reimbursements', icon: HandCoins },
   { name: 'Loan', icon: Landmark },

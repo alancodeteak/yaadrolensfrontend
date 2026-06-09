@@ -4,6 +4,8 @@ import {
   GettingStarted,
   DashboardGuide,
   EmployeesGuide,
+  SalaryGuide,
+  PayrollGuide,
   LiveAttendanceGuide,
   AnalyticsGuide,
   SettingsGuide,
@@ -11,8 +13,10 @@ import {
   InAppHelpGuide,
   ComingSoonGuide,
 } from '../../components/pages/docs';
+import { DocsLanguageProvider } from '../../components/pages/docs/DocsLanguageContext';
 
 const Docs = () => (
+  <DocsLanguageProvider>
   <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
     <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
       <div>
@@ -34,6 +38,8 @@ const Docs = () => (
           <Route path="getting-started" element={<GettingStarted />} />
           <Route path="dashboard" element={<DashboardGuide />} />
           <Route path="employees" element={<EmployeesGuide />} />
+          <Route path="salary" element={<SalaryGuide />} />
+          <Route path="payroll" element={<PayrollGuide />} />
           <Route path="attendance" element={<LiveAttendanceGuide />} />
           <Route path="analytics" element={<AnalyticsGuide />} />
           <Route path="settings" element={<SettingsGuide />} />
@@ -45,6 +51,7 @@ const Docs = () => (
       </div>
     </div>
   </div>
+  </DocsLanguageProvider>
 );
 
 export default Docs;

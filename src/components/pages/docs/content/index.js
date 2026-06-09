@@ -1,0 +1,11 @@
+export { gettingStartedContent } from './gettingStarted';
+export { dashboardContent } from './dashboard';
+export { employeesContent } from './employees';
+export { salaryContent } from './salary';
+export { payrollContent } from './payroll';
+export { attendanceContent } from './attendance';
+export { analyticsContent } from './analytics';
+export { settingsContent } from './settings';
+export { kioskContent } from './kiosk';
+export { helpContent } from './help';
+export { comingSoonContent } from './comingSoon';

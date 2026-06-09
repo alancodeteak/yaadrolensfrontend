@@ -1,104 +1,68 @@
 import { baseApi } from './baseApi';
+import { normalizePayrollRun, normalizePayrollRuns } from './transforms';
 
 export const payrollApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
     getPayrolls: builder.query({
-      query: ({ start_month, start_year, end_month, end_year, employee_id, skip = 0, limit = 100 } = {}) => {
+      query: ({ year, month, employee_id, skip = 0, limit = 100 } = {}) => {
         const params = new URLSearchParams({ skip: skip.toString(), limit: limit.toString() });
-        if (start_month) params.append('start_month', start_month);
-        if (start_year) params.append('start_year', start_year);
-        if (end_month) params.append('end_month', end_month);
-        if (end_year) params.append('end_year', end_year);
+        if (year) params.append('year', year);
+        if (month) params.append('month', month);
         if (employee_id) params.append('employee_id', employee_id);
-        return `/payrolls/?${params.toString()}`;
+        return `/org-admin/payroll?${params.toString()}`;
       },
+      transformResponse: (response) => normalizePayrollRuns(response?.items || response),
       providesTags: ['Payroll'],
     }),
-    
+
     getPayrollById: builder.query({
-      query: (id) => `/payrolls/${id}`,
+      query: (id) => `/org-admin/payroll/${id}`,
+      transformResponse: (response) => normalizePayrollRun(response),
       providesTags: (result, error, id) => [{ type: 'Payroll', id }],
     }),
-    
-    createPayroll: builder.mutation({
-      query: (payrollData) => ({
-        url: '/payrolls/',
-        method: 'POST',
-        body: payrollData,
-      }),
-      invalidatesTags: ['Payroll'],
-    }),
-    
-    updatePayroll: builder.mutation({
-      query: ({ id, ...payrollData }) => ({
-        url: `/payrolls/${id}`,
-        method: 'PUT',
-        body: payrollData,
-      }),
-      invalidatesTags: (result, error, { id }) => [{ type: 'Payroll', id }],
-    }),
-    
-    deletePayroll: builder.mutation({
-      query: (id) => ({
-        url: `/payrolls/${id}`,
-        method: 'DELETE',
-      }),
-      invalidatesTags: ['Payroll'],
-    }),
-    
+
     calculatePayroll: builder.mutation({
       query: (params) => ({
-        url: '/payrolls/calculate',
+        url: '/org-admin/payroll/calculate',
         method: 'POST',
         body: params,
       }),
       invalidatesTags: ['Payroll'],
     }),
-    
+
     getPayrollSummary: builder.query({
-      query: ({ start_month, start_year, end_month, end_year } = {}) => {
+      query: ({ year, month } = {}) => {
         const params = new URLSearchParams();
-        if (start_month) params.append('start_month', start_month);
-        if (start_year) params.append('start_year', start_year);
-        if (end_month) params.append('end_month', end_month);
-        if (end_year) params.append('end_year', end_year);
-        return `/payrolls/summary/?${params.toString()}`;
+        if (year) params.append('year', year);
+        if (month) params.append('month', month);
+        return `/org-admin/payroll/summary?${params.toString()}`;
       },
       providesTags: ['Payroll'],
     }),
-    
+
     exportPayroll: builder.mutation({
       query: (params) => ({
-        url: '/payrolls/export/csv',
+        url: '/org-admin/payroll/export/csv',
         method: 'GET',
         params,
         responseHandler: (response) => response.blob(),
       }),
     }),
 
-    // New endpoints for individual actions
     approvePayroll: builder.mutation({
       query: (id) => ({
-        url: `/payrolls/${id}/approve`,
+        url: `/org-admin/payroll/${id}/approve`,
         method: 'PATCH',
       }),
-      invalidatesTags: (result, error, id) => [{ type: 'Payroll', id }],
+      invalidatesTags: (result, error, id) => [{ type: 'Payroll', id }, 'Payroll'],
     }),
 
     markPayrollPaid: builder.mutation({
       query: (id) => ({
-        url: `/payrolls/${id}/mark-paid`,
+        url: `/org-admin/payroll/${id}/mark-paid`,
         method: 'PATCH',
       }),
-      invalidatesTags: (result, error, id) => [{ type: 'Payroll', id }],
-    }),
-
-    getEmployeePayrollHistory: builder.query({
-      query: ({ employee_id, skip = 0, limit = 100 } = {}) => {
-        const params = new URLSearchParams({ skip: skip.toString(), limit: limit.toString() });
-        return `/payrolls/employee/${employee_id}?${params.toString()}`;
-      },
-      providesTags: ['Payroll'],
+      invalidatesTags: (result, error, id) => [{ type: 'Payroll', id }, 'Payroll'],
     }),
   }),
 });
@@ -106,13 +70,9 @@ export const payrollApi = baseApi.injectEndpoints({
 export const {
   useGetPayrollsQuery,
   useGetPayrollByIdQuery,
-  useCreatePayrollMutation,
-  useUpdatePayrollMutation,
-  useDeletePayrollMutation,
   useCalculatePayrollMutation,
   useGetPayrollSummaryQuery,
   useExportPayrollMutation,
   useApprovePayrollMutation,
   useMarkPayrollPaidMutation,
-  useGetEmployeePayrollHistoryQuery,
 } = payrollApi;

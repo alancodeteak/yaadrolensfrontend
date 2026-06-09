@@ -1,10 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import Card from '../../../common/Card/Card';
-import { LoadingScreen, UserAvatar } from '../../../common';
+import { LoadingScreen, UserAvatar, ConfirmationDialog, dashboardToast } from '../../../common';
 import {
   useGetPayrollByIdQuery,
-  useUpdatePayrollMutation,
   useApprovePayrollMutation,
   useMarkPayrollPaidMutation
 } from '../../../../store/api/payrollApi';
@@ -23,9 +22,9 @@ const PayrollDetails = ({ employee: propEmployee }) => {
     skip: !payrollData?.employee_id
   });
   
-  const [updatePayroll, { isLoading: isUpdating }] = useUpdatePayrollMutation();
   const [approvePayroll, { isLoading: isApproving }] = useApprovePayrollMutation();
   const [markPayrollPaid, { isLoading: isMarkingPaid }] = useMarkPayrollPaidMutation();
+  const [confirmAction, setConfirmAction] = useState(null);
   
   // Use employee from props or API
   const employee = propEmployee || employeeData || {};
@@ -93,56 +92,25 @@ const PayrollDetails = ({ employee: propEmployee }) => {
     return grossPay - totalDeductions;
   };
 
-  const handleSaveChanges = async () => {
-    if (!payrollData || isUpdating) return;
-    
-    try {
-      await updatePayroll({
-        id: payrollData.id,
-        hourly_rate: formData.hourlyRate.toString(),
-        overtime_rate: formData.overtimeRate.toString(),
-        deductions: formData.deductions.toString()
-      }).unwrap();
-      alert('Payroll updated successfully');
-    } catch (error) {
-      console.error('Update failed:', error);
-      alert('Failed to update payroll');
-    }
-  };
-
   const handleApprove = async () => {
     if (!payrollData || isApproving) return;
-    
-    if (!confirm('Are you sure you want to approve this payroll?')) {
-      return;
-    }
-
     try {
       await approvePayroll(payrollData.id).unwrap();
-      alert('Payroll approved successfully');
-      // Refresh data or navigate back
+      dashboardToast.success('Payroll approved successfully.', 'Approved');
       navigate('/admin/payroll');
     } catch (error) {
-      console.error('Approve failed:', error);
-      alert('Failed to approve payroll');
+      dashboardToast.error(error?.data?.detail || 'Failed to approve payroll.', 'Approval failed');
     }
   };
 
   const handleMarkPaid = async () => {
     if (!payrollData || isMarkingPaid) return;
-    
-    if (!confirm('Are you sure you want to mark this payroll as paid?')) {
-      return;
-    }
-
     try {
       await markPayrollPaid(payrollData.id).unwrap();
-      alert('Payroll marked as paid successfully');
-      // Refresh data or navigate back
+      dashboardToast.success('Payroll marked as paid.', 'Payment recorded');
       navigate('/admin/payroll');
     } catch (error) {
-      console.error('Mark paid failed:', error);
-      alert('Failed to mark payroll as paid');
+      dashboardToast.error(error?.data?.detail || 'Failed to mark payroll as paid.', 'Update failed');
     }
   };
 
@@ -154,7 +122,7 @@ const PayrollDetails = ({ employee: propEmployee }) => {
   // Show error state
   if (payrollError) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex items-center justify-center min-h-[50vh]">
         <div className="text-center">
           <div className="text-red-600 mb-4">
             <svg className="w-12 h-12 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -176,7 +144,7 @@ const PayrollDetails = ({ employee: propEmployee }) => {
 
   if (!payrollData) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex items-center justify-center min-h-[50vh]">
         <div className="text-center">
           <h3 className="text-lg font-medium text-gray-900 mb-2">Payroll Not Found</h3>
           <p className="text-gray-600 mb-4">The requested payroll record could not be found.</p>
@@ -192,8 +160,7 @@ const PayrollDetails = ({ employee: propEmployee }) => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="max-w-7xl mx-auto px-6 lg:px-8 py-8">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
           <div>
@@ -391,33 +358,27 @@ const PayrollDetails = ({ employee: propEmployee }) => {
             </Card>
 
             {/* Actions */}
-            <Card title="Actions">
+            <Card title="Actions" variant="panel">
               <div className="space-y-3">
-                <button 
-                  onClick={handleSaveChanges}
-                  disabled={isUpdating}
-                  className="w-full py-3 px-4 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200 font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {isUpdating ? 'Saving...' : 'Save Changes'}
-                </button>
-                
-                {payrollData.status !== 'Approved' && payrollData.status !== 'Paid' && (
-                  <button 
-                    onClick={handleApprove}
+                {payrollData.status !== 'approved' && payrollData.status !== 'Approved' && payrollData.status !== 'paid' && payrollData.status !== 'Paid' && (
+                  <button
+                    type="button"
+                    onClick={() => setConfirmAction('approve')}
                     disabled={isApproving}
-                    className="w-full py-3 px-4 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors duration-200 font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="w-full rounded-xl bg-[#007AFF] py-3 px-4 text-sm font-semibold text-white hover:bg-[#0066DD] disabled:opacity-50"
                   >
-                    {isApproving ? 'Approving...' : 'Approve Payroll'}
+                    {isApproving ? 'Approving...' : 'Approve payroll'}
                   </button>
                 )}
-                
-                {payrollData.status === 'Approved' && (
-                  <button 
-                    onClick={handleMarkPaid}
+
+                {(payrollData.status === 'approved' || payrollData.status === 'Approved') && (
+                  <button
+                    type="button"
+                    onClick={() => setConfirmAction('paid')}
                     disabled={isMarkingPaid}
-                    className="w-full py-3 px-4 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors duration-200 font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="w-full rounded-xl bg-[#34C759] py-3 px-4 text-sm font-semibold text-white hover:bg-[#2DB84C] disabled:opacity-50"
                   >
-                    {isMarkingPaid ? 'Marking Paid...' : 'Mark as Paid'}
+                    {isMarkingPaid ? 'Marking paid...' : 'Mark as paid'}
                   </button>
                 )}
               </div>
@@ -444,7 +405,30 @@ const PayrollDetails = ({ employee: propEmployee }) => {
             </Card>
           </div>
         </div>
-      </div>
+
+      <ConfirmationDialog
+        isOpen={confirmAction === 'approve'}
+        onClose={() => setConfirmAction(null)}
+        onConfirm={() => {
+          setConfirmAction(null);
+          handleApprove();
+        }}
+        title="Approve payroll?"
+        message="This will approve the payroll run for this employee."
+        confirmText="Approve"
+      />
+
+      <ConfirmationDialog
+        isOpen={confirmAction === 'paid'}
+        onClose={() => setConfirmAction(null)}
+        onConfirm={() => {
+          setConfirmAction(null);
+          handleMarkPaid();
+        }}
+        title="Mark as paid?"
+        message="This will record that payment has been made for this payroll run."
+        confirmText="Mark paid"
+      />
     </div>
   );
 };

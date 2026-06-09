@@ -1,7 +1,17 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
+import clsx from 'clsx';
+import { Eye, EyeOff, LogIn, ShieldCheck } from 'lucide-react';
+import { LottieLoader } from '../../components/common';
 import { login } from '../../store/slices';
+
+const CODETEAK_LOGO = '/assets/Copy of logo-with-text-ho.png';
+const CODETEAK_URL = 'https://www.codeteak.com/';
+
+const labelClass = 'mb-1.5 block text-xs font-medium text-gray-500';
+const inputClass =
+  'w-full rounded-xl border border-gray-200/60 bg-white px-3.5 py-2.5 text-sm text-gray-900 shadow-[0_2px_16px_rgba(0,0,0,0.04)] placeholder:text-gray-400 transition-colors duration-200 focus:border-[#007AFF] focus:outline-none focus:ring-2 focus:ring-[#007AFF]/20 disabled:opacity-50';
 
 const AdminLogin = () => {
   const [formData, setFormData] = useState({
@@ -49,118 +59,138 @@ const AdminLogin = () => {
     }
   };
 
-  const togglePasswordVisibility = () => {
-    setShowPassword(!showPassword);
-  };
-
   return (
-    <div className="min-h-screen flex flex-col" style={{ backgroundColor: '#007aff' }}>
-      <div className="absolute inset-0" style={{ backgroundColor: '#007aff' }}></div>
-
-      <div className="flex-1 flex items-center justify-center px-4 relative z-10">
-        <div className="text-center">
-          <div className="mb-4">
-            <img
-              src="/assets/yadro-logo-blue.png"
-              alt="Yadro Logo"
-              className="h-16 w-auto mx-auto transform transition-transform hover:scale-105"
-            />
-          </div>
-          <div className="text-xl font-medium text-white tracking-wide">
-            YaadroLens
-          </div>
-          <p className="text-sm text-blue-100 mt-2">Organization Admin Portal</p>
-        </div>
+    <div className="relative flex min-h-screen flex-col items-center justify-center bg-gray-50 px-4 py-10 sm:px-6">
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-0 overflow-hidden"
+      >
+        <div className="absolute -left-24 top-0 h-72 w-72 rounded-full bg-[#007AFF]/10 blur-3xl" />
+        <div className="absolute -right-24 bottom-0 h-72 w-72 rounded-full bg-[#5856D6]/10 blur-3xl" />
       </div>
 
-      <div className="relative z-10 w-full px-4 pb-8">
-        <div className="max-w-md mx-auto">
-          <div className="bg-gray-50 rounded-3xl shadow-2xl p-8 w-full">
-            <h1 className="text-2xl font-bold text-gray-800 text-center mb-8">
-              Log in
-            </h1>
+      <div className="relative z-10 w-full max-w-md">
+        <div className="mb-8 text-center">
+          <img
+            src="/assets/yadro-logo-blue.png"
+            alt="YaadroLens"
+            className="mx-auto h-14 w-auto"
+          />
+          <span className="mt-4 inline-flex items-center gap-1.5 rounded-full bg-[#007AFF]/10 px-2.5 py-0.5 text-[11px] font-semibold text-[#007AFF]">
+            <ShieldCheck className="h-3.5 w-3.5" strokeWidth={2} aria-hidden="true" />
+            Organization Admin
+          </span>
+          <h1 className="mt-3 text-2xl font-bold text-gray-900">Sign in to YaadroLens</h1>
+          <p className="mt-1 text-sm text-gray-500">
+            Manage attendance, employees, and your organization
+          </p>
+        </div>
 
-            <form onSubmit={handleSubmit} className="space-y-6">
-              <div>
-                <label htmlFor="login_id" className="block text-sm font-medium text-gray-700 mb-2">
-                  User ID
-                </label>
-                <input
-                  type="text"
-                  id="login_id"
-                  name="login_id"
-                  value={formData.login_id}
-                  onChange={handleInputChange}
-                  placeholder="Enter your user ID"
-                  className="w-full px-4 py-3 bg-white border border-gray-200 rounded-2xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none shadow-sm"
-                  required
-                  autoComplete="username"
-                />
-              </div>
-
-              <div>
-                <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
-                  Password
-                </label>
-                <div className="relative">
-                  <input
-                    type={showPassword ? 'text' : 'password'}
-                    id="password"
-                    name="password"
-                    value={formData.password}
-                    onChange={handleInputChange}
-                    placeholder="Enter your password"
-                    className="w-full px-4 py-3 pr-12 bg-white border border-gray-200 rounded-2xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none shadow-sm"
-                    required
-                    autoComplete="current-password"
-                  />
-                  <button
-                    type="button"
-                    onClick={togglePasswordVisibility}
-                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700 transition-colors duration-200"
-                  >
-                    {showPassword ? (
-                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.878 9.878L3 3m6.878 6.878L21 21" />
-                      </svg>
-                    ) : (
-                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                      </svg>
-                    )}
-                  </button>
-                </div>
-              </div>
-
-              {error && (
-                <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-2xl text-sm">
-                  {error}
-                </div>
-              )}
-
-              <button
-                type="submit"
-                disabled={isLoading}
-                className="w-full bg-blue-500 text-white py-3 px-4 rounded-2xl font-bold hover:bg-blue-600 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg"
-              >
-                {isLoading ? 'Logging in...' : 'Log in'}
-              </button>
-            </form>
-
-            <div className="mt-6 pt-4 text-center">
-              <div className="text-sm text-gray-500">
-                <div className="mb-2">Powered by</div>
-                <div className="flex items-center justify-center">
-                  <img
-                    src="/assets/codeteak-logo.png"
-                    alt="CodeTeak"
-                    className="h-4 w-auto"
-                  />
-                </div>
-              </div>
+        <div className="rounded-2xl border border-gray-200/60 bg-white p-6 shadow-[0_2px_16px_rgba(0,0,0,0.06)] sm:p-8">
+          <div className="mb-6 flex items-center gap-3 border-b border-gray-100 pb-5">
+            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-[#007AFF]/10 text-[#007AFF]">
+              <LogIn className="h-5 w-5" strokeWidth={2} aria-hidden="true" />
+            </span>
+            <div>
+              <h2 className="text-sm font-semibold text-gray-900">Admin login</h2>
+              <p className="text-[11px] text-gray-500">Enter your organization credentials</p>
             </div>
           </div>
+
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div>
+              <label htmlFor="login_id" className={labelClass}>
+                User ID
+              </label>
+              <input
+                type="text"
+                id="login_id"
+                name="login_id"
+                value={formData.login_id}
+                onChange={handleInputChange}
+                placeholder="Enter your user ID"
+                className={inputClass}
+                required
+                autoComplete="username"
+                disabled={isLoading}
+              />
+            </div>
+
+            <div>
+              <label htmlFor="password" className={labelClass}>
+                Password
+              </label>
+              <div className="relative">
+                <input
+                  type={showPassword ? 'text' : 'password'}
+                  id="password"
+                  name="password"
+                  value={formData.password}
+                  onChange={handleInputChange}
+                  placeholder="Enter your password"
+                  className={clsx(inputClass, 'pr-11')}
+                  required
+                  autoComplete="current-password"
+                  disabled={isLoading}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword((prev) => !prev)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 rounded-lg p-1 text-gray-400 transition-colors hover:text-gray-600"
+                  aria-label={showPassword ? 'Hide password' : 'Show password'}
+                >
+                  {showPassword ? (
+                    <EyeOff className="h-4 w-4" strokeWidth={2} />
+                  ) : (
+                    <Eye className="h-4 w-4" strokeWidth={2} />
+                  )}
+                </button>
+              </div>
+            </div>
+
+            {error && (
+              <div
+                role="alert"
+                className="rounded-xl border border-red-200 bg-red-50 px-3.5 py-2.5 text-sm text-red-700"
+              >
+                {error}
+              </div>
+            )}
+
+            <button
+              type="submit"
+              disabled={isLoading}
+              className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-[#007AFF] px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors duration-200 hover:bg-[#0066DD] focus:outline-none focus:ring-2 focus:ring-[#007AFF]/30 disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              {isLoading ? (
+                <>
+                  <LottieLoader size="xs" />
+                  Signing in…
+                </>
+              ) : (
+                'Sign in'
+              )}
+            </button>
+          </form>
+        </div>
+
+        <div className="mt-8 text-center">
+          <a
+            href={CODETEAK_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex flex-col items-center gap-2 rounded-xl px-3 py-2 transition-colors hover:bg-gray-100/80"
+            aria-label="Powered by CodeTeak — opens codeteak.com"
+          >
+            <span className="text-[10px] font-medium uppercase tracking-wide text-gray-400">
+              Powered by
+            </span>
+            <img
+              src={CODETEAK_LOGO}
+              alt="CodeTeak"
+              className="h-6 w-auto max-w-[180px] object-contain"
+            />
+          </a>
         </div>
       </div>
     </div>

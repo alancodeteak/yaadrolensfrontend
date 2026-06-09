@@ -23,6 +23,7 @@ import AnalyticsDashboard from './pages/AnalyticsDashboard/AnalyticsDashboard';
 import MobileDashboard from './pages/MobileDashboard/MobileDashboard';
 import PayrollDetailsPage from './pages/PayrollDetails/PayrollDetails';
 import PayrollManagement from './pages/PayrollManagement/PayrollManagement';
+import Salary from './pages/Salary/Salary';
 import Reports from './pages/Reports/Reports';
 import Settings from './pages/Settings/Settings';
 import Docs from './pages/Docs/Docs';
@@ -55,8 +56,9 @@ function App() {
               <Route path="employees/:id/today" element={<EmployeeToday />} />
               <Route path="employees/:id/attendance-report" element={<EmployeeAttendanceReport />} />
               <Route path="employees/:id/training" element={<EmployeeTraining />} />
-              <Route path="payroll" element={<Navigate to="/admin/dashboard" replace />} />
-              <Route path="payroll/:id" element={<Navigate to="/admin/dashboard" replace />} />
+              <Route path="salary" element={<Salary />} />
+              <Route path="payroll" element={<PayrollManagement />} />
+              <Route path="payroll/:id" element={<PayrollDetailsPage />} />
               <Route path="reports" element={<Navigate to="/admin/attendance-dashboard" replace />} />
               <Route path="settings/*" element={<Settings />} />
               <Route path="attendance" element={<LiveAttendanceMonitoring />} />

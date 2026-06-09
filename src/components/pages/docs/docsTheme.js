@@ -15,6 +15,8 @@ export const DOCS_ICON_TONES = {
   rocket: { bg: 'bg-[#5856D6]/10', fg: 'text-[#5856D6]' },
   dashboard: { bg: 'bg-[#007AFF]/10', fg: 'text-[#007AFF]' },
   users: { bg: 'bg-[#34C759]/10', fg: 'text-[#34C759]' },
+  salary: { bg: 'bg-[#FF9500]/10', fg: 'text-[#FF9500]' },
+  payroll: { bg: 'bg-[#5856D6]/10', fg: 'text-[#5856D6]' },
   attendance: { bg: 'bg-[#FF9500]/10', fg: 'text-[#FF9500]' },
   analytics: { bg: 'bg-[#5856D6]/10', fg: 'text-[#5856D6]' },
   settings: { bg: 'bg-gray-100', fg: 'text-gray-600' },

@@ -1,169 +1,148 @@
-import React, { useState, useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
+import { Calculator, CheckCircle, Download, Wallet } from 'lucide-react';
 import { PayrollTable } from '../../components/pages/payroll';
-import { Pagination, Card, LoadingScreen } from '../../components/common';
+import DashboardWidgetCard from '../../components/pages/dashboard/DashboardWidgetCard/DashboardWidgetCard';
+import {
+  PAYROLL_GUIDE_STEPS,
+  Pagination,
+  ConfirmationDialog,
+  LoadingScreen,
+  PageInfoOverlay,
+  PageTourButtons,
+  usePageTour,
+  dashboardToast,
+} from '../../components/common';
 import {
   useGetPayrollsQuery,
-  useCreatePayrollMutation,
+  useCalculatePayrollMutation,
   useApprovePayrollMutation,
   useMarkPayrollPaidMutation,
-  useExportPayrollMutation
+  useExportPayrollMutation,
 } from '../../store/api/payrollApi';
-import { useGetEmployeesQuery } from '../../store/api/employeeApi';
+
+const ACCENT = {
+  blue: '#007AFF',
+  green: '#34C759',
+  orange: '#FF9500',
+  purple: '#5856D6',
+};
+
+const MONTHS = [
+  'January', 'February', 'March', 'April', 'May', 'June',
+  'July', 'August', 'September', 'October', 'November', 'December',
+];
+
+const getMonthNumber = (monthName) => MONTHS.indexOf(monthName) + 1;
 
 const PayrollManagement = () => {
-  const [searchTerm, setSearchTerm] = useState('');
-  const [currentPage, setCurrentPage] = useState(1);
-  const [payrollsPerPage] = useState(10);
-  
-  // Get current date for defaults
-  const currentDate = new Date();
-  const currentMonth = currentDate.toLocaleString('en-US', { month: 'long' });
-  const currentYear = currentDate.getFullYear().toString();
-  
-  const [selectedMonth, setSelectedMonth] = useState(currentMonth);
-  const [selectedYear, setSelectedYear] = useState(currentYear);
-  const [isCalculating, setIsCalculating] = useState(false);
-  const [isApproving, setIsApproving] = useState(false);
-  const [isMarkingPaid, setIsMarkingPaid] = useState(false);
-
-  // Convert month name to number
-  const getMonthNumber = (monthName) => {
-    const months = {
-      'January': 1, 'February': 2, 'March': 3, 'April': 4,
-      'May': 5, 'June': 6, 'July': 7, 'August': 8,
-      'September': 9, 'October': 10, 'November': 11, 'December': 12
-    };
-    return months[monthName] || 6;
-  };
-
-  const monthNumber = getMonthNumber(selectedMonth);
-  const yearNumber = parseInt(selectedYear);
-
-  // API hooks
-  const { data: payrollsData = [], isLoading: payrollsLoading, error: payrollsError, refetch } = useGetPayrollsQuery({
-    start_month: monthNumber,
-    start_year: yearNumber,
-    end_month: monthNumber,
-    end_year: yearNumber,
-    skip: (currentPage - 1) * payrollsPerPage,
-    limit: payrollsPerPage
-  });
-
-  const { data: employeesData = [] } = useGetEmployeesQuery({
-    page: 1,
-    limit: 1000,
-    is_active: true
-  });
-
-  const [createPayroll] = useCreatePayrollMutation();
-  const [approvePayroll] = useApprovePayrollMutation();
-  const [markPayrollPaid] = useMarkPayrollPaidMutation();
-  const [exportPayroll] = useExportPayrollMutation();
-
-  // Process API data for display
-  const payrolls = useMemo(() => {
-    if (!payrollsData || payrollsData.length === 0) return [];
-    
-    return payrollsData.map(payroll => ({
-      id: payroll.employee_id,
-      payrollId: payroll.id,
-      name: payroll.employee_name,
-      grossPay: parseFloat(payroll.salary || 0),
-      deductions: parseFloat(payroll.deductions || 0),
-      netPay: parseFloat(payroll.net_salary || 0),
-      status: payroll.status || 'Pending',
-      photo: null,
-      month: payroll.month,
-      year: payroll.year
-    }));
-  }, [payrollsData]);
-
-  // Filter payrolls based on search term
-  const filteredPayrolls = payrolls.filter(payroll => 
-    payroll.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    payroll.id.toLowerCase().includes(searchTerm.toLowerCase())
+  const { infoOpen, startTutorial, startInfo, closeInfo } = usePageTour(
+    PAYROLL_GUIDE_STEPS,
+    'payroll_tour_completed'
   );
 
-  // For API-based pagination, we use the payrolls directly
-  const currentPayrolls = searchTerm ? filteredPayrolls : payrolls;
-  const totalPages = Math.ceil((searchTerm ? filteredPayrolls.length : (payrollsData?.length || 0)) / payrollsPerPage);
+  const currentDate = new Date();
+  const [selectedMonth, setSelectedMonth] = useState(MONTHS[currentDate.getMonth()]);
+  const [selectedYear, setSelectedYear] = useState(String(currentDate.getFullYear()));
+  const [searchTerm, setSearchTerm] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [confirmAction, setConfirmAction] = useState(null);
 
-  // Calculate statistics
-  const totalEmployees = payrolls.length;
-  const totalGrossPay = payrolls.reduce((sum, payroll) => sum + payroll.grossPay, 0);
-  const totalDeductions = payrolls.reduce((sum, payroll) => sum + payroll.deductions, 0);
-  const totalNetPay = payrolls.reduce((sum, payroll) => sum + payroll.netPay, 0);
-  const approvedCount = payrolls.filter(payroll => payroll.status === 'Approved' || payroll.status === 'Paid').length;
-  const isAllApproved = approvedCount === totalEmployees;
+  const monthNumber = getMonthNumber(selectedMonth);
+  const yearNumber = parseInt(selectedYear, 10);
+  const perPage = 10;
 
-  // Generate months list (only up to current month for current year, all months for past years)
-  const allMonths = [
-    'January', 'February', 'March', 'April', 'May', 'June',
-    'July', 'August', 'September', 'October', 'November', 'December'
-  ];
-  
-  const getAvailableMonths = () => {
-    const currentMonthIndex = currentDate.getMonth(); // 0-based index
-    const selectedYearNum = parseInt(selectedYear);
-    const currentYearNum = currentDate.getFullYear();
-    
-    if (selectedYearNum === currentYearNum) {
-      // For current year, only show months up to current month
-      return allMonths.slice(0, currentMonthIndex + 1);
-    } else if (selectedYearNum < currentYearNum) {
-      // For past years, show all months
-      return allMonths;
-    } else {
-      // For future years, show no months (shouldn't happen with our year filter)
-      return [];
-    }
-  };
-  
-  const months = getAvailableMonths();
-  
-  // Generate years list (from 2020 to current year, no future years)
-  const generateYears = () => {
-    const currentYear = new Date().getFullYear();
-    const startYear = 2020;
-    const years = [];
-    for (let year = currentYear; year >= startYear; year--) {
-      years.push(year.toString());
-    }
-    return years;
-  };
-  
-  const years = generateYears();
+  const {
+    data: payrollsData = [],
+    isLoading,
+    isError,
+    error,
+    refetch,
+  } = useGetPayrollsQuery({
+    year: yearNumber,
+    month: monthNumber,
+    skip: (currentPage - 1) * perPage,
+    limit: perPage,
+  });
 
-  const handleLoadPayrolls = () => {
-    setCurrentPage(1);
-    refetch();
-  };
-  
-  const handleYearChange = (newYear) => {
-    setSelectedYear(newYear);
-    
-    // If changing to current year and selected month is not available, reset to current month
-    const newYearNum = parseInt(newYear);
-    const currentYearNum = currentDate.getFullYear();
-    const currentMonthIndex = currentDate.getMonth();
-    const selectedMonthIndex = allMonths.indexOf(selectedMonth);
-    
-    if (newYearNum === currentYearNum && selectedMonthIndex > currentMonthIndex) {
-      // Selected month is in the future for current year, reset to current month
-      setSelectedMonth(currentMonth);
-    }
-  };
+  const [calculatePayroll, { isLoading: isCalculating }] = useCalculatePayrollMutation();
+  const [approvePayroll, { isLoading: isApproving }] = useApprovePayrollMutation();
+  const [markPayrollPaid, { isLoading: isMarkingPaid }] = useMarkPayrollPaidMutation();
+  const [exportPayroll, { isLoading: isExporting }] = useExportPayrollMutation();
 
-  const handleExportAll = async () => {
+  const payrolls = useMemo(
+    () =>
+      (payrollsData || []).map((p) => ({
+        id: p.employee_id || p.id,
+        payrollId: p.id,
+        name: p.employee_name || p.name,
+        grossPay: p.gross_pay ?? p.salary ?? 0,
+        deductions: p.deductions ?? 0,
+        netPay: p.net_pay ?? p.net_salary ?? 0,
+        status: p.status ? p.status.charAt(0).toUpperCase() + p.status.slice(1) : 'Pending',
+        photo: null,
+      })),
+    [payrollsData]
+  );
+
+  const filteredPayrolls = payrolls.filter(
+    (p) =>
+      p.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      String(p.id).toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  const totalGross = payrolls.reduce((s, p) => s + p.grossPay, 0);
+  const totalDeductions = payrolls.reduce((s, p) => s + p.deductions, 0);
+  const totalNet = payrolls.reduce((s, p) => s + p.netPay, 0);
+  const approvedCount = payrolls.filter(
+    (p) => p.status === 'Approved' || p.status === 'Paid'
+  ).length;
+
+  const years = useMemo(() => {
+    const y = currentDate.getFullYear();
+    return Array.from({ length: y - 2019 }, (_, i) => String(y - i));
+  }, [currentDate]);
+
+  const handleCalculate = async () => {
     try {
-      const blob = await exportPayroll({
-        start_month: monthNumber,
-        start_year: yearNumber,
-        end_month: monthNumber,
-        end_year: yearNumber
-      }).unwrap();
-      
-      // Create download link
+      await calculatePayroll({ year: yearNumber, month: monthNumber }).unwrap();
+      dashboardToast.success(
+        `Payroll calculated for ${selectedMonth} ${selectedYear}.`,
+        'Calculation complete'
+      );
+      refetch();
+    } catch (err) {
+      dashboardToast.error(
+        err?.data?.detail || 'Payroll calculation is not available yet.',
+        'Calculation failed'
+      );
+    }
+  };
+
+  const handleApproveAll = async () => {
+    const pending = payrolls.filter((p) => p.status === 'Pending' || p.status === 'Draft');
+    try {
+      await Promise.all(pending.map((p) => approvePayroll(p.payrollId).unwrap()));
+      dashboardToast.success(`Approved ${pending.length} payroll runs.`, 'Payroll approved');
+      refetch();
+    } catch (err) {
+      dashboardToast.error(err?.data?.detail || 'Failed to approve payrolls.', 'Approval failed');
+    }
+  };
+
+  const handleMarkAllPaid = async () => {
+    const approved = payrolls.filter((p) => p.status === 'Approved');
+    try {
+      await Promise.all(approved.map((p) => markPayrollPaid(p.payrollId).unwrap()));
+      dashboardToast.success(`Marked ${approved.length} payroll runs as paid.`, 'Payment recorded');
+      refetch();
+    } catch (err) {
+      dashboardToast.error(err?.data?.detail || 'Failed to mark payrolls as paid.', 'Update failed');
+    }
+  };
+
+  const handleExport = async () => {
+    try {
+      const blob = await exportPayroll({ year: yearNumber, month: monthNumber }).unwrap();
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
@@ -172,131 +151,29 @@ const PayrollManagement = () => {
       link.click();
       document.body.removeChild(link);
       window.URL.revokeObjectURL(url);
-    } catch (error) {
-      console.error('Export failed:', error);
-      alert('Failed to export payroll data');
+      dashboardToast.success('Payroll CSV downloaded.', 'Export complete');
+    } catch (err) {
+      dashboardToast.error(err?.data?.detail || 'Export failed.', 'Export failed');
     }
   };
 
-  const handleCalculateAll = async () => {
-    if (isCalculating) return;
-    
-    setIsCalculating(true);
-    try {
-      const activeEmployees = employeesData.filter(emp => emp.is_active);
-      
-      if (activeEmployees.length === 0) {
-        alert('No active employees found');
-        return;
-      }
-
-      // Create payroll for each active employee
-      const promises = activeEmployees.map(employee => 
-        createPayroll({
-          employee_id: employee.id,
-          month: monthNumber,
-          year: yearNumber,
-          hourly_rate: employee.hourly_rate || "25.00",
-          overtime_rate: employee.overtime_rate || "37.50",
-          deductions: employee.deductions || "1000.00"
-        })
-      );
-
-      await Promise.all(promises);
-      alert(`Successfully calculated payroll for ${activeEmployees.length} employees`);
-      refetch();
-    } catch (error) {
-      console.error('Calculate all failed:', error);
-      alert('Failed to calculate payrolls');
-    } finally {
-      setIsCalculating(false);
-    }
-  };
-
-  const handleApproveAll = async () => {
-    if (isApproving) return;
-    
-    const unapprovedPayrolls = payrolls.filter(p => p.status === 'Pending');
-    
-    if (unapprovedPayrolls.length === 0) {
-      alert('No payrolls to approve');
-      return;
-    }
-
-    if (!confirm(`Are you sure you want to approve ${unapprovedPayrolls.length} payrolls?`)) {
-      return;
-    }
-
-    setIsApproving(true);
-    try {
-      const promises = unapprovedPayrolls.map(payroll => 
-        approvePayroll(payroll.payrollId)
-      );
-
-      await Promise.all(promises);
-      alert(`Successfully approved ${unapprovedPayrolls.length} payrolls`);
-      refetch();
-    } catch (error) {
-      console.error('Approve all failed:', error);
-      alert('Failed to approve payrolls');
-    } finally {
-      setIsApproving(false);
-    }
-  };
-
-  const handleMarkAllPaid = async () => {
-    if (isMarkingPaid) return;
-    
-    const approvedPayrolls = payrolls.filter(p => p.status === 'Approved');
-    
-    if (approvedPayrolls.length === 0) {
-      alert('No approved payrolls to mark as paid');
-      return;
-    }
-
-    if (!confirm(`Are you sure you want to mark ${approvedPayrolls.length} payrolls as paid?`)) {
-      return;
-    }
-
-    setIsMarkingPaid(true);
-    try {
-      const promises = approvedPayrolls.map(payroll => 
-        markPayrollPaid(payroll.payrollId)
-      );
-
-      await Promise.all(promises);
-      alert(`Successfully marked ${approvedPayrolls.length} payrolls as paid`);
-      refetch();
-    } catch (error) {
-      console.error('Mark all paid failed:', error);
-      alert('Failed to mark payrolls as paid');
-    } finally {
-      setIsMarkingPaid(false);
-    }
-  };
-
-  // Show loading state
-  if (payrollsLoading) {
-    return <LoadingScreen message="Loading payroll data..." />;
+  if (isLoading) {
+    return <LoadingScreen message="Loading payroll..." />;
   }
 
-  // Show error state
-  if (payrollsError) {
+  if (isError) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="text-red-600 mb-4">
-            <svg className="w-12 h-12 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-          </div>
-          <h3 className="text-lg font-medium text-gray-900 mb-2">Error Loading Payroll Data</h3>
-          <p className="text-gray-600 mb-4">Failed to load payroll data. Please try again.</p>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="rounded-2xl border border-red-200 bg-red-50 p-6 text-center">
+          <p className="text-sm text-red-700">
+            {error?.data?.detail || 'Failed to load payroll data. The payroll API may not be available yet.'}
+          </p>
           <button
+            type="button"
             onClick={() => refetch()}
-            className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700"
+            className="mt-4 rounded-xl bg-[#007AFF] px-4 py-2 text-sm font-semibold text-white hover:bg-[#0066DD]"
           >
-            Retry
+            Try again
           </button>
         </div>
       </div>
@@ -304,190 +181,168 @@ const PayrollManagement = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="max-w-7xl mx-auto px-6 lg:px-8 py-8">
-        {/* Page Header */}
-        <div className="mb-8">
-          <div className="flex items-center justify-between mb-8">
-            <h1 className="text-3xl font-bold text-gray-900 tracking-tight">Payroll Management</h1>
-            {selectedMonth === currentMonth && selectedYear === currentYear && (
-              <div className="flex items-center px-3 py-1 bg-blue-50 text-blue-700 rounded-full text-sm font-medium">
-                <div className="w-2 h-2 bg-blue-500 rounded-full mr-2 animate-pulse"></div>
-                Current Month
-              </div>
-            )}
-          </div>
-          
-          {/* Payroll Period Selection */}
-          <Card title="Select Payroll Period">
-            <div className="mb-4">
-              <p className="text-sm text-gray-600">
-                Showing payroll data for <strong>{selectedMonth} {selectedYear}</strong>
-                {selectedMonth === currentMonth && selectedYear === currentYear && (
-                  <span className="ml-2 text-blue-600 font-medium">(Current Month)</span>
-                )}
-              </p>
-            </div>
-            <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between space-y-4 sm:space-y-0">
-              <div className="flex items-end space-x-4">
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">Month</label>
-                  <select
-                    value={selectedMonth}
-                    onChange={(e) => setSelectedMonth(e.target.value)}
-                    className="px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
-                  >
-                    {months.map(month => (
-                      <option key={month} value={month}>{month}</option>
-                    ))}
-                  </select>
-                </div>
-                
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">Year</label>
-                  <select
-                    value={selectedYear}
-                    onChange={(e) => handleYearChange(e.target.value)}
-                    className="px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
-                  >
-                    {years.map(year => (
-                      <option key={year} value={year}>{year}</option>
-                    ))}
-                  </select>
-                </div>
-                
-                <div>
-                  <button
-                    onClick={handleLoadPayrolls}
-                    className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200 font-semibold"
-                  >
-                    Load
-                  </button>
-                </div>
-              </div>
-              
-              <button
-                onClick={handleExportAll}
-                className="flex items-center px-4 py-3 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors duration-200"
-              >
-                <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10" />
-                </svg>
-                Export All Payrolls
-              </button>
-            </div>
-          </Card>
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900">Payment</h1>
+          <p className="mt-1 text-sm text-gray-500">
+            Calculate, review, and approve monthly payroll for your team.
+          </p>
         </div>
+        <PageTourButtons onTutorial={startTutorial} onInfo={startInfo} />
+      </div>
 
-        {/* Statistics */}
-        <div className="mb-8">
-          <Card title={`${selectedMonth} ${selectedYear} Period Statistics`}>
-            <div className="grid grid-cols-1 md:grid-cols-5 gap-6">
-              <div className="text-center">
-                <p className="text-2xl font-bold text-gray-900">{totalEmployees}</p>
-                <p className="text-sm text-gray-600">Total Employees</p>
-              </div>
-              
-              <div className="text-center">
-                <p className="text-2xl font-bold text-gray-900">${totalGrossPay.toLocaleString()}</p>
-                <p className="text-sm text-gray-600">Total Gross Pay</p>
-              </div>
-              
-              <div className="text-center">
-                <p className="text-2xl font-bold text-gray-900">${totalDeductions.toLocaleString()}</p>
-                <p className="text-sm text-gray-600">Total Deductions</p>
-              </div>
-              
-              <div className="text-center">
-                <p className="text-2xl font-bold text-gray-900">${totalNetPay.toLocaleString()}</p>
-                <p className="text-sm text-gray-600">Total Net Pay</p>
-              </div>
-              
-              <div className="text-center">
-                <span className={`inline-flex px-3 py-1 text-sm font-semibold rounded-full ${
-                  isAllApproved 
-                    ? 'bg-green-50 text-green-700 ring-1 ring-green-200'
-                    : 'bg-yellow-50 text-yellow-700 ring-1 ring-yellow-200'
-                }`}>
-                  {isAllApproved ? 'Approved' : 'Pending'}
-                </span>
-                <p className="text-sm text-gray-600 mt-1">Status</p>
-              </div>
-            </div>
-          </Card>
-        </div>
-
-        {/* Action Buttons and Search */}
-        <div className="mb-6">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-4 sm:space-y-0">
-            <div className="flex flex-wrap gap-3">
-              <button
-                onClick={handleCalculateAll}
-                disabled={isCalculating}
-                className="flex items-center px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200 font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
+      <div className="space-y-6">
+        <div
+          className="rounded-2xl border border-gray-200/60 bg-white p-5 shadow-[0_2px_16px_rgba(0,0,0,0.06)]"
+          data-tour="payroll-period"
+        >
+          <p className="mb-4 text-sm text-gray-600">
+            Period: <strong>{selectedMonth} {selectedYear}</strong>
+          </p>
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-end">
+            <div>
+              <label className="mb-1.5 block text-xs font-medium text-gray-500">Month</label>
+              <select
+                value={selectedMonth}
+                onChange={(e) => setSelectedMonth(e.target.value)}
+                className="rounded-xl border border-gray-200/60 bg-white px-3.5 py-2.5 text-sm shadow-[0_2px_16px_rgba(0,0,0,0.04)] focus:border-[#007AFF] focus:outline-none focus:ring-2 focus:ring-[#007AFF]/20"
               >
-                <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
-                </svg>
-                {isCalculating ? 'Calculating...' : 'Calculate All Payrolls'}
-              </button>
-              
-              <button
-                onClick={handleApproveAll}
-                disabled={isApproving}
-                className="flex items-center px-4 py-3 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors duration-200 font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                </svg>
-                {isApproving ? 'Approving...' : 'Approve All Payrolls'}
-              </button>
-              
-              <button
-                onClick={handleMarkAllPaid}
-                disabled={isMarkingPaid}
-                className="flex items-center px-4 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors duration-200 font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
-                </svg>
-                {isMarkingPaid ? 'Marking Paid...' : 'Mark All Paid'}
-              </button>
+                {MONTHS.map((m) => (
+                  <option key={m} value={m}>{m}</option>
+                ))}
+              </select>
             </div>
-            
-            <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                </svg>
-              </div>
-              <input
-                type="text"
-                placeholder="Search by Employee ID or Name"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="block w-full pl-10 pr-4 py-3 border border-gray-200 rounded-lg leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 sm:text-sm transition-all duration-200"
-              />
+            <div>
+              <label className="mb-1.5 block text-xs font-medium text-gray-500">Year</label>
+              <select
+                value={selectedYear}
+                onChange={(e) => setSelectedYear(e.target.value)}
+                className="rounded-xl border border-gray-200/60 bg-white px-3.5 py-2.5 text-sm shadow-[0_2px_16px_rgba(0,0,0,0.04)] focus:border-[#007AFF] focus:outline-none focus:ring-2 focus:ring-[#007AFF]/20"
+              >
+                {years.map((y) => (
+                  <option key={y} value={y}>{y}</option>
+                ))}
+              </select>
             </div>
+            <button
+              type="button"
+              onClick={() => { setCurrentPage(1); refetch(); }}
+              className="rounded-xl bg-[#007AFF] px-4 py-2.5 text-sm font-semibold text-white hover:bg-[#0066DD]"
+            >
+              Load
+            </button>
           </div>
         </div>
 
-        {/* Payroll Table */}
-        <div className="bg-white shadow-sm rounded-xl border border-gray-100">
-          <PayrollTable payrolls={currentPayrolls} onRefresh={refetch} />
-        </div>
-
-        {/* Pagination */}
-        <div className="mt-6">
-          <Pagination
-            currentPage={currentPage}
-            totalPages={totalPages}
-            onPageChange={setCurrentPage}
-            totalItems={filteredPayrolls.length}
-            itemsPerPage={payrollsPerPage}
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4" data-tour="payroll-stats">
+          <DashboardWidgetCard
+            title="Employees"
+            stats={[
+              { label: 'In period', value: payrolls.length, accent: ACCENT.blue },
+              { label: 'Approved', value: approvedCount, accent: ACCENT.green },
+            ]}
+          />
+          <DashboardWidgetCard
+            title="Gross pay"
+            stats={[{ label: 'Total', value: `$${totalGross.toLocaleString()}`, accent: ACCENT.purple }]}
+          />
+          <DashboardWidgetCard
+            title="Deductions"
+            stats={[{ label: 'Total', value: `$${totalDeductions.toLocaleString()}`, accent: ACCENT.orange }]}
+          />
+          <DashboardWidgetCard
+            title="Net pay"
+            stats={[{ label: 'Total', value: `$${totalNet.toLocaleString()}`, accent: ACCENT.green }]}
           />
         </div>
+
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between" data-tour="payroll-actions">
+          <div className="flex flex-wrap gap-2">
+            <button
+              type="button"
+              onClick={handleCalculate}
+              disabled={isCalculating}
+              className="inline-flex items-center gap-2 rounded-xl bg-[#007AFF] px-4 py-2.5 text-sm font-semibold text-white hover:bg-[#0066DD] disabled:opacity-50"
+            >
+              <Calculator className="h-4 w-4" />
+              {isCalculating ? 'Calculating...' : 'Calculate payroll'}
+            </button>
+            <button
+              type="button"
+              onClick={() => setConfirmAction('approve')}
+              disabled={isApproving}
+              className="inline-flex items-center gap-2 rounded-xl border border-gray-200/60 bg-white px-4 py-2.5 text-sm font-semibold text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+            >
+              <CheckCircle className="h-4 w-4" />
+              Approve all
+            </button>
+            <button
+              type="button"
+              onClick={() => setConfirmAction('paid')}
+              disabled={isMarkingPaid}
+              className="inline-flex items-center gap-2 rounded-xl border border-gray-200/60 bg-white px-4 py-2.5 text-sm font-semibold text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+            >
+              <Wallet className="h-4 w-4" />
+              Mark all paid
+            </button>
+            <button
+              type="button"
+              onClick={handleExport}
+              disabled={isExporting}
+              className="inline-flex items-center gap-2 rounded-xl border border-gray-200/60 bg-white px-4 py-2.5 text-sm font-semibold text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+            >
+              <Download className="h-4 w-4" />
+              Export CSV
+            </button>
+          </div>
+          <input
+            type="search"
+            placeholder="Search by name..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="w-full max-w-xs rounded-xl border border-gray-200/60 bg-white px-3.5 py-2.5 text-sm shadow-[0_2px_16px_rgba(0,0,0,0.04)] focus:border-[#007AFF] focus:outline-none focus:ring-2 focus:ring-[#007AFF]/20 lg:w-64"
+          />
+        </div>
+
+        <div data-tour="payroll-table">
+          <PayrollTable payrolls={filteredPayrolls} onRefresh={refetch} />
+        </div>
+
+        <Pagination
+          currentPage={currentPage}
+          totalPages={Math.max(1, Math.ceil(filteredPayrolls.length / perPage))}
+          onPageChange={setCurrentPage}
+        />
       </div>
+
+      <ConfirmationDialog
+        isOpen={confirmAction === 'approve'}
+        onClose={() => setConfirmAction(null)}
+        onConfirm={() => {
+          setConfirmAction(null);
+          handleApproveAll();
+        }}
+        title="Approve all payrolls?"
+        message="This will approve all pending payroll runs for the selected period."
+        confirmText="Approve all"
+      />
+
+      <ConfirmationDialog
+        isOpen={confirmAction === 'paid'}
+        onClose={() => setConfirmAction(null)}
+        onConfirm={() => {
+          setConfirmAction(null);
+          handleMarkAllPaid();
+        }}
+        title="Mark all as paid?"
+        message="This will mark all approved payroll runs as paid for the selected period."
+        confirmText="Mark all paid"
+      />
+
+      {infoOpen && (
+        <PageInfoOverlay steps={PAYROLL_GUIDE_STEPS} onClose={closeInfo} pageLabel="Payment" />
+      )}
     </div>
   );
 };

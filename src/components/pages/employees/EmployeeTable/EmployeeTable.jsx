@@ -175,8 +175,8 @@ const EmployeeTable = ({
                       <ArrowUpDown className="h-3.5 w-3.5" strokeWidth={2} />
                     </ActionButton>
                     <ActionButton
-                      onClick={() => navigate(`/admin/payroll/${employee.id}`)}
-                      title="View payroll"
+                      onClick={() => navigate(`/admin/salary?employeeId=${employee.id}`)}
+                      title="Manage salary"
                       tone="green"
                     >
                       <DollarSign className="h-3.5 w-3.5" strokeWidth={2} />

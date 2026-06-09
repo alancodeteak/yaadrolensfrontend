@@ -1,259 +1,175 @@
-import React from 'react';
+import { useState } from 'react';
+import clsx from 'clsx';
 import { useNavigate } from 'react-router-dom';
-import { UserAvatar } from '../../../common';
+import { Eye, CheckCircle, Wallet } from 'lucide-react';
+import { UserAvatar, ConfirmationDialog, dashboardToast } from '../../../common';
 import {
   useApprovePayrollMutation,
   useMarkPayrollPaidMutation,
-  useUpdatePayrollMutation
 } from '../../../../store/api/payrollApi';
+
+const TH = 'px-4 py-3 text-left text-xs font-medium text-gray-500 first:pl-5 last:pr-5';
+const TD = 'px-4 py-3.5 text-sm text-gray-900 first:pl-5 last:pr-5';
+
+const statusClass = {
+  Paid: 'bg-emerald-100 text-emerald-700',
+  Approved: 'bg-blue-100 text-blue-700',
+  Pending: 'bg-orange-100 text-orange-700',
+  Draft: 'bg-gray-100 text-gray-600',
+};
+
+const ActionButton = ({ onClick, title, children, disabled }) => (
+  <button
+    type="button"
+    onClick={onClick}
+    title={title}
+    disabled={disabled}
+    className="rounded-lg p-1.5 text-gray-400 transition-colors duration-200 hover:bg-blue-50 hover:text-[#007AFF] disabled:opacity-50"
+  >
+    {children}
+  </button>
+);
 
 const PayrollTable = ({ payrolls, onRefresh }) => {
   const navigate = useNavigate();
-  
-  // API mutations
+  const [confirmPayroll, setConfirmPayroll] = useState(null);
+
   const [approvePayroll, { isLoading: isApproving }] = useApprovePayrollMutation();
   const [markPayrollPaid, { isLoading: isMarkingPaid }] = useMarkPayrollPaidMutation();
-  const [updatePayroll] = useUpdatePayrollMutation();
 
-  const handleView = (payroll) => {
-    navigate(`/admin/payroll/${payroll.payrollId || payroll.id}`);
-  };
-
-  const handleEdit = (payroll) => {
-    // For now, navigate to details page for editing
-    navigate(`/admin/payroll/${payroll.payrollId || payroll.id}`);
-  };
-
-  const handleApprove = async (payroll) => {
-    if (isApproving) return;
-    
-    if (!confirm(`Are you sure you want to approve payroll for ${payroll.name}?`)) {
-      return;
-    }
-
+  const runAction = async () => {
+    if (!confirmPayroll) return;
+    const { payroll, action } = confirmPayroll;
+    const id = payroll.payrollId || payroll.id;
     try {
-      await approvePayroll(payroll.payrollId || payroll.id).unwrap();
-      alert('Payroll approved successfully');
-      if (onRefresh) onRefresh();
-    } catch (error) {
-      console.error('Approve failed:', error);
-      alert('Failed to approve payroll');
-    }
-  };
-
-  const handleMarkPaid = async (payroll) => {
-    if (isMarkingPaid) return;
-    
-    if (!confirm(`Are you sure you want to mark payroll for ${payroll.name} as paid?`)) {
-      return;
-    }
-
-    try {
-      await markPayrollPaid(payroll.payrollId || payroll.id).unwrap();
-      alert('Payroll marked as paid successfully');
-      if (onRefresh) onRefresh();
-    } catch (error) {
-      console.error('Mark paid failed:', error);
-      alert('Failed to mark payroll as paid');
-    }
-  };
-
-  const getStatusBadge = (status) => {
-    const statusStyles = {
-      'Paid': 'bg-green-50 text-green-700 ring-1 ring-green-200',
-      'Approved': 'bg-blue-50 text-blue-700 ring-1 ring-blue-200',
-      'Pending': 'bg-yellow-50 text-yellow-700 ring-1 ring-yellow-200'
-    };
-
-    return (
-      <span className={`inline-flex px-3 py-1 text-xs font-semibold rounded-full ${statusStyles[status] || 'bg-gray-50 text-gray-700 ring-1 ring-gray-200'}`}>
-        {status}
-      </span>
-    );
-  };
-
-  const getActionButtons = (payroll) => {
-    switch (payroll.status) {
-      case 'Paid':
-        return (
-          <>
-            <button
-              onClick={() => handleView(payroll)}
-              className="text-blue-600 hover:text-blue-800 font-medium"
-            >
-              View
-            </button>
-            <span className="text-gray-300">|</span>
-            <button
-              onClick={() => handleEdit(payroll)}
-              className="text-gray-600 hover:text-gray-800 font-medium"
-            >
-              Edit
-            </button>
-            <span className="text-gray-300">|</span>
-            <button
-              onClick={() => handleApprove(payroll)}
-              disabled={isApproving}
-              className="text-gray-600 hover:text-gray-800 font-medium disabled:opacity-50"
-            >
-              {isApproving ? 'Approving...' : 'Approve'}
-            </button>
-          </>
-        );
-      case 'Approved':
-        return (
-          <>
-            <button
-              onClick={() => handleView(payroll)}
-              className="text-blue-600 hover:text-blue-800 font-medium"
-            >
-              View
-            </button>
-            <span className="text-gray-300">|</span>
-            <button
-              onClick={() => handleEdit(payroll)}
-              className="text-gray-600 hover:text-gray-800 font-medium"
-            >
-              Edit
-            </button>
-            <span className="text-gray-300">|</span>
-            <button
-              onClick={() => handleMarkPaid(payroll)}
-              disabled={isMarkingPaid}
-              className="text-green-600 hover:text-green-800 font-medium disabled:opacity-50"
-            >
-              {isMarkingPaid ? 'Marking...' : 'Mark Paid'}
-            </button>
-          </>
-        );
-      case 'Pending':
-        return (
-          <>
-            <button
-              onClick={() => handleView(payroll)}
-              className="text-blue-600 hover:text-blue-800 font-medium"
-            >
-              View
-            </button>
-            <span className="text-gray-300">|</span>
-            <button
-              onClick={() => handleEdit(payroll)}
-              className="text-gray-600 hover:text-gray-800 font-medium"
-            >
-              Edit
-            </button>
-            <span className="text-gray-300">|</span>
-            <button
-              onClick={() => handleApprove(payroll)}
-              disabled={isApproving}
-              className="text-blue-600 hover:text-blue-800 font-medium disabled:opacity-50"
-            >
-              {isApproving ? 'Approving...' : 'Approve'}
-            </button>
-          </>
-        );
-      default:
-        return (
-          <>
-            <button
-              onClick={() => handleView(payroll)}
-              className="text-blue-600 hover:text-blue-800 font-medium"
-            >
-              View
-            </button>
-            <span className="text-gray-300">|</span>
-            <button
-              onClick={() => handleEdit(payroll)}
-              className="text-gray-600 hover:text-gray-800 font-medium"
-            >
-              Edit
-            </button>
-          </>
-        );
+      if (action === 'approve') {
+        await approvePayroll(id).unwrap();
+        dashboardToast.success(`Payroll approved for ${payroll.name}.`, 'Approved');
+      } else {
+        await markPayrollPaid(id).unwrap();
+        dashboardToast.success(`Payroll marked paid for ${payroll.name}.`, 'Payment recorded');
+      }
+      onRefresh?.();
+    } catch (err) {
+      dashboardToast.error(err?.data?.detail || 'Action failed.', 'Payroll update failed');
+    } finally {
+      setConfirmPayroll(null);
     }
   };
 
   return (
-    <div className="overflow-x-auto">
-      <table className="min-w-full divide-y divide-gray-100">
-        <thead className="bg-gray-50/50">
-          <tr>
-            <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-              Employee ID
-            </th>
-            <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-              Name
-            </th>
-            <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-              Gross Pay
-            </th>
-            <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-              Deductions
-            </th>
-            <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-              Net Pay
-            </th>
-            <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-              Status
-            </th>
-            <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-              Actions
-            </th>
-          </tr>
-        </thead>
-        <tbody className="bg-white divide-y divide-gray-100">
-          {payrolls.map((payroll) => (
-            <tr key={payroll.id} className="hover:bg-gray-50/50 transition-all duration-200 group">
-              <td className="px-6 py-4 whitespace-nowrap">
-                <div className="text-sm font-medium text-gray-900">{payroll.id}</div>
-              </td>
-              <td className="px-6 py-4 whitespace-nowrap">
-                <div className="flex items-center">
-                  <div className="flex-shrink-0 h-10 w-10">
-                    <UserAvatar
-                      className="h-10 w-10 rounded-full ring-1 ring-gray-100 group-hover:ring-gray-200 transition-all duration-200"
-                      src={payroll.photo}
-                      name={payroll.name}
-                      seed={payroll.id}
-                    />
-                  </div>
-                  <div className="ml-4">
-                    <div className="text-sm font-semibold text-gray-900">{payroll.name}</div>
-                  </div>
-                </div>
-              </td>
-              <td className="px-6 py-4 whitespace-nowrap">
-                <div className="text-sm text-gray-900">${payroll.grossPay.toLocaleString()}</div>
-              </td>
-              <td className="px-6 py-4 whitespace-nowrap">
-                <div className="text-sm text-gray-900">${payroll.deductions.toLocaleString()}</div>
-              </td>
-              <td className="px-6 py-4 whitespace-nowrap">
-                <div className="text-sm font-semibold text-gray-900">${payroll.netPay.toLocaleString()}</div>
-              </td>
-              <td className="px-6 py-4 whitespace-nowrap">
-                {getStatusBadge(payroll.status)}
-              </td>
-              <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                <div className="flex items-center space-x-2">
-                  {getActionButtons(payroll)}
-                </div>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-
-      {payrolls.length === 0 && (
-        <div className="text-center py-12">
-          <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
-          </svg>
-          <h3 className="mt-2 text-sm font-medium text-gray-900">No payroll records found</h3>
-          <p className="mt-1 text-sm text-gray-500">Try adjusting your search criteria or load a different period.</p>
+    <>
+      <div className="overflow-hidden rounded-2xl border border-gray-200/60 bg-white shadow-[0_2px_16px_rgba(0,0,0,0.06)]">
+        <div className="flex items-center justify-between border-b border-gray-100 px-5 py-3">
+          <div>
+            <h2 className="text-sm font-semibold text-gray-900">Payroll runs</h2>
+            <p className="text-[11px] text-gray-500">
+              {payrolls.length} {payrolls.length === 1 ? 'record' : 'records'}
+            </p>
+          </div>
         </div>
-      )}
-    </div>
+
+        <div className="overflow-x-auto">
+          <table className="w-full min-w-[720px]">
+            <thead>
+              <tr className="border-b border-gray-100">
+                <th className={clsx(TH, 'min-w-40')}>Employee</th>
+                <th className={clsx(TH, 'min-w-24')}>Gross</th>
+                <th className={clsx(TH, 'min-w-24 hidden md:table-cell')}>Deductions</th>
+                <th className={clsx(TH, 'min-w-24')}>Net pay</th>
+                <th className={clsx(TH, 'w-24')}>Status</th>
+                <th className={clsx(TH, 'w-32')}>Actions</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-100">
+              {payrolls.map((payroll) => (
+                <tr key={payroll.payrollId || payroll.id} className="hover:bg-gray-50/80">
+                  <td className={TD}>
+                    <div className="flex items-center gap-3">
+                      <UserAvatar
+                        className="h-9 w-9 rounded-full ring-1 ring-gray-100"
+                        src={payroll.photo}
+                        name={payroll.name}
+                        seed={payroll.id}
+                      />
+                      <span className="font-semibold text-gray-900">{payroll.name}</span>
+                    </div>
+                  </td>
+                  <td className={TD}>
+                    <span className="tabular-nums">${payroll.grossPay.toLocaleString()}</span>
+                  </td>
+                  <td className={clsx(TD, 'hidden md:table-cell')}>
+                    <span className="tabular-nums">${payroll.deductions.toLocaleString()}</span>
+                  </td>
+                  <td className={TD}>
+                    <span className="tabular-nums font-semibold">${payroll.netPay.toLocaleString()}</span>
+                  </td>
+                  <td className={TD}>
+                    <span
+                      className={clsx(
+                        'inline-flex rounded-full px-2 py-0.5 text-[10px] font-semibold',
+                        statusClass[payroll.status] || statusClass.Pending
+                      )}
+                    >
+                      {payroll.status}
+                    </span>
+                  </td>
+                  <td className={TD}>
+                    <div className="flex items-center gap-1">
+                      <ActionButton
+                        onClick={() => navigate(`/admin/payroll/${payroll.payrollId || payroll.id}`)}
+                        title="View details"
+                      >
+                        <Eye className="h-4 w-4" strokeWidth={2} />
+                      </ActionButton>
+                      {(payroll.status === 'Pending' || payroll.status === 'Draft') && (
+                        <ActionButton
+                          onClick={() => setConfirmPayroll({ payroll, action: 'approve' })}
+                          title="Approve"
+                          disabled={isApproving}
+                        >
+                          <CheckCircle className="h-4 w-4" strokeWidth={2} />
+                        </ActionButton>
+                      )}
+                      {payroll.status === 'Approved' && (
+                        <ActionButton
+                          onClick={() => setConfirmPayroll({ payroll, action: 'paid' })}
+                          title="Mark paid"
+                          disabled={isMarkingPaid}
+                        >
+                          <Wallet className="h-4 w-4" strokeWidth={2} />
+                        </ActionButton>
+                      )}
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+
+          {payrolls.length === 0 && (
+            <div className="px-5 py-12 text-center text-sm text-gray-500">
+              No payroll records for this period. Calculate payroll to get started.
+            </div>
+          )}
+        </div>
+      </div>
+
+      <ConfirmationDialog
+        isOpen={Boolean(confirmPayroll)}
+        onClose={() => setConfirmPayroll(null)}
+        onConfirm={runAction}
+        title={
+          confirmPayroll?.action === 'approve' ? 'Approve payroll?' : 'Mark payroll as paid?'
+        }
+        message={
+          confirmPayroll
+            ? `${confirmPayroll.action === 'approve' ? 'Approve' : 'Mark as paid'} payroll for ${confirmPayroll.payroll.name}?`
+            : ''
+        }
+        confirmText={confirmPayroll?.action === 'approve' ? 'Approve' : 'Mark paid'}
+      />
+    </>
   );
 };
 
