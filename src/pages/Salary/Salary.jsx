@@ -7,6 +7,7 @@ import {
   SalaryEditModal,
   SalaryHistoryPanel,
 } from '../../components/pages/salary';
+import { DASHBOARD_PANEL } from '../../components/pages/dashboard';
 import {
   SALARY_GUIDE_STEPS,
   LoadingScreen,
@@ -176,9 +177,11 @@ const Salary = () => {
         <PageTourButtons onTutorial={startTutorial} onInfo={startInfo} />
       </div>
 
-      <div className="space-y-6">
+      <div className="mb-6">
         <SalaryStatsRow stats={stats} loading={false} />
+      </div>
 
+      <div className={`${DASHBOARD_PANEL} mb-6 px-4 py-3 sm:px-5`}>
         <SalaryFilterBar
           searchTerm={searchTerm}
           onSearchChange={setSearchTerm}
@@ -187,8 +190,9 @@ const Salary = () => {
           sortBy={sortBy}
           onSortChange={setSortBy}
         />
+      </div>
 
-        <SalaryTable
+      <SalaryTable
           rows={processedRows}
           highlightId={highlightId}
           onEdit={(row) => setEditEmployee(row)}
@@ -197,7 +201,6 @@ const Salary = () => {
             setHistoryPage(1);
           }}
         />
-      </div>
 
       <SalaryEditModal
         isOpen={Boolean(editEmployee)}

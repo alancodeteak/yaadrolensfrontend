@@ -1,4 +1,4 @@
-import { Clock, TabletSmartphone, CircleHelp } from 'lucide-react';
+import { Clock, Wallet, TabletSmartphone, CircleHelp } from 'lucide-react';
 
 export const SETTINGS_NAV_ITEMS = [
   {
@@ -6,6 +6,12 @@ export const SETTINGS_NAV_ITEMS = [
     href: '/admin/settings/attendance',
     icon: Clock,
     tone: 'attendance',
+  },
+  {
+    name: 'Payment rules',
+    href: '/admin/settings/payment',
+    icon: Wallet,
+    tone: 'payment',
   },
   {
     name: 'Kiosk',

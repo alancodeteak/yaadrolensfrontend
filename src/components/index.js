@@ -6,5 +6,5 @@ export * from './common';
 export * from './pages/employees';
 export * from './pages/settings';
 export * from './pages/employee-details';
-export * from './pages/payroll';
+export * from './pages/payment';
 export * from './pages/attendance';

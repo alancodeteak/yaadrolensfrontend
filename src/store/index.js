@@ -4,12 +4,11 @@ import './api/authApi';
 import './api/employeeApi';
 import './api/salaryApi';
 import './api/settingsApi';
-import './api/payrollApi';
+import './api/paymentApi';
 import { 
   authReducer,
   employeeReducer,
   userReducer,
-  payrollReducer,
   attendanceReducer,
   reportReducer,
   settingsReducer
@@ -23,7 +22,6 @@ export const store = configureStore({
     // Modules
     employee: employeeReducer,
     user: userReducer,
-    payroll: payrollReducer,
     attendance: attendanceReducer,
     report: reportReducer,
     settings: settingsReducer,

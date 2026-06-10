@@ -1,16 +1,37 @@
 import React from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useGetEmployeeByIdQuery, useGetEmployeeReportQuery } from '../../store/api';
-import { LoadingScreen } from '../../components/common';
+import { LoadingScreen, NotFoundState, notFoundActionClass } from '../../components/common';
 
 const EmployeeToday = () => {
   const { id } = useParams();
   const today = new Date().toISOString().split('T')[0];
-  const { data: employee, isLoading: employeeLoading } = useGetEmployeeByIdQuery(id);
-  const { data: monthlyRow, isLoading: reportLoading } = useGetEmployeeReportQuery({
-    employee_id: id,
-    end_date: today,
-  });
+  const {
+    data: employee,
+    isLoading: employeeLoading,
+    isError: employeeError,
+  } = useGetEmployeeByIdQuery(id);
+  const { data: monthlyRow, isLoading: reportLoading } = useGetEmployeeReportQuery(
+    { employee_id: id, end_date: today },
+    { skip: employeeLoading || employeeError || !employee }
+  );
+
+  if (employeeLoading) {
+    return <LoadingScreen message="Loading employee..." />;
+  }
+
+  if (employeeError || !employee) {
+    return (
+      <NotFoundState
+        title="Employee not found"
+        message="The requested employee could not be found."
+      >
+        <Link to="/admin/employees" className={notFoundActionClass}>
+          Back to employees
+        </Link>
+      </NotFoundState>
+    );
+  }
 
   return (
     <div className="max-w-3xl mx-auto px-4 py-8">
@@ -19,17 +40,13 @@ const EmployeeToday = () => {
       </Link>
       <h1 className="text-2xl font-bold text-gray-900 mb-6">Employee Summary</h1>
 
-      {employeeLoading ? (
-        <LoadingScreen message="Loading employee..." fullScreen={false} size="sm" />
-      ) : employee ? (
-        <div className="bg-white border border-gray-200 rounded-lg p-6 mb-6">
-          <h2 className="text-lg font-semibold">{employee.name}</h2>
-          <p className="text-sm text-gray-500">{employee.employee_code}</p>
-          <p className="text-sm text-gray-500 mt-2">
-            Face enrolled: {employee.has_face_enrolled ? 'Yes' : 'No'}
-          </p>
-        </div>
-      ) : null}
+      <div className="bg-white border border-gray-200 rounded-lg p-6 mb-6">
+        <h2 className="text-lg font-semibold">{employee.name}</h2>
+        <p className="text-sm text-gray-500">{employee.employee_code}</p>
+        <p className="text-sm text-gray-500 mt-2">
+          Face enrolled: {employee.has_face_enrolled ? 'Yes' : 'No'}
+        </p>
+      </div>
 
       {reportLoading ? (
         <LoadingScreen message="Loading monthly stats..." fullScreen={false} size="sm" />

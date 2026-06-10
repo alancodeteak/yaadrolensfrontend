@@ -230,20 +230,190 @@ export function toSalaryUpdatePayload(data) {
   return payload;
 }
 
-export function normalizePayrollRun(run) {
-  if (!run) return run;
+function toMoney(value) {
+  if (value == null || value === '') return null;
+  return Number(value);
+}
+
+export function normalizePaymentRow(row) {
+  if (!row) return row;
   return {
-    ...run,
-    gross_pay: run.gross_pay != null ? Number(run.gross_pay) : 0,
-    net_pay: run.net_pay != null ? Number(run.net_pay) : 0,
-    deductions: run.deductions != null ? Number(run.deductions) : 0,
-    salary: run.salary != null ? Number(run.salary) : 0,
-    net_salary: run.net_salary != null ? Number(run.net_salary) : 0,
+    ...row,
+    amount: toMoney(row.amount) ?? 0,
+    base_amount: toMoney(row.base_amount),
+    balance_applied: toMoney(row.balance_applied),
+    bonus_included: toMoney(row.bonus_included),
   };
 }
 
-export function normalizePayrollRuns(list) {
-  return (list || []).map(normalizePayrollRun);
+export function normalizePayments(response) {
+  if (!response) return { items: [], total: 0, skip: 0, limit: 50 };
+  return {
+    ...response,
+    items: (response.items || []).map(normalizePaymentRow),
+  };
+}
+
+export function normalizePaymentSummary(summary) {
+  if (!summary) {
+    return {
+      paid_this_month: 0,
+      payment_count_this_month: 0,
+      outstanding_advance_total: 0,
+      outstanding_advance_count: 0,
+      pending_advance_count: 0,
+      pending_salary_count: 0,
+      unpaid_salary_total: 0,
+    };
+  }
+  return {
+    ...summary,
+    paid_this_month: toMoney(summary.paid_this_month) ?? 0,
+    outstanding_advance_total: toMoney(summary.outstanding_advance_total) ?? 0,
+    unpaid_salary_total: toMoney(summary.unpaid_salary_total) ?? 0,
+  };
+}
+
+export function normalizeEmployeePaymentSummary(summary) {
+  if (!summary) return summary;
+  return {
+    ...summary,
+    current_salary: toMoney(summary.current_salary),
+    total_paid: toMoney(summary.total_paid) ?? 0,
+    outstanding_advance: toMoney(summary.outstanding_advance) ?? 0,
+    running_balance: toMoney(summary.running_balance) ?? 0,
+  };
+}
+
+export function normalizeBonusRow(row) {
+  if (!row) return row;
+  return {
+    ...row,
+    amount: toMoney(row.amount) ?? 0,
+  };
+}
+
+export function normalizeBonuses(response) {
+  if (!response) return { items: [], total: 0 };
+  return {
+    ...response,
+    items: (response.items || []).map(normalizeBonusRow),
+  };
+}
+
+export function normalizeBalanceRow(row) {
+  if (!row) return row;
+  return {
+    ...row,
+    running_balance: toMoney(row.running_balance) ?? 0,
+  };
+}
+
+export function normalizeBalances(response) {
+  if (!response) return { items: [], total: 0, skip: 0, limit: 50 };
+  return {
+    ...response,
+    items: (response.items || []).map(normalizeBalanceRow),
+  };
+}
+
+export function normalizeBalanceTransactions(response) {
+  if (!response) return { items: [], total: 0, running_balance: 0 };
+  return {
+    ...response,
+    running_balance: toMoney(response.running_balance) ?? 0,
+    items: (response.items || []).map((item) => ({
+      ...item,
+      amount: toMoney(item.amount) ?? 0,
+      balance_after: toMoney(item.balance_after) ?? 0,
+    })),
+  };
+}
+
+export function toBalanceAdjustPayload(data) {
+  return {
+    transaction_type: data.transaction_type,
+    amount: Number(data.amount),
+    notes: data.notes,
+  };
+}
+
+export function toBonusCreatePayload(data) {
+  return {
+    employee_id: data.employee_id,
+    period_year: Number(data.period_year),
+    period_month: Number(data.period_month),
+    amount: Number(data.amount),
+    notes: data.notes || undefined,
+  };
+}
+
+export function toMarkPaidPayload(data) {
+  return {
+    payment_date: data.payment_date,
+    payment_method: data.payment_method,
+    payment_reference: data.payment_reference || undefined,
+    notes: data.notes || undefined,
+  };
+}
+
+export function toPaymentCreatePayload(data) {
+  const payload = {
+    employee_id: data.employee_id,
+    payment_type: data.payment_type,
+    amount: Number(data.amount),
+    payment_date: data.payment_date,
+  };
+  if (data.payment_type === 'monthly_salary') {
+    payload.period_year = Number(data.period_year);
+    payload.period_month = Number(data.period_month);
+  }
+  if (data.notes) payload.notes = data.notes;
+  return payload;
+}
+
+export function normalizeAdvanceRow(row) {
+  if (!row) return row;
+  return {
+    ...row,
+    amount: toMoney(row.amount) ?? 0,
+    outstanding_amount: toMoney(row.outstanding_amount) ?? 0,
+  };
+}
+
+export function normalizeAdvances(response) {
+  if (!response) return { items: [], total: 0, skip: 0, limit: 50 };
+  return {
+    ...response,
+    items: (response.items || []).map(normalizeAdvanceRow),
+  };
+}
+
+export function normalizeAdvanceDetail(detail) {
+  if (!detail) return detail;
+  return {
+    ...normalizeAdvanceRow(detail),
+    payments: (detail.payments || []).map(normalizePaymentRow),
+  };
+}
+
+export function toAdvanceCreatePayload(data) {
+  const payload = {
+    employee_id: data.employee_id,
+    amount: Number(data.amount),
+    advance_date: data.advance_date,
+  };
+  if (data.reason) payload.reason = data.reason;
+  return payload;
+}
+
+export function toAdvanceRecoverPayload(data) {
+  const payload = {
+    amount: Number(data.amount),
+    payment_date: data.payment_date,
+  };
+  if (data.notes) payload.notes = data.notes;
+  return payload;
 }
 
 export function buildUserFromToken(accessToken, loginData) {

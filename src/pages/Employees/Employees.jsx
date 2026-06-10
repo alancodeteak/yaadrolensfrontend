@@ -358,6 +358,7 @@ const Employees = () => {
         }
         confirmText="Deactivate Employee"
         cancelText="Cancel"
+        variant="destructive"
         isLoading={isDeleting}
       />
 

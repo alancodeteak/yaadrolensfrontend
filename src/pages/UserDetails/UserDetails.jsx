@@ -1,7 +1,7 @@
 import React from 'react';
-import { useParams } from 'react-router-dom';
+import { Link, useParams } from 'react-router-dom';
 import { useGetUserByIdQuery } from '../../store/api/apiSlice';
-import { LoadingScreen, UserAvatar } from '../../components/common';
+import { LoadingScreen, UserAvatar, NotFoundState, notFoundActionClass } from '../../components/common';
 
 const UserDetails = () => {
   const { id } = useParams();
@@ -13,11 +13,27 @@ const UserDetails = () => {
 
   if (error) {
     return (
-      <div className="container mx-auto px-4 py-8">
-        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
-          {error.message || 'Failed to load user details'}
-        </div>
-      </div>
+      <NotFoundState
+        title="User not found"
+        message={error?.data?.message || error?.message || 'The requested user could not be found.'}
+      >
+        <Link to="/admin/users" className={notFoundActionClass}>
+          Back to users
+        </Link>
+      </NotFoundState>
+    );
+  }
+
+  if (!user) {
+    return (
+      <NotFoundState
+        title="User not found"
+        message="The requested user could not be found."
+      >
+        <Link to="/admin/users" className={notFoundActionClass}>
+          Back to users
+        </Link>
+      </NotFoundState>
     );
   }
 
@@ -25,8 +41,7 @@ const UserDetails = () => {
     <div className="container mx-auto px-4 py-8">
       <h1 className="text-3xl font-bold text-gray-900 mb-8">User Details</h1>
       
-      {user && (
-        <div className="bg-white shadow-md rounded-lg p-6">
+      <div className="bg-white shadow-md rounded-lg p-6">
           <div className="flex items-center mb-6">
             <UserAvatar
               className="h-20 w-20 rounded-full"
@@ -110,7 +125,6 @@ const UserDetails = () => {
             </button>
           </div>
         </div>
-      )}
     </div>
   );
 };

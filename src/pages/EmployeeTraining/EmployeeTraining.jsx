@@ -1,10 +1,28 @@
 import React from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useGetEmployeeByIdQuery } from '../../store/api';
+import { LoadingScreen, NotFoundState, notFoundActionClass } from '../../components/common';
 
 const EmployeeTraining = () => {
   const { id } = useParams();
-  const { data: employee } = useGetEmployeeByIdQuery(id);
+  const { data: employee, isLoading, isError } = useGetEmployeeByIdQuery(id);
+
+  if (isLoading) {
+    return <LoadingScreen message="Loading employee..." />;
+  }
+
+  if (isError || !employee) {
+    return (
+      <NotFoundState
+        title="Employee not found"
+        message="The requested employee could not be found."
+      >
+        <Link to="/admin/employees" className={notFoundActionClass}>
+          Back to employees
+        </Link>
+      </NotFoundState>
+    );
+  }
 
   return (
     <div className="max-w-3xl mx-auto px-4 py-8">

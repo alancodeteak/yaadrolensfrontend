@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import DocsSection, {
   DocLink,
   DocList,
@@ -9,6 +10,42 @@ import DocsSection, {
 import DocLanguagePicker from './sections/DocLanguagePicker';
 import { DOCS_LANGUAGE_LABEL, DOCS_LANGUAGES } from './docsI18n';
 import { useDocsLanguage } from './DocsLanguageContext';
+
+// #region agent log
+const DEBUG_ENGLISH_TERMS = [
+  'Employees',
+  'Salary',
+  'Settings',
+  'Attendance',
+  'Kiosk setup',
+  'Live Attendance',
+  'Tutorial',
+  'Info',
+  'Get Started',
+];
+
+const findEnglishTermsInContent = (content, lang) => {
+  if (lang === 'en') return [];
+  const hits = [];
+  const scan = (val, path) => {
+    if (typeof val === 'string') {
+      DEBUG_ENGLISH_TERMS.forEach((term) => {
+        if (val.includes(term)) {
+          hits.push({ path, term, snippet: val.slice(0, 120) });
+        }
+      });
+    } else if (Array.isArray(val)) {
+      val.forEach((item, index) => scan(item, `${path}[${index}]`));
+    } else if (val && typeof val === 'object') {
+      if (val.type === 'link') scan(val.label, `${path}.link.label`);
+      if (val.type === 'strong') scan(val.text, `${path}.strong.text`);
+      Object.entries(val).forEach(([key, nested]) => scan(nested, `${path}.${key}`));
+    }
+  };
+  content.sections?.forEach((section, index) => scan(section, `sections[${index}]`));
+  return hits;
+};
+// #endregion
 
 const renderParts = (parts) =>
   parts.map((part, index) => {
@@ -55,6 +92,33 @@ const renderListItem = (item) => {
 const DocsGuidePage = ({ contentByLang }) => {
   const { language, setLanguage } = useDocsLanguage();
   const content = contentByLang[language] || contentByLang.en;
+
+  // #region agent log
+  useEffect(() => {
+    const usedFallback = !contentByLang[language];
+    const englishHits = findEnglishTermsInContent(content, language);
+    fetch('http://127.0.0.1:7515/ingest/538f2235-5832-44cc-ae52-fff8dcaf5d4a', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-Debug-Session-Id': '60137d' },
+      body: JSON.stringify({
+        sessionId: '60137d',
+        runId: 'pre-fix',
+        hypothesisId: usedFallback ? 'H2' : englishHits.length ? 'H1-H3' : 'H5',
+        location: 'DocsGuidePage.jsx:useEffect',
+        message: 'docs guide language render',
+        data: {
+          language,
+          pageTitle: content.pageTitle,
+          usedFallback,
+          englishHitCount: englishHits.length,
+          englishHits: englishHits.slice(0, 12),
+          sectionTitles: content.sections?.map((s) => s.title),
+        },
+        timestamp: Date.now(),
+      }),
+    }).catch(() => {});
+  }, [language, content, contentByLang]);
+  // #endregion
 
   return (
     <div className="space-y-6" lang={language}>

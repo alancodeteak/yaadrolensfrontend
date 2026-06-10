@@ -7,25 +7,33 @@ const enSections = [
       [
         'The ',
         docLink('/admin/payroll', 'Payment'),
-        ' page is for monthly payroll runs — calculate pay from salaries and attendance, review totals, approve, and export.',
+        ' page tracks money paid to employees and manages salary advances. It is separate from the Salary page, which sets monthly pay amounts.',
       ],
     ],
   },
   {
-    title: 'Workflow',
+    title: 'Payment ledger',
     list: [
-      'Choose the month and year, then click Load.',
-      'Click Calculate payroll to generate runs for active employees with salaries set.',
-      'Review gross pay, deductions, and net pay in the table.',
-      'Approve runs when totals look correct, then mark as paid after payment.',
-      'Export CSV for your records or accounting system.',
+      'Choose a month and year to filter payments for that period.',
+      'Click Record payment to log a monthly salary, bonus, or other payout.',
+      'View an employee\'s full payment history from the History action on any row.',
+      'Each monthly salary can only be recorded once per employee per period.',
+    ],
+  },
+  {
+    title: 'Salary advances',
+    list: [
+      'Switch to the Advances tab to request, approve, and disburse advances.',
+      'Advance amount is limited to 50% of the employee\'s monthly salary.',
+      'Workflow: pending → approved → disbursed → recoveries until fully recovered.',
+      'Use Record recovery to deduct advance repayments from future pay.',
     ],
   },
   {
     title: 'Before you start',
     list: [
       'Set employee salaries on the Salary page first.',
-      'Attendance for the period should be recorded via the kiosk.',
+      'Employees must have a salary set before requesting an advance.',
     ],
     footer: [
       'See also: ',
@@ -39,23 +47,23 @@ const enSections = [
 
 export const payrollContent = {
   en: {
-    pageTitle: 'Payment / Payroll',
-    pageSubtitle: 'Calculate and approve monthly payroll for your team.',
+    pageTitle: 'Payment',
+    pageSubtitle: 'Record payouts and manage salary advances for your team.',
     sections: enSections,
   },
   hi: {
-    pageTitle: 'Payment / Payroll',
-    pageSubtitle: 'अपनी टीम के लिए मासिक पेरोल की गणना और अनुमोदन करें।',
+    pageTitle: 'Payment',
+    pageSubtitle: 'अपनी टीम के लिए भुगतान दर्ज करें और वेतन अग्रिम प्रबंधित करें।',
     sections: enSections,
   },
   ml: {
-    pageTitle: 'Payment / Payroll',
-    pageSubtitle: 'നിങ്ങളുടെ ടീമിനായി മാസ പേറോൾ കണക്കാക്കി അംഗീകരിക്കുക.',
+    pageTitle: 'Payment',
+    pageSubtitle: 'നിങ്ങളുടെ ടീമിനായി പേയ്‌മെന്റുകൾ രേഖപ്പെടുത്തി സാലറി അഡ്വാൻസ് കൈകാര്യം ചെയ്യുക.',
     sections: enSections,
   },
   kn: {
-    pageTitle: 'Payment / Payroll',
-    pageSubtitle: 'ನಿಮ್ಮ ತಂಡಕ್ಕಾಗಿ ಮಾಸಿಕ ಪೇರೋಲ್ ಲೆಕ್ಕಾಚಾರ ಮಾಡಿ ಅನುಮೋದಿಸಿ.',
+    pageTitle: 'Payment',
+    pageSubtitle: 'ನಿಮ್ಮ ತಂಡಕ್ಕಾಗಿ ಪೇಮೆಂಟ್‌ಗಳನ್ನು ದಾಖಲಿಸಿ ಮತ್ತು ಸಂಬಳ ಮುಂಗಡ ನಿರ್ವಹಿಸಿ.',
     sections: enSections,
   },
 };

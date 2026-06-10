@@ -85,7 +85,7 @@ const SalaryTable = ({ rows, onEdit, onHistory, highlightId }) => (
                   className={clsx(
                     'inline-flex rounded-full px-2 py-0.5 text-[10px] font-semibold',
                     row.status === 'active' || row.is_active
-                      ? 'bg-emerald-100 text-emerald-700'
+                      ? 'bg-[#34C759]/10 text-[#34C759]'
                       : 'bg-gray-100 text-gray-600'
                   )}
                 >

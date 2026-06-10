@@ -1,64 +1,95 @@
-import React from 'react';
-import { LottieLoader } from '../Lottie';
+import { AlertTriangle, CheckCircle2, HelpCircle } from 'lucide-react';
+import ButtonSpinner from '../ButtonSpinner';
 
-const ConfirmationDialog = ({ 
-  isOpen, 
-  onClose, 
-  onConfirm, 
-  title, 
-  message, 
-  confirmText = 'Confirm', 
+const VARIANTS = {
+  primary: {
+    icon: CheckCircle2,
+    iconWrap: 'bg-[#007AFF]/10 text-[#007AFF]',
+    confirmClass:
+      'rounded-xl bg-[#007AFF] px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-[#0066DD] disabled:cursor-not-allowed disabled:opacity-50',
+  },
+  destructive: {
+    icon: AlertTriangle,
+    iconWrap: 'bg-red-50 text-[#FF3B30]',
+    confirmClass:
+      'rounded-xl bg-[#FF3B30] px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-[#E0352B] disabled:cursor-not-allowed disabled:opacity-50',
+  },
+  neutral: {
+    icon: HelpCircle,
+    iconWrap: 'bg-gray-100 text-gray-600',
+    confirmClass:
+      'rounded-xl bg-[#007AFF] px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-[#0066DD] disabled:cursor-not-allowed disabled:opacity-50',
+  },
+};
+
+const ConfirmationDialog = ({
+  isOpen,
+  onClose,
+  onConfirm,
+  title,
+  message,
+  confirmText = 'Confirm',
   cancelText = 'Cancel',
-  confirmButtonClass = 'bg-red-600 hover:bg-red-700 text-white',
-  isLoading = false 
+  variant = 'primary',
+  confirmButtonClass,
+  isLoading = false,
 }) => {
   if (!isOpen) return null;
 
-  const handleConfirm = () => {
-    onConfirm();
-  };
+  const config = VARIANTS[variant] || VARIANTS.primary;
+  const Icon = config.icon;
+  const confirmClass = confirmButtonClass || config.confirmClass;
 
   return (
-    <div className="fixed inset-0 bg-black/20 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-xl shadow-2xl w-full max-w-md">
-        {/* Header */}
-        <div className="p-6 border-b border-gray-200">
-          <div className="flex items-center">
-            <div className="flex-shrink-0">
-              <svg className="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z" />
-              </svg>
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/20 p-4 backdrop-blur-sm"
+      onClick={onClose}
+      role="presentation"
+    >
+      <div
+        className="flex w-full max-w-md flex-col overflow-hidden rounded-2xl border border-gray-200/60 bg-white shadow-[0_2px_16px_rgba(0,0,0,0.06)]"
+        onClick={(e) => e.stopPropagation()}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="confirmation-dialog-title"
+      >
+        <div className="px-5 py-5">
+          <div className="flex items-start gap-3">
+            <div
+              className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${config.iconWrap}`}
+            >
+              <Icon className="h-5 w-5" strokeWidth={2} aria-hidden="true" />
             </div>
-            <div className="ml-4">
-              <h3 className="text-lg font-semibold text-gray-900">{title}</h3>
+            <div className="min-w-0 flex-1 pt-0.5">
+              <h3 id="confirmation-dialog-title" className="text-lg font-semibold text-gray-900">
+                {title}
+              </h3>
+              {message ? (
+                <p className="mt-1.5 whitespace-pre-line text-sm leading-relaxed text-gray-500">
+                  {message}
+                </p>
+              ) : null}
             </div>
           </div>
         </div>
 
-        {/* Content */}
-        <div className="p-6">
-          <div className="text-sm text-gray-600 whitespace-pre-line">
-            {message}
-          </div>
-        </div>
-
-        {/* Footer */}
-        <div className="flex items-center justify-end space-x-3 p-6 border-t border-gray-200">
+        <div className="flex justify-end gap-3 border-t border-gray-100 px-5 py-4">
           <button
+            type="button"
             onClick={onClose}
-            className="px-4 py-2 text-gray-600 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors duration-200"
             disabled={isLoading}
+            className="rounded-xl border border-gray-200/60 px-4 py-2.5 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
           >
             {cancelText}
           </button>
-          
           <button
-            onClick={handleConfirm}
+            type="button"
+            onClick={onConfirm}
             disabled={isLoading}
-            className={`px-4 py-2 rounded-lg transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2 ${confirmButtonClass}`}
+            className={`inline-flex items-center gap-2 ${confirmClass}`}
           >
-            {isLoading && <LottieLoader size="xs" className="mr-2" />}
-            <span>{isLoading ? 'Processing...' : confirmText}</span>
+            {isLoading && <ButtonSpinner size="sm" className="text-white" />}
+            {isLoading ? 'Processing…' : confirmText}
           </button>
         </div>
       </div>
@@ -67,4 +98,3 @@ const ConfirmationDialog = ({
 };
 
 export default ConfirmationDialog;
-

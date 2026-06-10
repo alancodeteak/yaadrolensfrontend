@@ -10,6 +10,7 @@
   max-width: calc(100vw - 2rem);
   padding: 0 !important;
   pointer-events: none;
+  z-index: 10000 !important;
 }
 
 .dashboard-toast-container .dashboard-toast-item {

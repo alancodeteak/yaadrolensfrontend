@@ -1,7 +1,13 @@
 import { useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { Clock, BarChart3, ScanFace, Pencil } from 'lucide-react';
-import { useGetEmployeeByIdQuery } from '../../store/api';
+import {
+  useGetEmployeeByIdQuery,
+  useGetEmployeePaymentSummaryQuery,
+  useAdjustEmployeeBalanceMutation,
+} from '../../store/api';
+import { BalanceAdjustModal } from '../../components/pages/payment';
+import { dashboardToast } from '../../components/common';
 import {
   ProfileHeader,
   TabNavigation,
@@ -10,7 +16,7 @@ import {
   TrainingStatusCard,
   AttendanceLog,
 } from '../../components/pages/employee-details';
-import { LoadingScreen } from '../../components/common';
+import { LoadingScreen, NotFoundState, notFoundActionClass } from '../../components/common';
 
 const quickActionClass =
   'inline-flex items-center gap-2 rounded-xl border border-gray-200/60 bg-white px-3 py-2 text-xs font-medium text-gray-700 shadow-[0_2px_16px_rgba(0,0,0,0.04)] transition-colors duration-200 hover:bg-gray-50 sm:text-sm';
@@ -18,8 +24,26 @@ const quickActionClass =
 const EmployeeDetails = () => {
   const { id } = useParams();
   const [activeTab, setActiveTab] = useState('personal');
+  const [balanceModalOpen, setBalanceModalOpen] = useState(false);
 
   const { data: employee, isLoading, isError, error, refetch } = useGetEmployeeByIdQuery(id);
+  const { data: paymentSummary, refetch: refetchPaymentSummary } =
+    useGetEmployeePaymentSummaryQuery(id, { skip: !id });
+  const [adjustBalance, { isLoading: isAdjustingBalance }] = useAdjustEmployeeBalanceMutation();
+
+  const handleAdjustBalance = async (payload) => {
+    try {
+      await adjustBalance(payload).unwrap();
+      setBalanceModalOpen(false);
+      dashboardToast.success('Employee balance updated.', 'Balance saved');
+      refetchPaymentSummary();
+    } catch (err) {
+      dashboardToast.error(
+        err?.data?.detail || 'Could not update balance.',
+        'Balance failed'
+      );
+    }
+  };
 
   if (isLoading) {
     return <LoadingScreen message="Loading employee details..." />;
@@ -27,30 +51,30 @@ const EmployeeDetails = () => {
 
   if (isError) {
     return (
-      <div className="flex min-h-[50vh] items-center justify-center px-4">
-        <div className="text-center">
-          <h3 className="text-lg font-medium text-gray-900">Failed to load employee</h3>
-          <p className="mt-1 text-sm text-gray-500">{error?.data?.message || 'Employee not found'}</p>
-          <button
-            type="button"
-            onClick={() => refetch()}
-            className="mt-4 rounded-xl bg-[#007AFF] px-4 py-2 text-sm font-semibold text-white hover:bg-[#0066DD]"
-          >
-            Try again
-          </button>
-        </div>
-      </div>
+      <NotFoundState
+        title="Employee not found"
+        message={error?.data?.message || 'The requested employee could not be found.'}
+      >
+        <button type="button" onClick={() => refetch()} className={notFoundActionClass}>
+          Try again
+        </button>
+        <Link to="/admin/employees" className={notFoundActionClass}>
+          Back to employees
+        </Link>
+      </NotFoundState>
     );
   }
 
   if (!employee) {
     return (
-      <div className="flex min-h-[50vh] items-center justify-center px-4">
-        <div className="text-center">
-          <h3 className="text-lg font-medium text-gray-900">Employee not found</h3>
-          <p className="mt-1 text-sm text-gray-500">The requested employee could not be found.</p>
-        </div>
-      </div>
+      <NotFoundState
+        title="Employee not found"
+        message="The requested employee could not be found."
+      >
+        <Link to="/admin/employees" className={notFoundActionClass}>
+          Back to employees
+        </Link>
+      </NotFoundState>
     );
   }
 
@@ -60,7 +84,11 @@ const EmployeeDetails = () => {
         return (
           <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
             <PersonalDetailsCard employee={employee} />
-            <JobInformationCard employee={employee} />
+            <JobInformationCard
+              employee={employee}
+              paymentSummary={paymentSummary}
+              onAdjustBalance={() => setBalanceModalOpen(true)}
+            />
           </div>
         );
       case 'attendance':
@@ -111,6 +139,14 @@ const EmployeeDetails = () => {
 
         {renderTabContent()}
       </div>
+
+      <BalanceAdjustModal
+        isOpen={balanceModalOpen}
+        employee={employee}
+        onClose={() => setBalanceModalOpen(false)}
+        onSave={handleAdjustBalance}
+        isLoading={isAdjustingBalance}
+      />
     </div>
   );
 };

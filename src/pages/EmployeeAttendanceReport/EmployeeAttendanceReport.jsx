@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { Link, useParams } from 'react-router-dom';
 import { useGetEmployeeReportQuery, useGetEmployeeByIdQuery } from '../../store/api';
 import Card from '../../components/common/Card/Card';
+import { LoadingScreen, NotFoundState, notFoundActionClass } from '../../components/common';
 
 const EmployeeAttendanceReport = () => {
   const { employeeId } = useParams();
@@ -16,7 +17,11 @@ const EmployeeAttendanceReport = () => {
     start_date: dateRange.start_date,
     end_date: dateRange.end_date
   });
-  const { data: employeeData, isLoading: employeeLoading } = useGetEmployeeByIdQuery(employeeId);
+  const {
+    data: employeeData,
+    isLoading: employeeLoading,
+    isError: employeeError,
+  } = useGetEmployeeByIdQuery(employeeId);
 
   const handleDateChange = (field, value) => {
     setDateRange(prev => ({
@@ -26,38 +31,32 @@ const EmployeeAttendanceReport = () => {
   };
 
   if (reportLoading || employeeLoading) {
+    return <LoadingScreen message="Loading attendance report..." />;
+  }
+
+  if (employeeError || !employeeData) {
     return (
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="animate-pulse">
-          <div className="h-8 bg-gray-200 rounded w-1/3 mb-6"></div>
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-            {[1, 2, 3, 4].map(i => (
-              <div key={i} className="h-32 bg-gray-200 rounded"></div>
-            ))}
-          </div>
-          <div className="h-96 bg-gray-200 rounded"></div>
-        </div>
-      </div>
+      <NotFoundState
+        title="Employee not found"
+        message="The requested employee could not be found."
+      >
+        <Link to="/admin/employees" className={notFoundActionClass}>
+          Back to employees
+        </Link>
+      </NotFoundState>
     );
   }
 
   if (reportError) {
     return (
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="bg-red-50 border border-red-200 rounded-lg p-6">
-          <div className="flex">
-            <svg className="w-5 h-5 text-red-400 mr-2 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-            <div>
-              <h3 className="text-sm font-medium text-red-800">Error loading attendance report</h3>
-              <p className="text-sm text-red-700 mt-1">
-                {reportError?.data?.message || 'Failed to load attendance report.'}
-              </p>
-            </div>
-          </div>
-        </div>
-      </div>
+      <NotFoundState
+        title="Attendance report not found"
+        message={reportError?.data?.message || 'The requested attendance report could not be found.'}
+      >
+        <Link to={`/admin/employees/${employeeId}`} className={notFoundActionClass}>
+          Back to employee
+        </Link>
+      </NotFoundState>
     );
   }
 

@@ -6,7 +6,7 @@ export * from './authApi';
 export * from './employeeApi';
 export * from './salaryApi';
 export * from './userApi';
-export * from './payrollApi';
+export * from './paymentApi';
 export * from './attendanceApi';
 export * from './reportsApi';
 export * from './settingsApi';

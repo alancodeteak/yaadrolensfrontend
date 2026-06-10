@@ -25,6 +25,33 @@ export const settingsApi = baseApi.injectEndpoints({
       providesTags: ['Settings'],
     }),
 
+    updatePaymentSettings: builder.mutation({
+      query: (data) => ({
+        url: '/org-admin/settings',
+        method: 'PUT',
+        body: {
+          ...(data.salary_pay_day != null ? { salary_pay_day: data.salary_pay_day } : {}),
+          ...(data.auto_record_monthly_salary != null
+            ? { auto_record_monthly_salary: data.auto_record_monthly_salary }
+            : {}),
+          ...(data.salary_calculation_mode != null
+            ? { salary_calculation_mode: data.salary_calculation_mode }
+            : {}),
+          ...(data.salary_working_days_mode != null
+            ? { salary_working_days_mode: data.salary_working_days_mode }
+            : {}),
+          ...(data.salary_working_days_fixed != null
+            ? { salary_working_days_fixed: data.salary_working_days_fixed }
+            : {}),
+          ...(data.salary_count_half_days != null
+            ? { salary_count_half_days: data.salary_count_half_days }
+            : {}),
+        },
+      }),
+      transformResponse: transformSettingsResponse,
+      invalidatesTags: ['Settings'],
+    }),
+
     updateAttendanceRules: builder.mutation({
       query: (rulesData) => ({
         url: '/org-admin/settings',
@@ -57,6 +84,7 @@ export const {
   useGetSettingsQuery,
   useUpdateSettingsMutation,
   useGetAttendanceRulesQuery,
+  useUpdatePaymentSettingsMutation,
   useUpdateAttendanceRulesMutation,
   useGetDeviceStatusQuery,
   useGetDepartmentsQuery,

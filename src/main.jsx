@@ -21,7 +21,6 @@ import UserManagement from './pages/UserManagement/UserManagement';
 import SystemAdmin from './pages/SystemAdmin/SystemAdmin';
 import AnalyticsDashboard from './pages/AnalyticsDashboard/AnalyticsDashboard';
 import MobileDashboard from './pages/MobileDashboard/MobileDashboard';
-import PayrollDetailsPage from './pages/PayrollDetails/PayrollDetails';
 import PayrollManagement from './pages/PayrollManagement/PayrollManagement';
 import Salary from './pages/Salary/Salary';
 import Reports from './pages/Reports/Reports';
@@ -30,6 +29,7 @@ import Docs from './pages/Docs/Docs';
 import AdminDocsRedirect from './pages/Docs/AdminDocsRedirect';
 import { LiveAttendanceMonitoring } from './components/pages/attendance';
 import { ProtectedRoute, AuthChecker } from './components/common';
+import PageNotFound from './pages/PageNotFound';
 
 function App() {
   return (
@@ -58,7 +58,6 @@ function App() {
               <Route path="employees/:id/training" element={<EmployeeTraining />} />
               <Route path="salary" element={<Salary />} />
               <Route path="payroll" element={<PayrollManagement />} />
-              <Route path="payroll/:id" element={<PayrollDetailsPage />} />
               <Route path="reports" element={<Navigate to="/admin/attendance-dashboard" replace />} />
               <Route path="settings/*" element={<Settings />} />
               <Route path="attendance" element={<LiveAttendanceMonitoring />} />
@@ -68,6 +67,7 @@ function App() {
               <Route path="users" element={<Navigate to="/admin/employees" replace />} />
               <Route path="system" element={<Navigate to="/admin/settings" replace />} />
               <Route path="docs/*" element={<AdminDocsRedirect />} />
+              <Route path="*" element={<PageNotFound />} />
             </Route>
 
             {/* Protected docs routes (top-level /docs) */}
@@ -98,8 +98,8 @@ function App() {
               element={<Navigate to="/admin/dashboard" replace />} 
             />
             
-            {/* Catch all - redirect to login */}
-            <Route path="*" element={<Navigate to="/login" replace />} />
+            {/* Catch all */}
+            <Route path="*" element={<PageNotFound />} />
           </Routes>
         </Router>
         <ToastContainer
@@ -114,7 +114,7 @@ function App() {
           pauseOnFocusLoss={false}
           draggable={false}
           pauseOnHover={false}
-          theme="colored"
+          theme="light"
           toastClassName="dashboard-toast-item"
           bodyClassName="dashboard-toast-body"
         />

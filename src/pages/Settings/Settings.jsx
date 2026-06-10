@@ -12,6 +12,7 @@ import {
 import {
   SettingsSidebar,
   AttendanceRules,
+  PaymentRules,
   CameraDeviceManagement,
   HelpContact,
 } from '../../components/pages/settings';
@@ -78,6 +79,7 @@ const Settings = () => {
           <Routes>
             <Route path="/" element={<Navigate to="/admin/settings/attendance" replace />} />
             <Route path="attendance" element={<AttendanceRules />} />
+            <Route path="payment" element={<PaymentRules />} />
             <Route path="cameras" element={<CameraDeviceManagement />} />
             <Route path="help" element={<HelpContact />} />
             <Route path="*" element={<Navigate to="/admin/settings/attendance" replace />} />

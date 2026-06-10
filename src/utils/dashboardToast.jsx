@@ -15,12 +15,17 @@ const toastOptions = (duration = DEFAULT_DURATION) => ({
   bodyClassName: 'dashboard-toast-body',
 });
 
+const TOAST_IDS = {
+  success: 'dashboard-toast-success',
+  error: 'dashboard-toast-error',
+  info: 'dashboard-toast-info',
+};
+
 const showToast = (variant, message, title, duration = DEFAULT_DURATION) => {
   const refreshKey = Date.now();
-  toast.dismiss();
+  const toastId = `${TOAST_IDS[variant] || `dashboard-${variant}`}-${refreshKey}`;
 
   const notify = variant === 'success' ? toast.success : variant === 'error' ? toast.error : toast.info;
-  const toastId = `dashboard-${variant}-${refreshKey}`;
 
   return notify(
     ({ closeToast }) => (
@@ -40,10 +45,18 @@ const showToast = (variant, message, title, duration = DEFAULT_DURATION) => {
   );
 };
 
+const deferToast = (variant, message, title, duration, delayMs = 200) => {
+  window.setTimeout(() => showToast(variant, message, title, duration), delayMs);
+};
+
 export const dashboardToast = {
   success: (message, title, duration) => showToast('success', message, title, duration),
   error: (message, title, duration) => showToast('error', message, title, duration),
   info: (message, title, duration) => showToast('info', message, title, duration),
+  successAfterOverlay: (message, title, duration, delayMs) =>
+    deferToast('success', message, title, duration, delayMs),
+  errorAfterOverlay: (message, title, duration, delayMs) =>
+    deferToast('error', message, title, duration, delayMs),
 };
 
 export default dashboardToast;

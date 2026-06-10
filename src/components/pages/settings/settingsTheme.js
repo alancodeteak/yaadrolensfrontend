@@ -5,6 +5,7 @@ export const SETTINGS_PANEL =
 export const SETTINGS_ICON_TONES = {
   settings: { bg: 'bg-gray-100', fg: 'text-gray-600' },
   attendance: { bg: 'bg-[#FF9500]/10', fg: 'text-[#FF9500]' },
+  payment: { bg: 'bg-[#5856D6]/10', fg: 'text-[#5856D6]' },
   kiosk: { bg: 'bg-[#007AFF]/10', fg: 'text-[#007AFF]' },
   help: { bg: 'bg-[#34C759]/10', fg: 'text-[#34C759]' },
 };
