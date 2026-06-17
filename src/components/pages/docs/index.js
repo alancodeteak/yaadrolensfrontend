@@ -9,6 +9,7 @@ export { default as DashboardGuide } from './sections/DashboardGuide';
 export { default as EmployeesGuide } from './sections/EmployeesGuide';
 export { default as SalaryGuide } from './sections/SalaryGuide';
 export { default as PayrollGuide } from './sections/PayrollGuide';
+export { default as ReportsGuide } from './sections/ReportsGuide';
 export { default as LiveAttendanceGuide } from './sections/LiveAttendanceGuide';
 export { default as AnalyticsGuide } from './sections/AnalyticsGuide';
 export { default as SettingsGuide } from './sections/SettingsGuide';

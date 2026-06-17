@@ -1,6 +1,24 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import { authApi } from '../api/authApi';
 import { buildUserFromToken } from '../api/transforms';
+import { clearLocalAuth, revokeRefreshToken } from '../../utils/authSession';
+
+const clearAuthState = (state) => {
+  state.user = null;
+  state.access_token = null;
+  state.refresh_token = null;
+  state.isAuthenticated = false;
+  state.error = null;
+  clearLocalAuth();
+};
+
+export const logoutUser = createAsyncThunk('auth/logoutUser', async (_, { getState }) => {
+  const refreshToken =
+    getState().auth?.refresh_token || localStorage.getItem('refresh_token');
+  const accessToken =
+    getState().auth?.access_token || localStorage.getItem('access_token');
+  await revokeRefreshToken(refreshToken, accessToken);
+});
 
 export const login = createAsyncThunk(
   'auth/login',
@@ -77,14 +95,7 @@ const authSlice = createSlice({
       localStorage.removeItem('user');
     },
     logout: (state) => {
-      state.user = null;
-      state.access_token = null;
-      state.refresh_token = null;
-      state.isAuthenticated = false;
-      state.error = null;
-      localStorage.removeItem('access_token');
-      localStorage.removeItem('refresh_token');
-      localStorage.removeItem('user');
+      clearAuthState(state);
     },
     setToken: (state, action) => {
       state.access_token = action.payload;
@@ -124,9 +135,13 @@ const authSlice = createSlice({
         state.access_token = null;
         state.refresh_token = null;
         state.error = action.payload;
-        localStorage.removeItem('access_token');
-        localStorage.removeItem('refresh_token');
-        localStorage.removeItem('user');
+        clearLocalAuth();
+      })
+      .addCase(logoutUser.fulfilled, (state) => {
+        clearAuthState(state);
+      })
+      .addCase(logoutUser.rejected, (state) => {
+        clearAuthState(state);
       });
   },
 });

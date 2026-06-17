@@ -6,7 +6,7 @@ const initialState = {
     companyLogo: '',
     timezone: 'UTC',
     dateFormat: 'DD/MM/YYYY',
-    currency: 'USD',
+    currency: 'INR',
     language: 'en',
   },
   attendanceSettings: {

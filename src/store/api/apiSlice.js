@@ -1,10 +1,8 @@
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
-
-// Define the base URL for your API
-const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1';
+import { API_BASE_URL } from '../../config/apiBaseUrl';
 
 const baseQuery = fetchBaseQuery({
-  baseUrl,
+  baseUrl: API_BASE_URL,
   prepareHeaders: (headers, { getState }) => {
     // Get the token from the auth state or localStorage
     const token = getState().auth.access_token || localStorage.getItem('access_token');
@@ -258,31 +256,6 @@ export const apiSlice = createApi({
       providesTags: ['Attendance'],
     }),
     
-    // Report endpoints
-    getReports: builder.query({
-      query: ({ type = 'all', startDate, endDate } = {}) => ({
-        url: `/reports?type=${type}&startDate=${startDate || ''}&endDate=${endDate || ''}`,
-      }),
-      providesTags: ['Report'],
-    }),
-    
-    generateReport: builder.mutation({
-      query: (reportConfig) => ({
-        url: '/reports/generate',
-        method: 'POST',
-        body: reportConfig,
-      }),
-      invalidatesTags: ['Report'],
-    }),
-    
-    exportReport: builder.mutation({
-      query: ({ reportId, format = 'pdf' }) => ({
-        url: `/reports/${reportId}/export?format=${format}`,
-        method: 'GET',
-        responseHandler: (response) => response.blob(),
-      }),
-    }),
-    
     // Organization Settings endpoints
     getSettings: builder.query({
       query: () => '/organization/settings',
@@ -356,11 +329,6 @@ export const {
   useGetAttendanceHistoryQuery,
   useMarkAttendanceMutation,
   useGetAttendanceStatsQuery,
-  
-  // Report hooks
-  useGetReportsQuery,
-  useGenerateReportMutation,
-  useExportReportMutation,
   
   // Organization Settings hooks
   useGetSettingsQuery,

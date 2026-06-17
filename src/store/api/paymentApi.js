@@ -3,6 +3,7 @@ import {
   normalizeAdvanceDetail,
   normalizeAdvanceRow,
   normalizeAdvances,
+  normalizeBalanceLedger,
   normalizeBalanceTransactions,
   normalizeBalances,
   normalizeBonuses,
@@ -52,6 +53,17 @@ export const paymentApi = baseApi.injectEndpoints({
     getPaymentSummary: builder.query({
       query: () => '/org-admin/payments/summary',
       transformResponse: (response) => normalizePaymentSummary(response),
+      providesTags: ['Payment'],
+    }),
+
+    getMonthlyGenerationStatus: builder.query({
+      query: ({ period_year, period_month } = {}) => {
+        const params = new URLSearchParams();
+        if (period_year != null) params.append('period_year', String(period_year));
+        if (period_month != null) params.append('period_month', String(period_month));
+        const qs = params.toString();
+        return `/org-admin/payments/monthly-generation-status${qs ? `?${qs}` : ''}`;
+      },
       providesTags: ['Payment'],
     }),
 
@@ -107,6 +119,13 @@ export const paymentApi = baseApi.injectEndpoints({
       providesTags: (result, error, { employeeId }) => [
         { type: 'Payment', id: `balance-${employeeId}` },
       ],
+    }),
+
+    getBalanceLedger: builder.query({
+      query: ({ skip = 0, limit = 50 } = {}) =>
+        `/org-admin/payments/balance-ledger?skip=${skip}&limit=${limit}`,
+      transformResponse: (response) => normalizeBalanceLedger(response),
+      providesTags: ['Payment'],
     }),
 
     getEmployeeBalances: builder.query({
@@ -271,6 +290,7 @@ export const paymentApi = baseApi.injectEndpoints({
 export const {
   useGetPaymentsQuery,
   useGetPaymentSummaryQuery,
+  useGetMonthlyGenerationStatusQuery,
   useRecordPaymentMutation,
   useGetEmployeePaymentSummaryQuery,
   useGetEmployeePaymentHistoryQuery,
@@ -289,6 +309,7 @@ export const {
   useBulkApprovePaymentsMutation,
   useAdjustEmployeeBalanceMutation,
   useGetBalanceTransactionsQuery,
+  useGetBalanceLedgerQuery,
   useGetEmployeeBalancesQuery,
   useGetBonusesQuery,
   useCreateBonusMutation,

@@ -60,7 +60,7 @@ const AdminLogin = () => {
   };
 
   return (
-    <div className="relative flex min-h-screen flex-col items-center justify-center bg-gray-50 px-4 py-10 sm:px-6">
+    <div className="login-page relative flex min-h-screen flex-col items-center justify-center bg-gray-50 px-4 py-10 sm:px-6">
       <div
         aria-hidden="true"
         className="pointer-events-none absolute inset-0 overflow-hidden"
@@ -69,24 +69,28 @@ const AdminLogin = () => {
         <div className="absolute -right-24 bottom-0 h-72 w-72 rounded-full bg-[#5856D6]/10 blur-3xl" />
       </div>
 
-      <div className="relative z-10 w-full max-w-md">
-        <div className="mb-8 text-center">
+      <div className="login-shell relative z-10 w-full max-w-md">
+        <div className="login-brand mb-8 text-center">
           <img
-            src="/assets/yadro-logo-blue.png"
+            src="/assets/yaadrolens-logo.png"
             alt="YaadroLens"
-            className="mx-auto h-14 w-auto"
+            width={280}
+            height={64}
+            decoding="async"
+            fetchPriority="high"
+            className="login-logo mx-auto h-16 w-auto max-w-[280px] object-contain"
           />
           <span className="mt-4 inline-flex items-center gap-1.5 rounded-full bg-[#007AFF]/10 px-2.5 py-0.5 text-[11px] font-semibold text-[#007AFF]">
             <ShieldCheck className="h-3.5 w-3.5" strokeWidth={2} aria-hidden="true" />
-            Organization Admin
+            
           </span>
-          <h1 className="mt-3 text-2xl font-bold text-gray-900">Sign in to YaadroLens</h1>
-          <p className="mt-1 text-sm text-gray-500">
+          <h1 className="login-title mt-3 text-2xl font-bold text-gray-900">Sign in to YaadroLens</h1>
+          <p className="login-subtitle mt-1 text-sm text-gray-500">
             Manage attendance, employees, and your organization
           </p>
         </div>
 
-        <div className="rounded-2xl border border-gray-200/60 bg-white p-6 shadow-[0_2px_16px_rgba(0,0,0,0.06)] sm:p-8">
+        <div className="login-card rounded-2xl border border-gray-200/60 bg-white p-6 shadow-[0_2px_16px_rgba(0,0,0,0.06)] sm:p-8">
           <div className="mb-6 flex items-center gap-3 border-b border-gray-100 pb-5">
             <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-[#007AFF]/10 text-[#007AFF]">
               <LogIn className="h-5 w-5" strokeWidth={2} aria-hidden="true" />
@@ -188,6 +192,10 @@ const AdminLogin = () => {
             <img
               src={CODETEAK_LOGO}
               alt="CodeTeak"
+              width={180}
+              height={24}
+              decoding="async"
+              loading="lazy"
               className="h-6 w-auto max-w-[180px] object-contain"
             />
           </a>

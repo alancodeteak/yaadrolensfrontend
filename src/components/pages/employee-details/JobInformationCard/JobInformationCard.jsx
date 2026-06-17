@@ -1,6 +1,7 @@
 import { Scale } from 'lucide-react';
 import Card from '../../../common/Card/Card';
 import { formatMoney } from '../../payment/paymentUtils';
+import { formatMonthlySalary } from '../../../../utils/helpers';
 
 const DetailRow = ({ label, value, icon, badge }) => (
   <div className="flex items-start gap-3 rounded-lg px-2 py-2 transition-colors hover:bg-gray-50/80">
@@ -38,7 +39,7 @@ const JobInformationCard = ({ employee, paymentSummary, onAdjustBalance }) => {
       label: 'Monthly salary',
       value:
         employee.salary != null && employee.salary !== ''
-          ? `$${Number(employee.salary).toLocaleString()}/mo`
+          ? formatMonthlySalary(employee.salary)
           : '—',
       icon: (
         <svg className="h-4 w-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">

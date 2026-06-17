@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import clsx from 'clsx';
 import { ChevronDown, ArrowUpDown, Filter } from 'lucide-react';
 
@@ -23,6 +23,8 @@ const FilterSort = ({
 }) => {
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [isSortOpen, setIsSortOpen] = useState(false);
+  const filterRef = useRef(null);
+  const sortRef = useRef(null);
 
   const departments = [
     { value: 'all', label: 'All departments' },
@@ -37,12 +39,51 @@ const FilterSort = ({
     { value: 'training_status', label: 'Training status' },
   ];
 
+  const activeDepartmentLabel =
+    departments.find((dept) => dept.value === filterDepartment)?.label ?? 'All departments';
+  const activeSortLabel = sortOptions.find((option) => option.value === sortBy)?.label ?? 'Name';
+
+  useEffect(() => {
+    const handlePointerDown = (event) => {
+      if (filterRef.current && !filterRef.current.contains(event.target)) {
+        setIsFilterOpen(false);
+      }
+      if (sortRef.current && !sortRef.current.contains(event.target)) {
+        setIsSortOpen(false);
+      }
+    };
+
+    const handleEscape = (event) => {
+      if (event.key === 'Escape') {
+        setIsFilterOpen(false);
+        setIsSortOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handlePointerDown);
+    document.addEventListener('keydown', handleEscape);
+    return () => {
+      document.removeEventListener('mousedown', handlePointerDown);
+      document.removeEventListener('keydown', handleEscape);
+    };
+  }, []);
+
   return (
-    <div className="flex flex-wrap items-center gap-3">
-      <div className="relative">
-        <button type="button" onClick={() => setIsFilterOpen(!isFilterOpen)} className={triggerClass}>
+    <div className="flex flex-wrap items-center gap-3" data-tour="filter-sort">
+      <div className="relative" ref={filterRef}>
+        <button
+          type="button"
+          onClick={() => {
+            setIsFilterOpen((open) => !open);
+            setIsSortOpen(false);
+          }}
+          className={triggerClass}
+          aria-expanded={isFilterOpen}
+        >
           <Filter className="h-4 w-4 text-gray-500" strokeWidth={2} />
-          Filter
+          <span className="max-w-[8rem] truncate">
+            {filterDepartment === 'all' ? 'Department' : activeDepartmentLabel}
+          </span>
           <ChevronDown className="h-4 w-4 text-gray-400" strokeWidth={2} />
         </button>
 
@@ -65,10 +106,18 @@ const FilterSort = ({
         )}
       </div>
 
-      <div className="relative">
-        <button type="button" onClick={() => setIsSortOpen(!isSortOpen)} className={triggerClass}>
+      <div className="relative" ref={sortRef}>
+        <button
+          type="button"
+          onClick={() => {
+            setIsSortOpen((open) => !open);
+            setIsFilterOpen(false);
+          }}
+          className={triggerClass}
+          aria-expanded={isSortOpen}
+        >
           <ArrowUpDown className="h-4 w-4 text-gray-500" strokeWidth={2} />
-          Sort
+          <span className="max-w-[8rem] truncate">Sort: {activeSortLabel}</span>
           <ChevronDown className="h-4 w-4 text-gray-400" strokeWidth={2} />
         </button>
 

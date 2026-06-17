@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { X } from 'lucide-react';
 import { DashboardDatePicker, ButtonSpinner } from '../../../common';
-import { PAYMENT_METHOD_LABELS } from '../paymentUtils';
+import { formatMoney, PAYMENT_METHOD_LABELS } from '../paymentUtils';
 
 const PaymentMarkPaidModal = ({ isOpen, payment, onClose, onSave, isLoading }) => {
   const today = new Date().toISOString().slice(0, 10);
@@ -40,7 +40,7 @@ const PaymentMarkPaidModal = ({ isOpen, payment, onClose, onSave, isLoading }) =
           <div>
             <h2 className="text-lg font-semibold text-gray-900">Mark as paid</h2>
             <p className="text-sm text-gray-500">
-              {payment.employee_name} · {payment.amount != null ? `$${Number(payment.amount).toLocaleString()}` : ''}
+              {payment.employee_name} · {payment.amount != null ? formatMoney(payment.amount) : ''}
             </p>
           </div>
           <button type="button" onClick={onClose} className="rounded-lg p-2 text-gray-400 hover:bg-gray-100">

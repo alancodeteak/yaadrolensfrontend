@@ -1,11 +1,8 @@
 import { baseApi } from './baseApi';
+import { API_BASE_URL } from '../../config/apiBaseUrl';
 
 /** API origin without /api/v1 — for GET /health */
-const apiOrigin = (
-  import.meta.env.VITE_API_URL ||
-  import.meta.env.VITE_API_BASE_URL ||
-  'http://localhost:8000/api/v1'
-).replace(/\/api\/v1\/?$/, '');
+const apiOrigin = API_BASE_URL.replace(/\/api\/v1\/?$/, '');
 
 const notAvailable = (feature) => ({
   error: {

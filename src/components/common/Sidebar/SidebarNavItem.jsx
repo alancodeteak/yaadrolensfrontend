@@ -11,18 +11,18 @@ const SidebarNavItem = ({ icon: Icon, label, isActive, collapsed, comingSoon = f
       aria-current={isActive ? 'page' : undefined}
       aria-label={collapsed ? (comingSoon ? `${label}, coming soon` : label) : undefined}
       aria-disabled={comingSoon || undefined}
-      className={sidebarRowClass(
-        collapsed,
-        clsx(
-          'relative rounded-xl text-left transition-colors duration-200',
-          comingSoon ? 'cursor-default text-gray-400' : 'cursor-pointer',
-          !comingSoon && isActive && 'bg-[#007AFF]/10 font-semibold text-[#007AFF]',
-          'group',
-          !comingSoon && !isActive && 'font-medium text-gray-600 hover:bg-gray-50 hover:text-gray-900'
-        )
+      className={clsx(
+        'relative rounded-xl transition-colors duration-200',
+        collapsed
+          ? 'mx-auto flex h-10 w-10 shrink-0 items-center justify-center'
+          : sidebarRowClass(false),
+        comingSoon ? 'cursor-default text-gray-400' : 'cursor-pointer',
+        !comingSoon && isActive && 'bg-[#007AFF]/10 font-semibold text-[#007AFF]',
+        'group',
+        !comingSoon && !isActive && 'font-medium text-gray-600 hover:bg-gray-50 hover:text-gray-900'
       )}
     >
-      {!comingSoon && isActive && (
+      {!comingSoon && isActive && !collapsed && (
         <span
           className="absolute left-0 top-1/2 h-5 w-0.5 -translate-y-1/2 rounded-r-full bg-[#007AFF]"
           aria-hidden="true"
@@ -38,8 +38,9 @@ const SidebarNavItem = ({ icon: Icon, label, isActive, collapsed, comingSoon = f
       />
       <span
         className={clsx(
-          'flex min-w-0 flex-1 items-center gap-2 overflow-hidden whitespace-nowrap transition-[opacity,width] duration-200',
-          collapsed ? 'w-0 opacity-0' : 'opacity-100'
+          collapsed
+            ? 'hidden'
+            : 'flex min-w-0 flex-1 items-center gap-2 overflow-hidden whitespace-nowrap opacity-100'
         )}
         aria-hidden={collapsed}
       >

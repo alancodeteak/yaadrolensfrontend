@@ -31,6 +31,8 @@ const PaymentToolbar = ({
   onBonusStatusFilterChange,
   balanceFilter,
   onBalanceFilterChange,
+  onClearFilters,
+  hasActiveFilters,
 }) => {
   const showPeriod = activeTab === 'ledger' || activeTab === 'bonuses';
 
@@ -72,6 +74,8 @@ const PaymentToolbar = ({
         onBonusStatusFilterChange={onBonusStatusFilterChange}
         balanceFilter={balanceFilter}
         onBalanceFilterChange={onBalanceFilterChange}
+        onClearFilters={onClearFilters}
+        hasActiveFilters={hasActiveFilters}
       />
     </div>
   </div>

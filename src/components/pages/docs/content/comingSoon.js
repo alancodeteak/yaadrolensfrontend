@@ -11,7 +11,6 @@ export const comingSoonContent = {
           'You may see these in the sidebar. They are placeholders and do not open working pages yet:',
         ],
         list: [
-          'Report',
           'Tax',
           'Reimbursements',
           'Loan',
@@ -46,7 +45,6 @@ export const comingSoonContent = {
           'ये आपको sidebar में दिख सकते हैं। ये placeholders हैं और अभी काम करने वाले पेज नहीं खोलते:',
         ],
         list: [
-          'Report',
           'Tax',
           'Reimbursements',
           'Loan',
@@ -81,7 +79,6 @@ export const comingSoonContent = {
           'ഇവ sidebarൽ കാണാം. ഇവ placeholders ആണ്; ഇപ്പോൾ പ്രവർത്തിക്കുന്ന പേജുകൾ തുറക്കില്ല:',
         ],
         list: [
-          'Report',
           'Tax',
           'Reimbursements',
           'Loan',
@@ -116,7 +113,6 @@ export const comingSoonContent = {
           'ಇವು sidebar ನಲ್ಲಿ ಕಾಣಬಹುದು. ಇವು placeholders ಆಗಿದ್ದು, ಇನ್ನೂ ಕೆಲಸ ಮಾಡುವ ಪುಟಗಳನ್ನು ತೆರೆಯುವುದಿಲ್ಲ:',
         ],
         list: [
-          'Report',
           'Tax',
           'Reimbursements',
           'Loan',

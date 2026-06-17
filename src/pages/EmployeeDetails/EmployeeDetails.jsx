@@ -12,6 +12,7 @@ import {
   ProfileHeader,
   TabNavigation,
   PersonalDetailsCard,
+  IdentityDocumentsCard,
   JobInformationCard,
   TrainingStatusCard,
   AttendanceLog,
@@ -35,7 +36,7 @@ const EmployeeDetails = () => {
     try {
       await adjustBalance(payload).unwrap();
       setBalanceModalOpen(false);
-      dashboardToast.success('Employee balance updated.', 'Balance saved');
+      dashboardToast.success('Balance adjustment recorded in the ledger.', 'Adjustment saved');
       refetchPaymentSummary();
     } catch (err) {
       dashboardToast.error(
@@ -84,6 +85,7 @@ const EmployeeDetails = () => {
         return (
           <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
             <PersonalDetailsCard employee={employee} />
+            <IdentityDocumentsCard employee={employee} />
             <JobInformationCard
               employee={employee}
               paymentSummary={paymentSummary}
@@ -92,7 +94,7 @@ const EmployeeDetails = () => {
           </div>
         );
       case 'attendance':
-        return <AttendanceLog />;
+        return <AttendanceLog employeeId={employee.id} />;
       case 'training':
         return <TrainingStatusCard employee={employee} />;
       default:

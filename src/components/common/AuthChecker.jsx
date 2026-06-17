@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { logout, setToken } from '../../store/slices';
-import { LoadingScreen } from './Lottie';
+import { setToken, logout } from '../../store/slices';
+import LoadingScreen from './Lottie/LoadingScreen';
 
 const AuthChecker = ({ children }) => {
   const dispatch = useDispatch();
@@ -22,8 +22,9 @@ const AuthChecker = ({ children }) => {
     try {
       const tokenPayload = JSON.parse(atob(accessToken.split('.')[1]));
       const currentTime = Date.now() / 1000;
+      const accessValid = tokenPayload.exp && tokenPayload.exp > currentTime;
 
-      if (tokenPayload.exp && tokenPayload.exp > currentTime) {
+      if (accessValid || refreshToken) {
         dispatch(setToken(accessToken));
       } else {
         dispatch(logout());
@@ -32,7 +33,7 @@ const AuthChecker = ({ children }) => {
       console.error('Error checking auth status:', error);
       dispatch(logout());
     }
-  }, [dispatch]);
+  }, [dispatch, isAuthenticated]);
 
   if (loading) {
     return <LoadingScreen message="Loading application..." />;

@@ -2,10 +2,22 @@ import { useEffect, useState } from 'react';
 import clsx from 'clsx';
 import { X } from 'lucide-react';
 import { dashboardToast } from '../../../common';
-import { useGetDepartmentsQuery } from '../../../../store/api/settingsApi';
-import ProfilePhotoField from '../ProfilePhotoField';
+import { useGetDepartmentsQuery, useGetSettingsQuery } from '../../../../store/api/settingsApi';
 
-const labelClass = 'mb-1.5 block text-xs font-medium text-gray-500';
+const WEEKDAY_OPTIONS = [
+  { value: 0, label: 'Mon' },
+  { value: 1, label: 'Tue' },
+  { value: 2, label: 'Wed' },
+  { value: 3, label: 'Thu' },
+  { value: 4, label: 'Fri' },
+  { value: 5, label: 'Sat' },
+  { value: 6, label: 'Sun' },
+];
+import ProfilePhotoField from '../ProfilePhotoField';
+import EmployeeDocumentsField from '../EmployeeDocumentsField';
+import { EMPTY_DOCUMENT_STATE, hasDocumentChanges } from '../../../../utils/employeeDocumentConstants';
+
+const labelClass = 'mb-1 block text-[10px] font-medium uppercase tracking-wide text-gray-400';
 const inputClass =
   'w-full rounded-xl border border-gray-200/60 bg-white px-3.5 py-2.5 text-sm text-gray-900 shadow-[0_2px_16px_rgba(0,0,0,0.04)] placeholder:text-gray-400 transition-colors duration-200 focus:border-[#007AFF] focus:outline-none focus:ring-2 focus:ring-[#007AFF]/20 disabled:opacity-50';
 
@@ -17,17 +29,22 @@ const EmployeeEditModal = ({ isOpen, onClose, onSave, employee, isLoading }) => 
     phone: '',
     salary: '',
     is_active: true,
+    useOrgWeeklyOff: true,
+    weekly_off_days: [],
+    paid_leaves_per_month: '',
   });
 
   const [errors, setErrors] = useState({});
   const [photoFile, setPhotoFile] = useState(null);
   const [removePhoto, setRemovePhoto] = useState(false);
   const [photoError, setPhotoError] = useState('');
+  const [documentState, setDocumentState] = useState(EMPTY_DOCUMENT_STATE);
   const {
     data: departments = [],
     isLoading: departmentsLoading,
     isError: departmentsError,
   } = useGetDepartmentsQuery({ active_only: true });
+  const { data: orgSettings } = useGetSettingsQuery();
 
   useEffect(() => {
     if (employee) {
@@ -38,11 +55,21 @@ const EmployeeEditModal = ({ isOpen, onClose, onSave, employee, isLoading }) => 
         phone: employee.phone || '',
         salary: employee.salary != null ? String(employee.salary) : '',
         is_active: employee.is_active !== undefined ? employee.is_active : true,
+        useOrgWeeklyOff: !employee.weekly_off_days || employee.weekly_off_days.length === 0,
+        weekly_off_days: employee.weekly_off_days || orgSettings?.default_weekly_off_days || [6],
+        paid_leaves_per_month:
+          employee.paid_leaves_per_month != null ? String(employee.paid_leaves_per_month) : '',
       });
     }
     setPhotoFile(null);
     setRemovePhoto(false);
     setPhotoError('');
+    setDocumentState({
+      docType: employee?.identity_document?.type || 'aadhaar',
+      otherLabel: employee?.identity_document?.label || '',
+      uploads: { front: null, back: null },
+      deletes: { front: false, back: false },
+    });
   }, [employee]);
 
   const handleInputChange = (e) => {
@@ -83,14 +110,22 @@ const EmployeeEditModal = ({ isOpen, onClose, onSave, employee, isLoading }) => 
         phone: employee?.phone || '',
         salary: employee?.salary != null ? String(employee.salary) : '',
         is_active: employee?.is_active !== undefined ? employee.is_active : true,
+        useOrgWeeklyOff: !employee?.weekly_off_days || employee.weekly_off_days.length === 0,
+        weekly_off_days: employee?.weekly_off_days || [],
+        paid_leaves_per_month:
+          employee?.paid_leaves_per_month != null ? String(employee.paid_leaves_per_month) : '',
       };
 
       Object.keys(formData).forEach((key) => {
+        if (key === 'useOrgWeeklyOff' || key === 'weekly_off_days') return;
         if (formData[key] !== originalData[key]) {
           if (key === 'department_id' || key === 'position' || key === 'phone') {
             updateData[key] = formData[key] || null;
           } else if (key === 'salary') {
             updateData.salary = formData.salary === '' ? null : formData.salary;
+          } else if (key === 'paid_leaves_per_month') {
+            updateData.paid_leaves_per_month =
+              formData.paid_leaves_per_month === '' ? null : Number(formData.paid_leaves_per_month);
           } else {
             updateData[key] =
               typeof formData[key] === 'string' ? formData[key].trim() : formData[key];
@@ -98,13 +133,27 @@ const EmployeeEditModal = ({ isOpen, onClose, onSave, employee, isLoading }) => 
         }
       });
 
-      if (Object.keys(updateData).length === 0) {
+      const weeklyOffChanged =
+        formData.useOrgWeeklyOff !== originalData.useOrgWeeklyOff ||
+        JSON.stringify([...formData.weekly_off_days].sort()) !==
+          JSON.stringify([...(originalData.weekly_off_days || [])].sort());
+      if (weeklyOffChanged) {
+        updateData.weekly_off_days = formData.useOrgWeeklyOff ? null : formData.weekly_off_days;
+      }
+
+      const hasPhotoChange = Boolean(photoFile) || removePhoto;
+      const hasDocChange = hasDocumentChanges(documentState);
+
+      if (Object.keys(updateData).length === 0 && !hasPhotoChange && !hasDocChange) {
         dashboardToast.info('No changes to save.', 'Nothing changed');
         onClose();
         return;
       }
 
-      await onSave({ id: employee.id, ...updateData }, { photoFile, removePhoto });
+      await onSave(
+        { id: employee.id, ...updateData },
+        { photoFile, removePhoto, documentState }
+      );
       setPhotoFile(null);
       setRemovePhoto(false);
       setErrors({});
@@ -129,6 +178,7 @@ const EmployeeEditModal = ({ isOpen, onClose, onSave, employee, isLoading }) => 
     setPhotoFile(null);
     setRemovePhoto(false);
     setPhotoError('');
+    setDocumentState(EMPTY_DOCUMENT_STATE);
     onClose();
   };
 
@@ -271,6 +321,79 @@ const EmployeeEditModal = ({ isOpen, onClose, onSave, employee, isLoading }) => 
                 value={formData.phone}
                 onChange={handleInputChange}
                 className={inputClass}
+              />
+            </div>
+
+            <div className="md:col-span-2 rounded-xl border border-gray-200/60 bg-gray-50/40 p-4">
+              <p className="mb-3 text-xs font-semibold text-gray-700">Weekly off days</p>
+              <label className="mb-3 flex items-center gap-2 text-sm text-gray-700">
+                <input
+                  type="checkbox"
+                  checked={formData.useOrgWeeklyOff}
+                  onChange={(e) =>
+                    setFormData((prev) => ({
+                      ...prev,
+                      useOrgWeeklyOff: e.target.checked,
+                      weekly_off_days: e.target.checked
+                        ? orgSettings?.default_weekly_off_days || [6]
+                        : prev.weekly_off_days,
+                    }))
+                  }
+                  className="h-4 w-4 rounded border-gray-300 text-[#007AFF]"
+                />
+                Use organization default
+              </label>
+              {!formData.useOrgWeeklyOff && (
+                <div className="flex flex-wrap gap-2">
+                  {WEEKDAY_OPTIONS.map((wd) => (
+                    <button
+                      key={wd.value}
+                      type="button"
+                      onClick={() =>
+                        setFormData((prev) => ({
+                          ...prev,
+                          weekly_off_days: prev.weekly_off_days.includes(wd.value)
+                            ? prev.weekly_off_days.filter((d) => d !== wd.value)
+                            : [...prev.weekly_off_days, wd.value].sort((a, b) => a - b),
+                        }))
+                      }
+                      className={clsx(
+                        'rounded-lg border px-3 py-1.5 text-xs font-semibold',
+                        formData.weekly_off_days.includes(wd.value)
+                          ? 'border-[#007AFF] bg-[#007AFF]/10 text-[#007AFF]'
+                          : 'border-gray-200 text-gray-600'
+                      )}
+                    >
+                      {wd.label}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <div>
+              <label htmlFor="edit-paid-leaves" className={labelClass}>
+                Paid leaves per month (override)
+              </label>
+              <input
+                id="edit-paid-leaves"
+                type="number"
+                name="paid_leaves_per_month"
+                min="0"
+                max="31"
+                value={formData.paid_leaves_per_month}
+                onChange={handleInputChange}
+                className={inputClass}
+                placeholder={`Org default: ${orgSettings?.paid_leaves_per_month ?? 2}`}
+              />
+            </div>
+
+            <div className="md:col-span-2 rounded-xl border border-gray-200/60 bg-gray-50/40 p-4">
+              <EmployeeDocumentsField
+                employeeId={employee?.id}
+                identityDocument={employee?.identity_document}
+                documentState={documentState}
+                onDocumentStateChange={setDocumentState}
               />
             </div>
 

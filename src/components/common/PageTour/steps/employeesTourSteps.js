@@ -15,7 +15,7 @@ export const EMPLOYEES_GUIDE_STEPS = [
     id: 'employee-table',
     selector: '[data-tour="employee-table"]',
     title: 'Employee table',
-    body: 'Browse all employees with department, status, and face enrollment. Edit or deactivate from the row actions.',
+    body: 'Browse all employees with department, status, and face enrollment. Edit to update details, profile photo, or identity documents (Aadhaar, PAN, etc.).',
   },
   {
     id: 'pagination',

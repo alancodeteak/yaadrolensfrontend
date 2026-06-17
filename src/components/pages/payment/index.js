@@ -16,5 +16,6 @@ export { default as BalanceAdjustModal } from './BalanceAdjustModal';
 export { default as BonusCreateModal } from './BonusCreateModal';
 export { default as BonusTable } from './BonusTable';
 export { default as BalanceTable } from './BalanceTable';
+export { default as BalanceLedgerTable } from './BalanceLedgerTable';
 export { default as BalanceHistoryPanel } from './BalanceHistoryPanel';
 export { default as OutstandingPanel } from './OutstandingPanel';

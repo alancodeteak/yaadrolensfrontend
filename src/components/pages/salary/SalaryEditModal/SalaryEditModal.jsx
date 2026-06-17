@@ -1,6 +1,17 @@
 import { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { X } from 'lucide-react';
-import { DashboardDatePicker, LottieLoader, dashboardToast } from '../../../common';
+import {
+  DashboardDatePicker,
+  LottieLoader,
+  UserAvatar,
+  dashboardToast,
+} from '../../../common';
+import {
+  DASHBOARD_BTN_PRIMARY,
+  DASHBOARD_BTN_SECONDARY,
+} from '../../dashboard/dashboardTheme';
+import { formatMonthlySalary } from '../../../../utils/helpers';
 
 const labelClass = 'mb-1.5 block text-xs font-medium text-gray-500';
 const inputClass =
@@ -15,6 +26,8 @@ const SalaryEditModal = ({ isOpen, employee, onClose, onSave, isLoading }) => {
     reason: '',
   });
   const [errors, setErrors] = useState({});
+
+  const currentSalary = employee?.current_salary;
 
   useEffect(() => {
     if (isOpen && employee) {
@@ -33,6 +46,12 @@ const SalaryEditModal = ({ isOpen, employee, onClose, onSave, isLoading }) => {
     const amount = Number(formData.new_amount);
     if (!formData.new_amount || Number.isNaN(amount) || amount <= 0) {
       next.new_amount = 'Enter a valid salary greater than zero';
+    } else if (
+      currentSalary != null &&
+      !Number.isNaN(amount) &&
+      Number(currentSalary) === amount
+    ) {
+      next.new_amount = 'New salary must differ from the current amount';
     }
     if (!formData.effective_date) {
       next.effective_date = 'Effective date is required';
@@ -76,13 +95,21 @@ const SalaryEditModal = ({ isOpen, employee, onClose, onSave, isLoading }) => {
         aria-labelledby="salary-edit-title"
       >
         <div className="flex items-center justify-between border-b border-gray-100 px-5 py-4">
-          <div>
-            <h2 id="salary-edit-title" className="text-lg font-semibold text-gray-900">
-              Update salary
-            </h2>
-            <p className="text-sm text-gray-500">
-              {employee.name} · {employee.employee_code}
-            </p>
+          <div className="flex items-center gap-3">
+            <UserAvatar
+              className="h-10 w-10 shrink-0 rounded-full object-cover ring-1 ring-gray-100"
+              src={employee.profilePhotoUrl || employee.photo || employee.avatar}
+              name={employee.name}
+              seed={employee.employee_id || employee.id}
+            />
+            <div>
+              <h2 id="salary-edit-title" className="text-lg font-semibold text-gray-900">
+                Update salary
+              </h2>
+              <p className="text-sm text-gray-500">
+                {employee.name} · {employee.employee_code}
+              </p>
+            </div>
           </div>
           <button
             type="button"
@@ -96,9 +123,18 @@ const SalaryEditModal = ({ isOpen, employee, onClose, onSave, isLoading }) => {
 
         <form onSubmit={handleSubmit} className="flex flex-1 flex-col overflow-hidden">
           <div className="space-y-4 overflow-y-auto px-5 py-4">
+            {currentSalary != null && (
+              <div className="rounded-xl border border-gray-100 bg-gray-50/80 px-3 py-2.5 text-sm">
+                <span className="text-gray-500">Current monthly salary: </span>
+                <span className="font-semibold tabular-nums text-gray-900">
+                  {formatMonthlySalary(currentSalary)}
+                </span>
+              </div>
+            )}
+
             <div>
               <label htmlFor="salary-amount" className={labelClass}>
-                Monthly salary (USD)
+                New monthly salary (INR)
               </label>
               <input
                 id="salary-amount"
@@ -145,6 +181,14 @@ const SalaryEditModal = ({ isOpen, employee, onClose, onSave, isLoading }) => {
                 disabled={isLoading}
               />
             </div>
+
+            <p className="text-xs text-gray-500">
+              After saving, generate payments on the{' '}
+              <Link to="/admin/payroll" className="font-medium text-[#007AFF] hover:underline">
+                Payment
+              </Link>{' '}
+              page.
+            </p>
           </div>
 
           <div className="flex justify-end gap-3 border-t border-gray-100 px-5 py-4">
@@ -152,15 +196,11 @@ const SalaryEditModal = ({ isOpen, employee, onClose, onSave, isLoading }) => {
               type="button"
               onClick={onClose}
               disabled={isLoading}
-              className="rounded-xl border border-gray-200/60 px-4 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+              className={DASHBOARD_BTN_SECONDARY}
             >
               Cancel
             </button>
-            <button
-              type="submit"
-              disabled={isLoading}
-              className="inline-flex items-center gap-2 rounded-xl bg-[#007AFF] px-4 py-2.5 text-sm font-semibold text-white hover:bg-[#0066DD] disabled:opacity-50"
-            >
+            <button type="submit" disabled={isLoading} className={DASHBOARD_BTN_PRIMARY}>
               {isLoading && <LottieLoader size={18} />}
               Save salary
             </button>

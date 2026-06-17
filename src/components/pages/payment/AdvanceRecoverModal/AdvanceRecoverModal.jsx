@@ -98,7 +98,7 @@ const AdvanceRecoverModal = ({ isOpen, advance, onClose, onSave, isLoading }) =>
           <div className="space-y-4 overflow-y-auto px-5 py-4">
             <div>
               <label htmlFor="recover-amount" className={labelClass}>
-                Recovery amount (USD)
+                Recovery amount (INR)
               </label>
               <input
                 id="recover-amount"

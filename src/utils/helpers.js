@@ -23,14 +23,24 @@ export const formatDate = (date, format = 'DD/MM/YYYY') => {
   }
 };
 
-// Currency formatting
-export const formatCurrency = (amount, currency = 'USD') => {
+// Currency formatting (INR by default)
+export const formatCurrency = (
+  amount,
+  { currency = 'INR', locale = 'en-IN', minimumFractionDigits, maximumFractionDigits } = {},
+) => {
   if (amount === null || amount === undefined) return '';
-  
-  return new Intl.NumberFormat('en-US', {
+
+  return new Intl.NumberFormat(locale, {
     style: 'currency',
-    currency: currency,
+    currency,
+    ...(minimumFractionDigits !== undefined ? { minimumFractionDigits } : {}),
+    ...(maximumFractionDigits !== undefined ? { maximumFractionDigits } : {}),
   }).format(amount);
+};
+
+export const formatMonthlySalary = (amount) => {
+  if (amount === null || amount === undefined) return '—';
+  return `${formatCurrency(amount, { maximumFractionDigits: 0 })}/mo`;
 };
 
 // Number formatting

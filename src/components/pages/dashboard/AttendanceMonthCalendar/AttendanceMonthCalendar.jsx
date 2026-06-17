@@ -133,7 +133,7 @@ const AttendanceMonthCalendar = ({
   };
 
   return (
-    <div className="rounded-2xl border border-gray-200/60 bg-white shadow-[0_2px_16px_rgba(0,0,0,0.06)]">
+    <div className="flex h-full min-h-[24rem] flex-col rounded-2xl border border-gray-200/60 bg-white shadow-[0_2px_16px_rgba(0,0,0,0.06)] [contain:layout]">
       <div className="border-b border-gray-100 px-4 py-3">
         <h2 className="text-sm font-semibold text-gray-900">{title}</h2>
         <div className="flex flex-wrap items-center gap-2">

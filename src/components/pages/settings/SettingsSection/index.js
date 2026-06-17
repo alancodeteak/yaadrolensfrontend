@@ -1,7 +1,8 @@
+export { default } from './SettingsSection';
 export {
-  default,
   settingsInputClass,
   settingsLabelClass,
+  SettingsSectionMeta,
   SettingsPageHeader,
   SettingsContentGrid,
 } from './SettingsSection';

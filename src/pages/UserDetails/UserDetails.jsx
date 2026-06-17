@@ -2,6 +2,7 @@ import React from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { useGetUserByIdQuery } from '../../store/api/apiSlice';
 import { LoadingScreen, UserAvatar, NotFoundState, notFoundActionClass } from '../../components/common';
+import { formatCurrency } from '../../utils/helpers';
 
 const UserDetails = () => {
   const { id } = useParams();
@@ -106,7 +107,7 @@ const UserDetails = () => {
                 <div>
                   <span className="font-medium text-gray-700">Salary:</span>
                   <span className="ml-2 text-gray-900">
-                    {user.salary ? `$${user.salary.toLocaleString()}` : 'N/A'}
+                    {user.salary ? formatCurrency(user.salary, { maximumFractionDigits: 0 }) : 'N/A'}
                   </span>
                 </div>
               </div>

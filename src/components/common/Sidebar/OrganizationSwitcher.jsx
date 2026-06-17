@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { LogOut, ChevronsUpDown } from 'lucide-react';
-import { logout } from '../../../store/slices';
+import { logoutUser } from '../../../store/slices';
 import SidebarIdentityChip from './SidebarIdentityChip';
 
 const OrganizationSwitcher = ({ collapsed = false }) => {
@@ -33,8 +33,8 @@ const OrganizationSwitcher = ({ collapsed = false }) => {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [open]);
 
-  const handleLogout = () => {
-    dispatch(logout());
+  const handleLogout = async () => {
+    await dispatch(logoutUser());
     navigate('/login', { replace: true });
   };
 

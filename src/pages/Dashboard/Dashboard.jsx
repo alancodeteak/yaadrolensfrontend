@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useMemo } from 'react';
 import { useSelector } from 'react-redux';
 import {
   DASHBOARD_GUIDE_STEPS,
@@ -12,9 +12,11 @@ import {
   ActivityRingsChart,
   DashboardWidgetCard,
   AttendanceMonthCalendar,
-  IndiaHolidaysCard,
+  PaymentAlertsFeed,
+  PaymentScheduleCard,
   RecentActivityFeed,
 } from '../../components/pages/dashboard';
+import { PaymentStatsRow } from '../../components/pages/payment';
 import { getDefaultAvatar } from '../../utils/avatar';
 
 const ACCENT = {
@@ -26,6 +28,26 @@ const ACCENT = {
   gray: '#8E8E93',
 };
 
+const DEFAULT_PAYMENT_SUMMARY = {
+  paid_this_month: 0,
+  payment_count_this_month: 0,
+  outstanding_advance_total: 0,
+  outstanding_advance_count: 0,
+  pending_advance_count: 0,
+  pending_salary_count: 0,
+  unpaid_salary_total: 0,
+};
+
+const WORKFORCE_LABELS = ['Active', 'New', 'Enrolled', 'Depts'];
+const TODAY_LABELS = ['Present', 'Absent', 'Late', 'Present rate'];
+const ACTION_LABELS = ['Need enroll', 'Profiles', 'Kiosk'];
+
+const PLACEHOLDER_ACTIVITY_RINGS = [
+  { label: 'Present today', value: 0, color: ACCENT.blue },
+  { label: 'Avg attendance', value: 0, color: ACCENT.purple },
+  { label: 'Punctuality', value: 0, color: ACCENT.green },
+];
+
 const Dashboard = () => {
   const user = useSelector((state) => state.auth.user);
   const { infoOpen, startTutorial, startInfo, closeInfo } = usePageTour(
@@ -33,25 +55,11 @@ const Dashboard = () => {
     'dashboard_tour_completed'
   );
   const { data: summary, isLoading, isError } = useGetDashboardSummaryQuery({});
-  const calendarRef = useRef(null);
-  const [calendarHeight, setCalendarHeight] = useState(null);
 
   const { data: activityLogs = [], isLoading: activitiesLoading } = useGetAttendanceLogsQuery(
     { end_date: summary?.date, limit: 5 },
     { skip: !summary?.date }
   );
-
-  useEffect(() => {
-    const el = calendarRef.current;
-    if (!el) return undefined;
-
-    const updateHeight = () => setCalendarHeight(el.offsetHeight);
-    updateHeight();
-
-    const observer = new ResizeObserver(updateHeight);
-    observer.observe(el);
-    return () => observer.disconnect();
-  }, [isLoading, summary?.month, summary?.date]);
 
   const recentActivities = useMemo(
     () =>
@@ -71,7 +79,9 @@ const Dashboard = () => {
   );
 
   const activityRings = useMemo(() => {
-    if (!summary) return [];
+    if (!summary) {
+      return isLoading ? PLACEHOLDER_ACTIVITY_RINGS : [];
+    }
     return [
       {
         label: 'Present today',
@@ -89,7 +99,7 @@ const Dashboard = () => {
         color: ACCENT.green,
       },
     ];
-  }, [summary]);
+  }, [summary, isLoading]);
 
   const workforceStats = useMemo(() => {
     const wf = summary?.workforce;
@@ -123,6 +133,10 @@ const Dashboard = () => {
     ];
   }, [summary]);
 
+  const paymentSummary = summary?.payments?.summary;
+  const paymentSchedule = summary?.payments?.schedule;
+  const paymentAlerts = summary?.payments?.alerts ?? [];
+
   const actionStats = useMemo(() => {
     const a = summary?.actions;
     if (!a) return [];
@@ -143,29 +157,36 @@ const Dashboard = () => {
         label: 'Kiosk',
         value: a.kiosk_paired ? 'Paired' : 'Not paired',
         accent: a.kiosk_paired ? ACCENT.green : ACCENT.red,
-        href: a.kiosk_paired ? undefined : '/admin/settings',
+        href: '/admin/settings',
       },
     ];
   }, [summary]);
 
+  const welcomeName = user?.name || user?.login_id || user?.organization_code;
+
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div className="dashboard-page max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
-          {summary?.date && (
-            <p className="mt-1 text-sm text-gray-500">
-              Summary for {summary.date}
-            </p>
-          )}
-          {user && (
-            <p className="mt-1 text-sm text-gray-600">
-              Welcome back,{' '}
-              <span className="font-medium">
-                {user.name || user.login_id || user.organization_code}
-              </span>
-            </p>
-          )}
+          <h1 className="dashboard-title text-3xl font-bold text-gray-900">Dashboard</h1>
+          <div className="dashboard-subtitle-slot mt-1">
+            {summary?.date ? (
+              <p className="text-sm text-gray-500">Summary for {summary.date}</p>
+            ) : isLoading ? (
+              <p className="text-sm text-gray-400" aria-hidden="true">
+                &nbsp;
+              </p>
+            ) : null}
+            {user ? (
+              <p className="text-sm text-gray-600">
+                Welcome back, <span className="font-medium">{welcomeName}</span>
+              </p>
+            ) : isLoading ? (
+              <p className="text-sm text-gray-400" aria-hidden="true">
+                &nbsp;
+              </p>
+            ) : null}
+          </div>
         </div>
         <PageTourButtons onTutorial={startTutorial} onInfo={startInfo} />
       </div>
@@ -176,41 +197,56 @@ const Dashboard = () => {
         </div>
       )}
 
-      <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4 xl:items-stretch">
-        <div data-tour="workforce" className="h-full">
+      <div className="dashboard-widget-row mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4 xl:items-stretch">
+        <div data-tour="workforce" className="dashboard-widget-slot h-full">
           <DashboardWidgetCard
             title="Workforce"
             stats={workforceStats}
-            loading={isLoading}
+            skeletonLabels={WORKFORCE_LABELS}
+            loading={isLoading && !summary?.workforce}
             href="/admin/employees"
             compact
           />
         </div>
-        <div data-tour="today" className="h-full">
+        <div data-tour="today" className="dashboard-widget-slot h-full">
           <DashboardWidgetCard
             title="Today"
             stats={todayStats}
-            loading={isLoading}
+            skeletonLabels={TODAY_LABELS}
+            loading={isLoading && !summary?.today}
             href="/admin/attendance"
             compact
           />
         </div>
-        <div data-tour="actions" className="h-full">
+        <div data-tour="actions" className="dashboard-widget-slot h-full">
           <DashboardWidgetCard
             title="Actions"
             stats={actionStats}
-            loading={isLoading}
-            href="/admin/employees"
+            skeletonLabels={ACTION_LABELS}
+            loading={isLoading && !summary?.actions}
             compact
           />
         </div>
-        <div data-tour="holidays" className="h-full">
-          <IndiaHolidaysCard referenceDate={summary?.date} compact />
+        <div data-tour="pay-schedule" className="dashboard-widget-slot h-full">
+          <PaymentScheduleCard schedule={paymentSchedule} loading={isLoading} compact />
         </div>
       </div>
 
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2 xl:grid-cols-3">
-        <div ref={calendarRef} data-tour="calendar" className="h-fit">
+      <div className="dashboard-stats-slot mb-6" data-tour="payroll-stats">
+        <PaymentStatsRow
+          summary={paymentSummary || DEFAULT_PAYMENT_SUMMARY}
+          loading={isLoading}
+        />
+      </div>
+
+      <div className="dashboard-alerts-slot mb-6">
+        <div data-tour="payment-alerts" className="h-full min-h-[12rem]">
+          <PaymentAlertsFeed alerts={paymentAlerts} loading={isLoading} compact maxItems={5} />
+        </div>
+      </div>
+
+      <div className="dashboard-lower-grid grid grid-cols-1 gap-6 lg:grid-cols-2 xl:grid-cols-3 xl:items-stretch">
+        <div data-tour="calendar" className="dashboard-panel-slot h-full min-h-[24rem]">
           <AttendanceMonthCalendar
             month={summary?.month}
             calendar={summary?.month?.calendar}
@@ -220,14 +256,13 @@ const Dashboard = () => {
         </div>
         <div
           data-tour="activity-rings"
-          className="flex flex-col overflow-hidden rounded-2xl border border-gray-200/60 bg-white shadow-[0_2px_16px_rgba(0,0,0,0.06)]"
-          style={calendarHeight ? { height: calendarHeight } : undefined}
+          className="dashboard-chart-panel flex min-h-[24rem] flex-col overflow-hidden rounded-2xl border border-gray-200/60 bg-white shadow-[0_2px_16px_rgba(0,0,0,0.06)]"
         >
           <div className="shrink-0 border-b border-gray-100 px-4 py-3">
             <h2 className="text-sm font-semibold text-gray-900">Activity</h2>
             <p className="text-[11px] text-gray-500">Present rate, attendance & punctuality</p>
           </div>
-          <div className="flex min-h-0 flex-1 items-center justify-center px-2 py-1">
+          <div className="dashboard-chart-body flex min-h-[12rem] flex-1 items-center justify-center px-2 py-1">
             <ActivityRingsChart
               rings={activityRings}
               loading={isLoading}
@@ -237,10 +272,7 @@ const Dashboard = () => {
             />
           </div>
         </div>
-        <div
-          data-tour="recent-activity"
-          style={calendarHeight ? { height: calendarHeight } : undefined}
-        >
+        <div data-tour="recent-activity" className="dashboard-panel-slot h-full min-h-[24rem]">
           <RecentActivityFeed
             activities={recentActivities}
             loading={isLoading || activitiesLoading}

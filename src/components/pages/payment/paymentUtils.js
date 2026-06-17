@@ -1,3 +1,5 @@
+import { formatCurrency } from '../../../utils/helpers';
+
 /** ISO start/end dates for a calendar month (for ledger API filters). */
 export const getMonthDateRange = (year, month) => {
   const y = Number(year);
@@ -13,7 +15,7 @@ export const getMonthDateRange = (year, month) => {
 
 export const formatMoney = (value) => {
   if (value == null) return '—';
-  return `$${Number(value).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  return formatCurrency(value, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 };
 
 export const formatDate = (value) => {

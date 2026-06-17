@@ -1,4 +1,5 @@
-import React, { useMemo, useState, useEffect } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
+import clsx from 'clsx';
 import { useSearchParams } from 'react-router-dom';
 import {
   SalaryStatsRow,
@@ -7,12 +8,16 @@ import {
   SalaryEditModal,
   SalaryHistoryPanel,
 } from '../../components/pages/salary';
-import { DASHBOARD_PANEL } from '../../components/pages/dashboard';
+import {
+  DASHBOARD_BTN_PRIMARY,
+  DASHBOARD_PANEL,
+} from '../../components/pages/dashboard';
 import {
   SALARY_GUIDE_STEPS,
   LoadingScreen,
   PageInfoOverlay,
   PageTourButtons,
+  Pagination,
   usePageTour,
   dashboardToast,
 } from '../../components/common';
@@ -23,6 +28,7 @@ import {
 } from '../../store/api';
 
 const HISTORY_PER_PAGE = 10;
+const ROWS_PER_PAGE = 10;
 
 const Salary = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -36,11 +42,20 @@ const Salary = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [sortBy, setSortBy] = useState('name');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [rowHighlightId, setRowHighlightId] = useState(null);
   const [editEmployee, setEditEmployee] = useState(null);
   const [historyEmployee, setHistoryEmployee] = useState(null);
   const [historyPage, setHistoryPage] = useState(1);
 
-  const { data: salaries = [], isLoading, isError, error, refetch } = useGetSalariesQuery();
+  const {
+    data: salaries = [],
+    isLoading,
+    isFetching,
+    isError,
+    error,
+    refetch,
+  } = useGetSalariesQuery();
   const [updateSalary, { isLoading: isUpdating }] = useUpdateSalaryMutation();
 
   const historyEmployeeId = historyEmployee?.employee_id || historyEmployee?.id;
@@ -55,16 +70,27 @@ const Salary = () => {
 
   const stats = useMemo(() => {
     const total = salaries.length;
+    const activeCount = salaries.filter((r) => r.status === 'active' || r.is_active).length;
     const salarySet = salaries.filter((r) => r.current_salary != null).length;
     const unset = total - salarySet;
     const totalMonthly = salaries.reduce(
-      (sum, r) => sum + (r.current_salary != null ? Number(r.current_salary) : 0),
+      (sum, r) =>
+        sum +
+        (r.current_salary != null && (r.status === 'active' || r.is_active)
+          ? Number(r.current_salary)
+          : 0),
       0
     );
-    const activeWithSalary = salaries.filter(
+    const activeSalaries = salaries.filter(
       (r) => (r.status === 'active' || r.is_active) && r.current_salary != null
-    ).length;
-    return { total, salarySet, unset, totalMonthly, activeWithSalary };
+    );
+    const avgActiveSalary = activeSalaries.length
+      ? Math.round(
+          activeSalaries.reduce((sum, r) => sum + Number(r.current_salary), 0) /
+            activeSalaries.length
+        )
+      : 0;
+    return { total, activeCount, salarySet, unset, totalMonthly, avgActiveSalary };
   }, [salaries]);
 
   const processedRows = useMemo(() => {
@@ -108,6 +134,33 @@ const Salary = () => {
     return rows;
   }, [salaries, searchTerm, statusFilter, sortBy]);
 
+  const totalFilteredCount = processedRows.length;
+  const totalPages = Math.max(1, Math.ceil(totalFilteredCount / ROWS_PER_PAGE));
+  const paginatedRows = useMemo(() => {
+    const start = (currentPage - 1) * ROWS_PER_PAGE;
+    return processedRows.slice(start, start + ROWS_PER_PAGE);
+  }, [processedRows, currentPage]);
+
+  const hasActiveFilters =
+    Boolean(searchTerm) || statusFilter !== 'all' || sortBy !== 'name';
+
+  const clearFilters = () => {
+    setSearchTerm('');
+    setStatusFilter('all');
+    setSortBy('name');
+    setCurrentPage(1);
+  };
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, statusFilter, sortBy]);
+
+  useEffect(() => {
+    if (currentPage > totalPages) {
+      setCurrentPage(totalPages);
+    }
+  }, [currentPage, totalPages]);
+
   useEffect(() => {
     if (!highlightId || !salaries.length) return;
     const match = salaries.find(
@@ -115,9 +168,13 @@ const Salary = () => {
     );
     if (match) {
       setEditEmployee(match);
+      setRowHighlightId(highlightId);
       searchParams.delete('employeeId');
       setSearchParams(searchParams, { replace: true });
+      const timer = setTimeout(() => setRowHighlightId(null), 4000);
+      return () => clearTimeout(timer);
     }
+    return undefined;
   }, [highlightId, salaries, searchParams, setSearchParams]);
 
   const handleSaveSalary = async (payload) => {
@@ -142,23 +199,17 @@ const Salary = () => {
   const historyTotal = historyData?.total || 0;
   const historyTotalPages = Math.max(1, Math.ceil(historyTotal / HISTORY_PER_PAGE));
 
-  if (isLoading) {
+  if (isLoading && !salaries.length) {
     return <LoadingScreen message="Loading salaries..." />;
   }
 
   if (isError) {
     return (
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="rounded-2xl border border-red-200 bg-red-50 p-6 text-center">
-          <p className="text-sm text-red-700">
-            {error?.data?.detail || 'Failed to load salary data.'}
-          </p>
-          <button
-            type="button"
-            onClick={() => refetch()}
-            className="mt-4 rounded-xl bg-[#007AFF] px-4 py-2 text-sm font-semibold text-white hover:bg-[#0066DD]"
-          >
-            Try again
+      <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+        <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+          <p>{error?.data?.detail || 'Failed to load salary data.'}</p>
+          <button type="button" onClick={() => refetch()} className={`${DASHBOARD_BTN_PRIMARY} mt-3`}>
+            Retry
           </button>
         </div>
       </div>
@@ -166,22 +217,20 @@ const Salary = () => {
   }
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+    <div className="mx-auto max-w-7xl space-y-6 px-4 py-8 sm:px-6 lg:px-8">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <h1 className="text-3xl font-bold text-gray-900">Salary</h1>
           <p className="mt-1 text-sm text-gray-500">
-            Manage monthly salaries and view change history for your team.
+            Set monthly salaries and view change history. Generate payments on the Payment page.
           </p>
         </div>
         <PageTourButtons onTutorial={startTutorial} onInfo={startInfo} />
       </div>
 
-      <div className="mb-6">
-        <SalaryStatsRow stats={stats} loading={false} />
-      </div>
+      <SalaryStatsRow stats={stats} loading={isFetching} />
 
-      <div className={`${DASHBOARD_PANEL} mb-6 px-4 py-3 sm:px-5`}>
+      <div className={clsx(DASHBOARD_PANEL, 'p-4')}>
         <SalaryFilterBar
           searchTerm={searchTerm}
           onSearchChange={setSearchTerm}
@@ -189,18 +238,34 @@ const Salary = () => {
           onStatusFilterChange={setStatusFilter}
           sortBy={sortBy}
           onSortChange={setSortBy}
+          onClearFilters={clearFilters}
+          hasActiveFilters={hasActiveFilters}
         />
       </div>
 
       <SalaryTable
-          rows={processedRows}
-          highlightId={highlightId}
-          onEdit={(row) => setEditEmployee(row)}
-          onHistory={(row) => {
-            setHistoryEmployee(row);
-            setHistoryPage(1);
-          }}
+        rows={paginatedRows}
+        totalCount={totalFilteredCount}
+        isFetching={isFetching}
+        highlightId={rowHighlightId}
+        onEdit={(row) => setEditEmployee(row)}
+        onHistory={(row) => {
+          setHistoryEmployee(row);
+          setHistoryPage(1);
+        }}
+        onClearFilters={clearFilters}
+        hasActiveFilters={hasActiveFilters}
+      />
+
+      {totalFilteredCount > ROWS_PER_PAGE && (
+        <Pagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          totalItems={totalFilteredCount}
+          itemsPerPage={ROWS_PER_PAGE}
+          onPageChange={setCurrentPage}
         />
+      )}
 
       <SalaryEditModal
         isOpen={Boolean(editEmployee)}
@@ -217,6 +282,8 @@ const Salary = () => {
         isLoading={historyLoading}
         currentPage={historyPage}
         totalPages={historyTotalPages}
+        totalItems={historyTotal}
+        itemsPerPage={HISTORY_PER_PAGE}
         onPageChange={setHistoryPage}
         onClose={() => setHistoryEmployee(null)}
       />

@@ -23,7 +23,19 @@ export const authApi = baseApi.injectEndpoints({
         body: { refresh_token: refreshToken },
       }),
     }),
+
+    logout: builder.mutation({
+      query: (refreshToken) => ({
+        url: '/auth/logout',
+        method: 'POST',
+        body: { refresh_token: refreshToken },
+      }),
+    }),
   }),
 });
 
-export const { useOrgAdminLoginMutation, useRefreshTokenMutation } = authApi;
+export const {
+  useOrgAdminLoginMutation,
+  useRefreshTokenMutation,
+  useLogoutMutation,
+} = authApi;

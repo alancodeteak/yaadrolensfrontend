@@ -1,6 +1,5 @@
 import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
-import { Settings as SettingsIcon } from 'lucide-react';
-import clsx from 'clsx';
+import { useSelector } from 'react-redux';
 import {
   PageInfoOverlay,
   PageTourButtons,
@@ -17,7 +16,6 @@ import {
   HelpContact,
 } from '../../components/pages/settings';
 import { getSettingsNavItem } from '../../components/pages/settings/settingsNav';
-import { SETTINGS_ICON_TONES } from '../../components/pages/settings/settingsTheme';
 
 function getSettingsTourSteps(pathname) {
   if (pathname.includes('/cameras')) return SETTINGS_KIOSK_STEPS;
@@ -27,10 +25,9 @@ function getSettingsTourSteps(pathname) {
 
 const Settings = () => {
   const location = useLocation();
+  const user = useSelector((state) => state.auth.user);
   const steps = getSettingsTourSteps(location.pathname);
   const activeSection = getSettingsNavItem(location.pathname);
-  const ActiveIcon = activeSection.icon;
-  const activeTone = SETTINGS_ICON_TONES[activeSection.tone];
   const { infoOpen, startTutorial, startInfo, closeInfo } = usePageTour(
     steps,
     'settings_tour_completed'
@@ -39,36 +36,15 @@ const Settings = () => {
   return (
     <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
       <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-        <div className="flex items-start gap-4">
-          <span
-            className={clsx(
-              'flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl',
-              SETTINGS_ICON_TONES.settings.bg,
-              SETTINGS_ICON_TONES.settings.fg
-            )}
-          >
-            <SettingsIcon className="h-6 w-6" strokeWidth={2} aria-hidden="true" />
-          </span>
-          <div>
-            <span className="mb-2 inline-block rounded-full bg-[#007AFF]/10 px-2.5 py-0.5 text-[11px] font-semibold text-[#007AFF]">
-              Organization
-            </span>
-            <h1 className="text-3xl font-bold text-gray-900">Settings</h1>
-            <p className="mt-1 flex flex-wrap items-center gap-2 text-sm text-gray-500">
-              <span
-                className={clsx(
-                  'inline-flex items-center gap-1.5 rounded-lg px-2 py-0.5 text-xs font-medium',
-                  activeTone.bg,
-                  activeTone.fg
-                )}
-              >
-                <ActiveIcon className="h-3.5 w-3.5" strokeWidth={2} aria-hidden="true" />
-                {activeSection.name}
-              </span>
-              <span className="text-gray-400">·</span>
-              <span>Manage rules, kiosk, and support for your organization</span>
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900">Settings</h1>
+          <p className="mt-1 text-sm text-gray-500">{activeSection.subtitle}</p>
+          {user?.organization_code && (
+            <p className="mt-1 text-sm text-gray-600">
+              Organization:{' '}
+              <span className="font-medium">{user.organization_code}</span>
             </p>
-          </div>
+          )}
         </div>
         <PageTourButtons onTutorial={startTutorial} onInfo={startInfo} />
       </div>

@@ -10,5 +10,6 @@ export * from './paymentApi';
 export * from './attendanceApi';
 export * from './reportsApi';
 export * from './settingsApi';
+export * from './leaveApi';
 export * from './systemAdminApi';
 export * from './dashboardApi';

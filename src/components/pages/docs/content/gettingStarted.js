@@ -33,6 +33,7 @@ export const gettingStartedContent = {
           'Connect the kiosk tablet (see Kiosk setup).',
           "Register each employee's face on the kiosk.",
           'Watch attendance on the Dashboard and Live Attendance pages.',
+          'Download attendance and payroll reports from the Reports page.',
         ],
       },
       {
@@ -52,6 +53,8 @@ export const gettingStartedContent = {
           docLink('/docs/dashboard', 'Your Dashboard'),
           ' · ',
           docLink('/docs/kiosk', 'Kiosk setup'),
+          ' · ',
+          docLink('/docs/reports', 'Reports'),
         ],
       },
     ],

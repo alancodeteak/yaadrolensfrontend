@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { CalendarCheck, Gift, Plus, Scale, Wallet } from 'lucide-react';
 import {
   PaymentToolbar,
@@ -9,6 +10,7 @@ import {
   AdvanceTable,
   BonusTable,
   BalanceTable,
+  BalanceLedgerTable,
   PaymentRecordModal,
   AdvanceCreateModal,
   AdvanceRecoverModal,
@@ -26,6 +28,7 @@ import {
   PAYROLL_GUIDE_STEPS,
   Pagination,
   LoadingScreen,
+  LottieLoader,
   PageInfoOverlay,
   PageTourButtons,
   usePageTour,
@@ -36,6 +39,7 @@ import {
 import {
   useGetPaymentsQuery,
   useGetPaymentSummaryQuery,
+  useGetMonthlyGenerationStatusQuery,
   useRecordPaymentMutation,
   useGetEmployeePaymentSummaryQuery,
   useGetEmployeePaymentHistoryQuery,
@@ -50,6 +54,7 @@ import {
   useRunScheduledSalariesMutation,
   useGetEmployeesQuery,
   useGetOutstandingEmployeesQuery,
+  useGetSettingsQuery,
   useApprovePaymentMutation,
   useMarkPaymentPaidMutation,
   useAdjustEmployeeBalanceMutation,
@@ -58,10 +63,21 @@ import {
   useReleaseBonusMutation,
   useGetEmployeeBalancesQuery,
   useGetBalanceTransactionsQuery,
+  useGetBalanceLedgerQuery,
 } from '../../store/api';
+import { isPayrollPeriodOpen } from '../../store/api/transforms';
+import {
+  buildEmployeePhotoMap,
+  computePeriodPaymentStats,
+  enrichRowsWithPhotos,
+  filterPaymentRows,
+  paginateRows,
+} from '../../utils/paymentListUtils';
 
 const PER_PAGE = 10;
 const HISTORY_PER_PAGE = 10;
+/** Backend payment/employee list endpoints cap limit at 200 (le=200). */
+const FETCH_LIMIT = 200;
 
 const getMonthNumber = (monthName) => MONTHS.indexOf(monthName) + 1;
 
@@ -83,6 +99,7 @@ const PayrollManagement = () => {
   const [selectedMonth, setSelectedMonth] = useState(MONTHS[currentDate.getMonth()]);
   const [selectedYear, setSelectedYear] = useState(String(currentDate.getFullYear()));
   const [searchTerm, setSearchTerm] = useState('');
+  const [ledgerEmployeeId, setLedgerEmployeeId] = useState(null);
   const [typeFilter, setTypeFilter] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
   const [paymentStatusFilter, setPaymentStatusFilter] = useState('');
@@ -103,12 +120,18 @@ const PayrollManagement = () => {
   const [bonusModalOpen, setBonusModalOpen] = useState(false);
   const [balanceHistoryEmployee, setBalanceHistoryEmployee] = useState(null);
   const [balanceHistoryPage, setBalanceHistoryPage] = useState(1);
+  const [balanceLedgerPage, setBalanceLedgerPage] = useState(1);
   const [bonusToRelease, setBonusToRelease] = useState(null);
   const [selectedPaymentIds, setSelectedPaymentIds] = useState([]);
   const [isApprovingSelected, setIsApprovingSelected] = useState(false);
 
   const monthNumber = getMonthNumber(selectedMonth);
   const yearNumber = parseInt(selectedYear, 10);
+  const { data: orgSettings } = useGetSettingsQuery();
+  const payrollPeriodStillOpen = useMemo(
+    () => isPayrollPeriodOpen(yearNumber, monthNumber, orgSettings?.timezone ?? 'UTC'),
+    [yearNumber, monthNumber, orgSettings?.timezone]
+  );
   const monthDateRange = useMemo(
     () => getMonthDateRange(yearNumber, monthNumber),
     [yearNumber, monthNumber]
@@ -122,6 +145,7 @@ const PayrollManagement = () => {
   const {
     data: paymentsData,
     isLoading: paymentsLoading,
+    isFetching: paymentsFetching,
     isError: paymentsError,
     error: paymentsErr,
     refetch: refetchPayments,
@@ -131,8 +155,9 @@ const PayrollManagement = () => {
       end_date: monthDateRange.end_date,
       payment_type: typeFilter || undefined,
       status: paymentStatusFilter || undefined,
-      skip: (currentPage - 1) * PER_PAGE,
-      limit: PER_PAGE,
+      employee_id: ledgerEmployeeId || undefined,
+      skip: 0,
+      limit: FETCH_LIMIT,
     },
     { skip: activeTab !== 'ledger' }
   );
@@ -143,22 +168,42 @@ const PayrollManagement = () => {
     refetch: refetchSummary,
   } = useGetPaymentSummaryQuery();
 
+  const { data: monthlyGenerationStatus } = useGetMonthlyGenerationStatusQuery(
+    { period_year: yearNumber, period_month: monthNumber },
+    { skip: activeTab !== 'ledger' }
+  );
+
+  const monthlyGenerationDone =
+    monthlyGenerationStatus != null && !monthlyGenerationStatus.can_generate;
+
   const { data: outstandingData, isLoading: outstandingLoading } =
     useGetOutstandingEmployeesQuery();
 
   const {
     data: advancesData,
     isLoading: advancesLoading,
+    isFetching: advancesFetching,
     isError: advancesError,
     error: advancesErr,
     refetch: refetchAdvances,
-  } = useGetAdvancesQuery({
-    status: activeTab === 'advances' && statusFilter ? statusFilter : undefined,
-    skip: activeTab === 'advances' ? (currentPage - 1) * PER_PAGE : 0,
-    limit: PER_PAGE,
-  });
+  } = useGetAdvancesQuery(
+    {
+      status: statusFilter || undefined,
+      skip: 0,
+      limit: FETCH_LIMIT,
+    },
+    { skip: activeTab !== 'advances' }
+  );
 
-  const { data: employees = [] } = useGetEmployeesQuery({ is_active: true });
+  const { data: employeesData } = useGetEmployeesQuery({ page: 1, limit: FETCH_LIMIT });
+  const employeePhotoMap = useMemo(
+    () => buildEmployeePhotoMap(employeesData?.items ?? []),
+    [employeesData]
+  );
+  const employees = useMemo(
+    () => (employeesData?.items ?? []).filter((employee) => employee.is_active),
+    [employeesData]
+  );
 
   const [recordPayment, { isLoading: isRecording }] = useRecordPaymentMutation();
   const [generateMonthlySalaries, { isLoading: isGenerating }] =
@@ -178,6 +223,7 @@ const PayrollManagement = () => {
   const {
     data: bonusesData,
     isLoading: bonusesLoading,
+    isFetching: bonusesFetching,
     isError: bonusesError,
     error: bonusesErr,
     refetch: refetchBonuses,
@@ -185,9 +231,9 @@ const PayrollManagement = () => {
     {
       period_year: yearNumber,
       period_month: monthNumber,
-      status: activeTab === 'bonuses' && bonusStatusFilter ? bonusStatusFilter : undefined,
-      skip: activeTab === 'bonuses' ? (currentPage - 1) * PER_PAGE : 0,
-      limit: PER_PAGE,
+      status: bonusStatusFilter || undefined,
+      skip: 0,
+      limit: FETCH_LIMIT,
     },
     { skip: activeTab !== 'bonuses' }
   );
@@ -195,14 +241,28 @@ const PayrollManagement = () => {
   const {
     data: balancesData,
     isLoading: balancesLoading,
+    isFetching: balancesFetching,
     isError: balancesError,
     error: balancesErr,
     refetch: refetchBalances,
   } = useGetEmployeeBalancesQuery(
     {
-      non_zero_only: activeTab === 'balance' && balanceFilter === 'non_zero',
-      skip: activeTab === 'balance' ? (currentPage - 1) * PER_PAGE : 0,
-      limit: PER_PAGE,
+      non_zero_only: balanceFilter === 'non_zero',
+      skip: 0,
+      limit: FETCH_LIMIT,
+    },
+    { skip: activeTab !== 'balance' }
+  );
+
+  const {
+    data: balanceLedgerData,
+    isLoading: balanceLedgerLoading,
+    isFetching: balanceLedgerFetching,
+    refetch: refetchBalanceLedger,
+  } = useGetBalanceLedgerQuery(
+    {
+      skip: 0,
+      limit: FETCH_LIMIT,
     },
     { skip: activeTab !== 'balance' }
   );
@@ -236,6 +296,14 @@ const PayrollManagement = () => {
     { skip: !selectedAdvanceId }
   );
 
+  const defaultPeriodStats = {
+    paidTotal: 0,
+    paidCount: 0,
+    pendingSalaryCount: 0,
+    pendingSalaryTotal: 0,
+    approvedSalaryCount: 0,
+  };
+
   const defaultSummary = {
     paid_this_month: 0,
     payment_count_this_month: 0,
@@ -246,34 +314,123 @@ const PayrollManagement = () => {
     unpaid_salary_total: 0,
   };
 
-  const filterRows = (rows) => {
-    if (!searchTerm) return rows;
-    const term = searchTerm.toLowerCase();
-    return rows.filter(
-      (r) =>
-        r.employee_name?.toLowerCase().includes(term) ||
-        r.employee_code?.toLowerCase().includes(term) ||
-        r.name?.toLowerCase().includes(term)
-    );
+  const enrichEmployeeRow = (row) => {
+    if (!row) return row;
+    const empId = String(row.employee_id || row.id || '');
+    const photos = employeePhotoMap.get(empId) || {};
+    return {
+      ...row,
+      profilePhotoUrl: photos.profilePhotoUrl ?? row.profilePhotoUrl,
+      photo: photos.photo ?? row.photo,
+      avatar: photos.avatar ?? row.avatar,
+    };
   };
 
+  const periodLabel = `${selectedMonth} ${selectedYear}`;
+
+  const periodStats = useMemo(
+    () => computePeriodPaymentStats(paymentsData?.items || []),
+    [paymentsData]
+  );
+
+  const allPaymentItems = useMemo(
+    () => enrichRowsWithPhotos(paymentsData?.items || [], employeePhotoMap),
+    [paymentsData, employeePhotoMap]
+  );
+  const filteredPayments = useMemo(
+    () => filterPaymentRows(allPaymentItems, searchTerm),
+    [allPaymentItems, searchTerm]
+  );
   const paymentRows = useMemo(
-    () => filterRows(paymentsData?.items || []),
-    [paymentsData, searchTerm]
+    () => paginateRows(filteredPayments, currentPage, PER_PAGE),
+    [filteredPayments, currentPage]
   );
 
   const approvablePaymentRows = useMemo(
     () =>
-      paymentRows.filter(
+      filteredPayments.filter(
         (row) => row.status === 'pending' && row.payment_type === 'monthly_salary'
       ),
-    [paymentRows]
+    [filteredPayments]
   );
 
   const approvablePaymentIds = useMemo(
     () => approvablePaymentRows.map((row) => row.id),
     [approvablePaymentRows]
   );
+
+  const allAdvanceItems = useMemo(
+    () => enrichRowsWithPhotos(advancesData?.items || [], employeePhotoMap),
+    [advancesData, employeePhotoMap]
+  );
+  const filteredAdvances = useMemo(
+    () => filterPaymentRows(allAdvanceItems, searchTerm),
+    [allAdvanceItems, searchTerm]
+  );
+  const advanceRows = useMemo(
+    () => paginateRows(filteredAdvances, currentPage, PER_PAGE),
+    [filteredAdvances, currentPage]
+  );
+
+  const allBonusItems = useMemo(
+    () => enrichRowsWithPhotos(bonusesData?.items || [], employeePhotoMap),
+    [bonusesData, employeePhotoMap]
+  );
+  const filteredBonuses = useMemo(
+    () => filterPaymentRows(allBonusItems, searchTerm),
+    [allBonusItems, searchTerm]
+  );
+  const bonusRows = useMemo(
+    () => paginateRows(filteredBonuses, currentPage, PER_PAGE),
+    [filteredBonuses, currentPage]
+  );
+
+  const allBalanceItems = useMemo(
+    () => enrichRowsWithPhotos(balancesData?.items || [], employeePhotoMap),
+    [balancesData, employeePhotoMap]
+  );
+  const filteredBalances = useMemo(
+    () => filterPaymentRows(allBalanceItems, searchTerm),
+    [allBalanceItems, searchTerm]
+  );
+  const balanceRows = useMemo(
+    () => paginateRows(filteredBalances, currentPage, PER_PAGE),
+    [filteredBalances, currentPage]
+  );
+
+  const allLedgerItems = useMemo(
+    () => enrichRowsWithPhotos(balanceLedgerData?.items || [], employeePhotoMap),
+    [balanceLedgerData, employeePhotoMap]
+  );
+  const filteredLedger = useMemo(
+    () => filterPaymentRows(allLedgerItems, searchTerm),
+    [allLedgerItems, searchTerm]
+  );
+  const balanceLedgerRows = useMemo(
+    () => paginateRows(filteredLedger, balanceLedgerPage, PER_PAGE),
+    [filteredLedger, balanceLedgerPage]
+  );
+
+  const filteredCounts = {
+    ledger: filteredPayments.length,
+    advances: filteredAdvances.length,
+    bonuses: filteredBonuses.length,
+    balance: filteredBalances.length,
+  };
+
+  const ledgerTotalPages = Math.max(1, Math.ceil(filteredCounts.ledger / PER_PAGE));
+  const advancesTotalPages = Math.max(1, Math.ceil(filteredCounts.advances / PER_PAGE));
+  const bonusesTotalPages = Math.max(1, Math.ceil(filteredCounts.bonuses / PER_PAGE));
+  const balancesTotalPages = Math.max(1, Math.ceil(filteredCounts.balance / PER_PAGE));
+  const balanceLedgerTotalPages = Math.max(1, Math.ceil(filteredLedger.length / PER_PAGE));
+
+  const tabTotalPages = {
+    ledger: ledgerTotalPages,
+    advances: advancesTotalPages,
+    bonuses: bonusesTotalPages,
+    balance: balancesTotalPages,
+  };
+  const totalPages = tabTotalPages[activeTab] || 1;
 
   const allApprovableSelected =
     approvablePaymentIds.length > 0 &&
@@ -285,39 +442,11 @@ const PayrollManagement = () => {
 
   const selectedPaymentTotal = useMemo(
     () =>
-      paymentRows
+      filteredPayments
         .filter((row) => selectedPaymentIds.includes(row.id))
         .reduce((sum, row) => sum + Number(row.amount || 0), 0),
-    [paymentRows, selectedPaymentIds]
+    [filteredPayments, selectedPaymentIds]
   );
-
-  const advanceRows = useMemo(
-    () => filterRows(advancesData?.items || []),
-    [advancesData, searchTerm]
-  );
-
-  const bonusRows = useMemo(
-    () => filterRows(bonusesData?.items || []),
-    [bonusesData, searchTerm]
-  );
-
-  const balanceRows = useMemo(
-    () => filterRows(balancesData?.items || []),
-    [balancesData, searchTerm]
-  );
-
-  const paymentsTotal = paymentsData?.total || 0;
-  const advancesTotal = advancesData?.total || 0;
-  const bonusesTotal = bonusesData?.total || 0;
-  const balancesTotal = balancesData?.total || 0;
-
-  const tabTotals = {
-    ledger: paymentsTotal,
-    advances: advancesTotal,
-    bonuses: bonusesTotal,
-    balance: balancesTotal,
-  };
-  const totalPages = Math.max(1, Math.ceil((tabTotals[activeTab] || 0) / PER_PAGE));
 
   const historyTotal = historyData?.total || 0;
   const historyTotalPages = Math.max(1, Math.ceil(historyTotal / HISTORY_PER_PAGE));
@@ -326,7 +455,13 @@ const PayrollManagement = () => {
     ledger: paymentsLoading,
     advances: advancesLoading,
     bonuses: bonusesLoading,
-    balance: balancesLoading,
+    balance: balancesLoading || balanceLedgerLoading,
+  };
+  const tabFetching = {
+    ledger: paymentsFetching,
+    advances: advancesFetching,
+    bonuses: bonusesFetching,
+    balance: balancesFetching || balanceLedgerFetching,
   };
   const tabError = {
     ledger: paymentsError,
@@ -347,9 +482,61 @@ const PayrollManagement = () => {
     balance: refetchBalances,
   };
   const isLoading = tabLoading[activeTab];
+  const isFetching = tabFetching[activeTab];
   const isError = tabError[activeTab];
   const error = tabErrors[activeTab];
   const refetch = tabRefetch[activeTab];
+
+  const hasActiveFilters = Boolean(
+    searchTerm ||
+    ledgerEmployeeId ||
+    typeFilter ||
+    statusFilter ||
+    paymentStatusFilter ||
+    bonusStatusFilter ||
+    balanceFilter
+  );
+
+  const clearFilters = () => {
+    setSearchTerm('');
+    setLedgerEmployeeId(null);
+    setTypeFilter('');
+    setStatusFilter('');
+    setPaymentStatusFilter('');
+    setBonusStatusFilter('');
+    setBalanceFilter('');
+    setCurrentPage(1);
+    setBalanceLedgerPage(1);
+    setSelectedPaymentIds([]);
+  };
+
+  useEffect(() => {
+    setCurrentPage(1);
+    setBalanceLedgerPage(1);
+    setSelectedPaymentIds([]);
+  }, [
+    searchTerm,
+    ledgerEmployeeId,
+    typeFilter,
+    statusFilter,
+    paymentStatusFilter,
+    bonusStatusFilter,
+    balanceFilter,
+    selectedMonth,
+    selectedYear,
+  ]);
+
+  useEffect(() => {
+    if (currentPage > totalPages) {
+      setCurrentPage(totalPages);
+    }
+  }, [currentPage, totalPages]);
+
+  useEffect(() => {
+    if (balanceLedgerPage > balanceLedgerTotalPages) {
+      setBalanceLedgerPage(balanceLedgerTotalPages);
+    }
+  }, [balanceLedgerPage, balanceLedgerTotalPages]);
 
   const balanceHistoryTotal = balanceHistoryData?.total || 0;
   const balanceHistoryTotalPages = Math.max(
@@ -371,6 +558,7 @@ const PayrollManagement = () => {
     safeRefetch(refetchAdvances);
     safeRefetch(refetchBonuses);
     safeRefetch(refetchBalances);
+    safeRefetch(refetchBalanceLedger);
     safeRefetch(refetchSummary);
   };
 
@@ -398,46 +586,65 @@ const PayrollManagement = () => {
   const handleTabChange = (tab) => {
     setActiveTab(tab);
     setCurrentPage(1);
+    setBalanceLedgerPage(1);
     setSearchTerm('');
+    setLedgerEmployeeId(null);
     setTypeFilter('');
     setStatusFilter('');
     setPaymentStatusFilter('');
     setBonusStatusFilter('');
     setBalanceFilter('');
+    setSelectedPaymentIds([]);
   };
 
-  const handleApprovePayment = async (row) => {
+  const handleTogglePaymentSelection = (paymentId) => {
+    setSelectedPaymentIds((prev) =>
+      prev.includes(paymentId) ? prev.filter((id) => id !== paymentId) : [...prev, paymentId]
+    );
+  };
+
+  const handleToggleSelectAllApprovable = () => {
+    if (allApprovableSelected) {
+      setSelectedPaymentIds((prev) =>
+        prev.filter((id) => !approvablePaymentIds.includes(id))
+      );
+      return;
+    }
+    setSelectedPaymentIds((prev) => [...new Set([...prev, ...approvablePaymentIds])]);
+  };
+
+  const handleApproveSelected = async () => {
+    if (selectedPaymentIds.length === 0) return;
+
+    setIsApprovingSelected(true);
+    let approvedCount = 0;
     try {
-      await approvePayment(row.id).unwrap();
-      dashboardToast.successAfterOverlay(
-        `Approved salary payment for ${row.employee_name}.`,
-        'Payment approved'
+      for (const paymentId of selectedPaymentIds) {
+        await approvePayment(paymentId).unwrap();
+        approvedCount += 1;
+      }
+      setSelectedPaymentIds([]);
+      dashboardToast.success(
+        `Approved ${approvedCount} pending ${approvedCount === 1 ? 'salary' : 'salaries'} (${formatMoney(selectedPaymentTotal)}).`,
+        'Payments approved'
       );
       refreshAll();
     } catch (err) {
       dashboardToast.error(
-        getErrorMessage(err, 'Could not approve payment.'),
+        getErrorMessage(
+          err,
+          approvedCount > 0
+            ? `Approved ${approvedCount}, but some payments could not be approved.`
+            : 'Could not approve selected payments.'
+        ),
         'Approval failed'
       );
-    }
-  };
-
-  const handleBulkApprove = async () => {
-    try {
-      const result = await bulkApprovePayments({
-        period_year: yearNumber,
-        period_month: monthNumber,
-      }).unwrap();
-      dashboardToast.success(
-        `Approved ${result.approved_count} pending ${result.approved_count === 1 ? 'salary' : 'salaries'}.`,
-        'Bulk approve complete'
-      );
-      refreshAll();
-    } catch (err) {
-      dashboardToast.error(
-        getErrorMessage(err, 'Could not bulk approve payments.'),
-        'Bulk approve failed'
-      );
+      if (approvedCount > 0) {
+        setSelectedPaymentIds([]);
+        refreshAll();
+      }
+    } finally {
+      setIsApprovingSelected(false);
     }
   };
 
@@ -459,7 +666,7 @@ const PayrollManagement = () => {
     try {
       await adjustBalance(payload).unwrap();
       setBalanceEmployee(null);
-      dashboardToast.success('Employee balance updated.', 'Balance saved');
+      dashboardToast.success('Balance adjustment recorded in the ledger.', 'Adjustment saved');
       if (balanceHistoryEmployeeId) {
         setBalanceHistoryEmployee(null);
       }
@@ -515,9 +722,12 @@ const PayrollManagement = () => {
 
   const handleOutstandingSelect = (row) => {
     setActiveTab('ledger');
-    setSearchTerm(row.employee_name);
+    setLedgerEmployeeId(row.employee_id);
+    setSearchTerm('');
+    setTypeFilter('');
     setPaymentStatusFilter('');
     setCurrentPage(1);
+    setSelectedPaymentIds([]);
   };
 
   const handleRecordPayment = async (payload) => {
@@ -526,10 +736,10 @@ const PayrollManagement = () => {
       const result = await recordPayment(payload).unwrap();
       saved = true;
       const name = result?.employee_name || 'Employee';
-      const amount = Number(result?.amount || payload.amount || 0).toLocaleString();
+      const amount = formatMoney(result?.amount ?? payload.amount ?? 0);
       setRecordModalOpen(false);
       setPrefillEmployee(null);
-      dashboardToast.success(`Recorded $${amount} for ${name}.`, 'Payment saved');
+      dashboardToast.success(`Recorded ${amount} for ${name}.`, 'Payment saved');
       refreshAll();
     } catch (err) {
       if (!saved) {
@@ -657,7 +867,7 @@ const PayrollManagement = () => {
     runAdvanceAction(
       disburseAdvance,
       advance,
-      `Disbursed $${Number(advance.amount).toLocaleString()} to ${advance.employee_name}.`,
+      `Disbursed ${formatMoney(advance.amount)} to ${advance.employee_name}.`,
       'Advance disbursed'
     );
 
@@ -676,27 +886,13 @@ const PayrollManagement = () => {
     balance: balancesData,
   };
 
-  if (isLoading && !tabData[activeTab]) {
-    return <LoadingScreen message="Loading payments..." />;
-  }
+  const isInitialLedgerLoad =
+    activeTab === 'ledger' && paymentsLoading && !paymentsData;
+  const isTabContentLoading = isLoading && !tabData[activeTab];
+  const isTabContentError = isError && !tabData[activeTab];
 
-  if (isError && !tabData[activeTab]) {
-    return (
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="rounded-2xl border border-red-200 bg-red-50 p-6 text-center">
-          <p className="text-sm text-red-700">
-            {getErrorMessage(error, 'Failed to load payment data.')}
-          </p>
-          <button
-            type="button"
-            onClick={() => refetch()}
-            className="mt-4 rounded-xl bg-[#007AFF] px-4 py-2 text-sm font-semibold text-white hover:bg-[#0066DD]"
-          >
-            Try again
-          </button>
-        </div>
-      </div>
-    );
+  if (isInitialLedgerLoad) {
+    return <LoadingScreen message="Loading payments..." />;
   }
 
   return (
@@ -705,17 +901,26 @@ const PayrollManagement = () => {
         <div>
           <h1 className="text-3xl font-bold text-gray-900">Payment</h1>
           <p className="mt-1 text-sm text-gray-500">
-            Ledger, advances, bonuses, and employee balances in one place.
+            Ledger, advances, bonuses, and employee balances.{' '}
+            <Link to="/admin/salary" className="font-medium text-[#007AFF] hover:underline">
+              Salary setup
+            </Link>
           </p>
         </div>
         <PageTourButtons onTutorial={startTutorial} onInfo={startInfo} />
       </div>
 
       <div className="mb-6 space-y-4">
-        <PaymentStatsRow summary={summary || defaultSummary} loading={summaryLoading} />
+        <PaymentStatsRow
+          summary={summary || defaultSummary}
+          periodStats={periodStats || defaultPeriodStats}
+          periodLabel={periodLabel}
+          loading={summaryLoading || paymentsLoading}
+        />
         <OutstandingPanel
           items={outstandingData?.items || []}
           loading={outstandingLoading}
+          photoMap={employeePhotoMap}
           onSelectEmployee={handleOutstandingSelect}
         />
       </div>
@@ -729,10 +934,12 @@ const PayrollManagement = () => {
           onMonthChange={(m) => {
             setSelectedMonth(m);
             setCurrentPage(1);
+            setSelectedPaymentIds([]);
           }}
           onYearChange={(y) => {
             setSelectedYear(y);
             setCurrentPage(1);
+            setSelectedPaymentIds([]);
           }}
           years={years}
           searchTerm={searchTerm}
@@ -741,6 +948,7 @@ const PayrollManagement = () => {
           onTypeFilterChange={(v) => {
             setTypeFilter(v);
             setCurrentPage(1);
+            setSelectedPaymentIds([]);
           }}
           statusFilter={statusFilter}
           onStatusFilterChange={(v) => {
@@ -751,6 +959,7 @@ const PayrollManagement = () => {
           onPaymentStatusFilterChange={(v) => {
             setPaymentStatusFilter(v);
             setCurrentPage(1);
+            setSelectedPaymentIds([]);
           }}
           bonusStatusFilter={bonusStatusFilter}
           onBonusStatusFilterChange={(v) => {
@@ -761,23 +970,26 @@ const PayrollManagement = () => {
           onBalanceFilterChange={(v) => {
             setBalanceFilter(v);
             setCurrentPage(1);
+            setBalanceLedgerPage(1);
           }}
+          onClearFilters={clearFilters}
+          hasActiveFilters={hasActiveFilters}
           actions={
             activeTab === 'ledger' ? (
               <>
                 <button
                   type="button"
-                  onClick={handleBulkApprove}
-                  disabled={isBulkApproving}
-                  className={`${DASHBOARD_BTN_SECONDARY} inline-flex items-center gap-2`}
-                >
-                  {isBulkApproving ? <ButtonSpinner size="sm" /> : <CheckCheck className="h-4 w-4" strokeWidth={2} />}
-                  Bulk approve
-                </button>
-                <button
-                  type="button"
                   onClick={handleGenerateMonthlySalaries}
-                  disabled={isGenerating}
+                  disabled={isGenerating || monthlyGenerationDone || payrollPeriodStillOpen}
+                  title={
+                    payrollPeriodStillOpen
+                      ? `Salary for ${selectedMonth} ${selectedYear} can be generated after the month ends`
+                      : monthlyGenerationDone
+                        ? monthlyGenerationStatus?.eligible_count === 0
+                          ? 'No active employees with salary set for this period'
+                          : `Monthly salaries already generated for ${selectedMonth} ${selectedYear}`
+                        : undefined
+                  }
                   className={`${DASHBOARD_BTN_SECONDARY} inline-flex items-center gap-2`}
                 >
                   {isGenerating ? (
@@ -785,7 +997,11 @@ const PayrollManagement = () => {
                   ) : (
                     <CalendarCheck className="h-4 w-4" strokeWidth={2} />
                   )}
-                  {isGenerating ? 'Generating…' : 'Generate monthly salaries'}
+                  {isGenerating
+                    ? 'Generating…'
+                    : monthlyGenerationDone
+                      ? 'Salaries generated'
+                      : 'Generate monthly salaries'}
                 </button>
                 <button
                   type="button"
@@ -832,18 +1048,50 @@ const PayrollManagement = () => {
       </div>
 
       <div className="space-y-6">
+        {isTabContentLoading ? (
+          <div className="flex justify-center py-16">
+            <LottieLoader size={48} label="Loading..." centered />
+          </div>
+        ) : isTabContentError ? (
+          <div className="rounded-2xl border border-red-200 bg-red-50 p-6 text-center">
+            <p className="text-sm text-red-700">
+              {getErrorMessage(error, 'Failed to load payment data.')}
+            </p>
+            <button
+              type="button"
+              onClick={() => refetch()}
+              className={`mt-4 ${DASHBOARD_BTN_PRIMARY}`}
+            >
+              Try again
+            </button>
+          </div>
+        ) : (
+          <>
         {activeTab === 'ledger' && (
           <PaymentTable
             rows={paymentRows}
+            totalCount={filteredCounts.ledger}
+            isFetching={isFetching}
+            hasActiveFilters={hasActiveFilters}
+            onClearFilters={clearFilters}
+            selectedIds={selectedPaymentIds}
+            onToggleRow={handleTogglePaymentSelection}
+            onToggleSelectAll={handleToggleSelectAllApprovable}
+            allApprovableSelected={allApprovableSelected}
+            someApprovableSelected={someApprovableSelected}
+            approvableCount={approvablePaymentIds.length}
+            selectedCount={selectedPaymentIds.length}
+            selectedTotal={selectedPaymentTotal}
+            onApproveSelected={handleApproveSelected}
+            isApprovingSelected={isApprovingSelected}
             onHistory={(row) => {
-              setHistoryEmployee(row);
+              setHistoryEmployee(enrichEmployeeRow(row));
               setHistoryPage(1);
             }}
             onRecord={(row) => {
               setPrefillEmployee(row);
               setRecordModalOpen(true);
             }}
-            onApprove={handleApprovePayment}
             onMarkPaid={(row) => setPaymentToMarkPaid(row)}
           />
         )}
@@ -851,34 +1099,95 @@ const PayrollManagement = () => {
         {activeTab === 'advances' && (
           <AdvanceTable
             rows={advanceRows}
+            totalCount={filteredCounts.advances}
+            isFetching={isFetching}
+            hasActiveFilters={hasActiveFilters}
+            onClearFilters={clearFilters}
             onView={(row) => setSelectedAdvanceId(row.id)}
             onApprove={handleApproveAdvance}
           />
         )}
 
         {activeTab === 'bonuses' && (
-          <BonusTable rows={bonusRows} onRelease={handleReleaseBonus} />
-        )}
-
-        {activeTab === 'balance' && (
-          <BalanceTable
-            rows={balanceRows}
-            onHistory={(row) => {
-              setBalanceHistoryEmployee(row);
-              setBalanceHistoryPage(1);
-            }}
-            onAdjust={openBalanceAdjust}
+          <BonusTable
+            rows={bonusRows}
+            totalCount={filteredCounts.bonuses}
+            isFetching={isFetching}
+            hasActiveFilters={hasActiveFilters}
+            onClearFilters={clearFilters}
+            onRelease={handleReleaseBonus}
           />
         )}
 
-        {totalPages > 1 && (
+        {activeTab === 'balance' && (
+          <div className="space-y-4">
+            <BalanceTable
+              rows={balanceRows}
+              totalCount={filteredCounts.balance}
+              isFetching={balancesFetching}
+              hasActiveFilters={hasActiveFilters}
+              onClearFilters={clearFilters}
+              onHistory={(row) => {
+                setBalanceHistoryEmployee(enrichEmployeeRow(row));
+                setBalanceHistoryPage(1);
+              }}
+              onAdjust={openBalanceAdjust}
+            />
+            {filteredCounts.balance > PER_PAGE && (
+              <Pagination
+                currentPage={currentPage}
+                totalPages={balancesTotalPages}
+                totalItems={filteredCounts.balance}
+                itemsPerPage={PER_PAGE}
+                onPageChange={setCurrentPage}
+              />
+            )}
+            <BalanceLedgerTable
+              rows={balanceLedgerRows}
+              totalCount={filteredLedger.length}
+              isFetching={balanceLedgerFetching}
+              hasActiveFilters={hasActiveFilters}
+              onClearFilters={clearFilters}
+              onSelectEmployee={(row) => {
+                setBalanceHistoryEmployee(
+                  enrichEmployeeRow({
+                    id: row.employee_id,
+                    employee_id: row.employee_id,
+                    employee_name: row.employee_name,
+                    employee_code: row.employee_code,
+                    name: row.employee_name,
+                  })
+                );
+                setBalanceHistoryPage(1);
+              }}
+            />
+            {filteredLedger.length > PER_PAGE && (
+              <Pagination
+                currentPage={balanceLedgerPage}
+                totalPages={balanceLedgerTotalPages}
+                totalItems={filteredLedger.length}
+                itemsPerPage={PER_PAGE}
+                onPageChange={setBalanceLedgerPage}
+              />
+            )}
+          </div>
+        )}
+
+        {activeTab !== 'balance' && filteredCounts[activeTab] > PER_PAGE && (
           <div className="pt-2">
             <Pagination
               currentPage={currentPage}
               totalPages={totalPages}
-              onPageChange={setCurrentPage}
+              totalItems={filteredCounts[activeTab]}
+              itemsPerPage={PER_PAGE}
+              onPageChange={(page) => {
+                setCurrentPage(page);
+                if (activeTab === 'ledger') setSelectedPaymentIds([]);
+              }}
             />
           </div>
+        )}
+          </>
         )}
       </div>
 
@@ -921,6 +1230,8 @@ const PayrollManagement = () => {
         summaryLoading={summaryDetailLoading}
         currentPage={historyPage}
         totalPages={historyTotalPages}
+        totalItems={historyTotal}
+        itemsPerPage={HISTORY_PER_PAGE}
         onPageChange={setHistoryPage}
         onClose={() => setHistoryEmployee(null)}
         onAdjustBalance={(emp) =>
@@ -980,6 +1291,8 @@ const PayrollManagement = () => {
         isLoading={balanceHistoryLoading}
         currentPage={balanceHistoryPage}
         totalPages={balanceHistoryTotalPages}
+        totalItems={balanceHistoryTotal}
+        itemsPerPage={HISTORY_PER_PAGE}
         onPageChange={setBalanceHistoryPage}
         onClose={() => setBalanceHistoryEmployee(null)}
         onAdjust={(emp) => {

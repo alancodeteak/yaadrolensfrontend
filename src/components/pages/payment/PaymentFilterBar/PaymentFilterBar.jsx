@@ -1,6 +1,6 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import clsx from 'clsx';
-import { Search, ChevronDown } from 'lucide-react';
+import { Search, ChevronDown, Filter } from 'lucide-react';
 
 const menuClass =
   'absolute z-10 mt-2 w-52 overflow-hidden rounded-2xl border border-gray-200/60 bg-white py-1 shadow-[0_2px_16px_rgba(0,0,0,0.06)]';
@@ -15,7 +15,7 @@ const triggerClass =
   'inline-flex items-center gap-2 rounded-xl border border-gray-200/60 bg-white px-3 py-2 text-sm font-medium text-gray-700 shadow-[0_2px_16px_rgba(0,0,0,0.04)] transition-colors duration-200 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-[#007AFF]/20';
 
 const inputClass =
-  'w-full rounded-xl border border-gray-200/60 bg-white py-2.5 pl-10 pr-4 text-sm text-gray-900 shadow-[0_2px_16px_rgba(0,0,0,0.04)] placeholder:text-gray-400 transition-colors duration-200 focus:border-[#007AFF] focus:outline-none focus:ring-2 focus:ring-[#007AFF]/20';
+  'block w-full rounded-xl border border-gray-200/60 bg-white py-2.5 pl-9 pr-4 text-sm text-gray-900 shadow-[0_2px_16px_rgba(0,0,0,0.04)] placeholder:text-gray-400 focus:border-[#007AFF] focus:outline-none focus:ring-2 focus:ring-[#007AFF]/20';
 
 const PAYMENT_TYPE_OPTIONS = [
   { value: '', label: 'All types' },
@@ -68,9 +68,13 @@ const PaymentFilterBar = ({
   onBonusStatusFilterChange,
   balanceFilter,
   onBalanceFilterChange,
+  onClearFilters,
+  hasActiveFilters,
 }) => {
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [isStatusOpen, setIsStatusOpen] = useState(false);
+  const filterRef = useRef(null);
+  const statusRef = useRef(null);
 
   const tabOptions = {
     ledger: PAYMENT_TYPE_OPTIONS,
@@ -101,23 +105,66 @@ const PaymentFilterBar = ({
   const filterLabel =
     activeTab === 'ledger' ? 'Type' : activeTab === 'balance' ? 'Show' : 'Status';
 
+  const activeFilterLabel =
+    options.find((opt) => opt.value === filterValue)?.label ?? options[0]?.label;
+  const activeStatusLabel =
+    PAYMENT_STATUS_OPTIONS.find((opt) => opt.value === paymentStatusFilter)?.label ??
+    'All statuses';
+
+  useEffect(() => {
+    const handlePointerDown = (event) => {
+      if (filterRef.current && !filterRef.current.contains(event.target)) {
+        setIsFilterOpen(false);
+      }
+      if (statusRef.current && !statusRef.current.contains(event.target)) {
+        setIsStatusOpen(false);
+      }
+    };
+
+    const handleEscape = (event) => {
+      if (event.key === 'Escape') {
+        setIsFilterOpen(false);
+        setIsStatusOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handlePointerDown);
+    document.addEventListener('keydown', handleEscape);
+    return () => {
+      document.removeEventListener('mousedown', handlePointerDown);
+      document.removeEventListener('keydown', handleEscape);
+    };
+  }, []);
+
   return (
-    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-      <div className="relative max-w-md flex-1">
-        <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+    <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+      <div className="relative w-full lg:max-w-sm">
+        <Search
+          className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400"
+          strokeWidth={2}
+          aria-hidden="true"
+        />
         <input
           type="search"
           value={searchTerm}
           onChange={(e) => onSearchChange(e.target.value)}
-          placeholder="Search by name or employee code..."
+          placeholder="Search by name or code…"
           className={inputClass}
         />
       </div>
 
       <div className="flex flex-wrap items-center gap-2">
-        <div className="relative">
-          <button type="button" onClick={() => setIsFilterOpen(!isFilterOpen)} className={triggerClass}>
-            {filterLabel}
+        <div className="relative" ref={filterRef}>
+          <button
+            type="button"
+            onClick={() => {
+              setIsFilterOpen((open) => !open);
+              setIsStatusOpen(false);
+            }}
+            className={triggerClass}
+          >
+            <Filter className="h-4 w-4 text-gray-500" strokeWidth={2} />
+            {activeFilterLabel || filterLabel}
             <ChevronDown className="h-4 w-4 text-gray-400" strokeWidth={2} />
           </button>
           {isFilterOpen && (
@@ -138,10 +185,18 @@ const PaymentFilterBar = ({
             </div>
           )}
         </div>
+
         {activeTab === 'ledger' && (
-          <div className="relative">
-            <button type="button" onClick={() => setIsStatusOpen(!isStatusOpen)} className={triggerClass}>
-              Status
+          <div className="relative" ref={statusRef}>
+            <button
+              type="button"
+              onClick={() => {
+                setIsStatusOpen((open) => !open);
+                setIsFilterOpen(false);
+              }}
+              className={triggerClass}
+            >
+              {activeStatusLabel}
               <ChevronDown className="h-4 w-4 text-gray-400" strokeWidth={2} />
             </button>
             {isStatusOpen && (
@@ -162,6 +217,16 @@ const PaymentFilterBar = ({
               </div>
             )}
           </div>
+        )}
+
+        {hasActiveFilters && (
+          <button
+            type="button"
+            onClick={onClearFilters}
+            className="text-sm font-medium text-[#007AFF] hover:text-[#0066DD]"
+          >
+            Clear filters
+          </button>
         )}
       </div>
     </div>

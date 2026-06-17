@@ -70,16 +70,15 @@ const ActivityRingsChart = ({
         </h2>
       )}
 
-      <div className="relative shrink-0">
-        <svg
-          viewBox="0 0 220 220"
-          className={clsx(
-            dense && 'h-20 w-20 sm:h-24 sm:w-24',
-            !dense && compact && 'h-28 w-28 sm:h-32 sm:w-32',
-            !dense && !compact && 'h-56 w-56 sm:h-64 sm:w-64'
-          )}
-          aria-hidden="true"
-        >
+      <div
+        className={clsx(
+          'relative shrink-0',
+          dense && 'mx-auto aspect-square w-full max-h-24 max-w-24 sm:max-h-28 sm:max-w-28',
+          !dense && compact && 'aspect-square h-28 w-28 sm:h-32 sm:w-32',
+          !dense && !compact && 'aspect-square h-56 w-56 sm:h-64 sm:w-64'
+        )}
+      >
+        <svg viewBox="0 0 220 220" className="h-full w-full" aria-hidden="true">
           {ringConfigs.map((config, index) => {
             const ring = rings[index];
             if (!ring) return null;

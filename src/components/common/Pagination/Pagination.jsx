@@ -1,102 +1,117 @@
-import React from 'react';
+import clsx from 'clsx';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 
-const Pagination = ({ currentPage, totalPages, onPageChange, totalItems, itemsPerPage }) => {
-  const startItem = (currentPage - 1) * itemsPerPage + 1;
-  const endItem = Math.min(currentPage * itemsPerPage, totalItems);
+const getPageNumbers = (currentPage, totalPages) => {
+  if (totalPages <= 5) {
+    return Array.from({ length: totalPages }, (_, i) => i + 1);
+  }
 
-  const getPageNumbers = () => {
-    const pages = [];
-    const maxVisiblePages = 5;
-    
-    if (totalPages <= maxVisiblePages) {
-      for (let i = 1; i <= totalPages; i++) {
-        pages.push(i);
-      }
-    } else {
-      if (currentPage <= 3) {
-        for (let i = 1; i <= 4; i++) {
-          pages.push(i);
-        }
-        pages.push('...');
-        pages.push(totalPages);
-      } else if (currentPage >= totalPages - 2) {
-        pages.push(1);
-        pages.push('...');
-        for (let i = totalPages - 3; i <= totalPages; i++) {
-          pages.push(i);
-        }
-      } else {
-        pages.push(1);
-        pages.push('...');
-        for (let i = currentPage - 1; i <= currentPage + 1; i++) {
-          pages.push(i);
-        }
-        pages.push('...');
-        pages.push(totalPages);
-      }
-    }
-    
-    return pages;
-  };
+  if (currentPage <= 3) {
+    return [1, 2, 3, 4, '...', totalPages];
+  }
 
-  const pageNumbers = getPageNumbers();
+  if (currentPage >= totalPages - 2) {
+    return [1, '...', totalPages - 3, totalPages - 2, totalPages - 1, totalPages];
+  }
+
+  return [1, '...', currentPage - 1, currentPage, currentPage + 1, '...', totalPages];
+};
+
+const navButtonClass =
+  'inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-gray-200/60 bg-white text-gray-500 shadow-[0_2px_16px_rgba(0,0,0,0.04)] transition-colors hover:bg-gray-50 hover:text-gray-700 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-white disabled:hover:text-gray-500';
+
+const pageButtonClass = (isActive) =>
+  clsx(
+    'inline-flex h-9 min-w-9 items-center justify-center rounded-xl px-2.5 text-sm font-medium tabular-nums transition-colors',
+    isActive
+      ? 'bg-[#007AFF] text-white shadow-sm'
+      : 'border border-gray-200/60 bg-white text-gray-700 shadow-[0_2px_16px_rgba(0,0,0,0.04)] hover:bg-gray-50'
+  );
+
+const Pagination = ({
+  currentPage,
+  totalPages,
+  onPageChange,
+  totalItems,
+  itemsPerPage,
+  className,
+}) => {
+  if (!totalPages || totalPages <= 1) return null;
+
+  const showResults =
+    totalItems != null && itemsPerPage != null && Number.isFinite(totalItems) && totalItems > 0;
+
+  const startItem = showResults ? (currentPage - 1) * itemsPerPage + 1 : null;
+  const endItem = showResults ? Math.min(currentPage * itemsPerPage, totalItems) : null;
+  const pageNumbers = getPageNumbers(currentPage, totalPages);
 
   return (
-    <div className="flex items-center justify-between">
-      {/* Results Info */}
-      <div className="text-sm text-gray-700">
-        Showing <span className="font-medium">{startItem}</span> to{' '}
-        <span className="font-medium">{endItem}</span> of{' '}
-        <span className="font-medium">{totalItems}</span> results
-      </div>
+    <nav
+      className={clsx(
+        'flex flex-col gap-3 sm:flex-row sm:items-center',
+        showResults ? 'sm:justify-between' : 'justify-center',
+        className
+      )}
+      aria-label="Pagination"
+    >
+      {showResults && (
+        <p className="text-sm text-gray-500">
+          Showing{' '}
+          <span className="font-medium text-gray-900">{startItem}</span>
+          {' – '}
+          <span className="font-medium text-gray-900">{endItem}</span>
+          {' of '}
+          <span className="font-medium text-gray-900">{totalItems}</span>
+        </p>
+      )}
 
-      {/* Pagination Controls */}
-      <div className="flex items-center space-x-1">
-        {/* Previous Button */}
+      <div className="flex items-center justify-center gap-1">
         <button
+          type="button"
           onClick={() => onPageChange(currentPage - 1)}
           disabled={currentPage === 1}
-          className="relative inline-flex items-center px-2 py-2 rounded-md text-sm font-medium text-gray-500 bg-white border border-gray-300 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
+          className={navButtonClass}
+          aria-label="Previous page"
         >
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-          </svg>
+          <ChevronLeft className="h-4 w-4" strokeWidth={2} />
         </button>
 
-        {/* Page Numbers */}
-        {pageNumbers.map((page, index) => (
-          <React.Fragment key={index}>
-            {page === '...' ? (
-              <span className="relative inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700">
-                ...
+        <div className="flex items-center gap-1 px-0.5">
+          {pageNumbers.map((page, index) =>
+            page === '...' ? (
+              <span
+                key={`ellipsis-${index}`}
+                className="inline-flex h-9 min-w-9 items-center justify-center text-sm text-gray-400"
+                aria-hidden="true"
+              >
+                …
               </span>
             ) : (
               <button
+                key={page}
+                type="button"
                 onClick={() => onPageChange(page)}
-                className={`relative inline-flex items-center px-4 py-2 text-sm font-medium rounded-md transition-colors duration-200 ${
-                  currentPage === page
-                    ? 'z-10 bg-blue-600 text-white border-blue-600'
-                    : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
-                }`}
+                className={pageButtonClass(currentPage === page)}
+                aria-label={`Page ${page}`}
+                aria-current={currentPage === page ? 'page' : undefined}
               >
                 {page}
               </button>
-            )}
-          </React.Fragment>
-        ))}
+            )
+          )}
+        </div>
 
-        {/* Next Button */}
         <button
+          type="button"
           onClick={() => onPageChange(currentPage + 1)}
           disabled={currentPage === totalPages}
-          className="relative inline-flex items-center px-2 py-2 rounded-md text-sm font-medium text-gray-500 bg-white border border-gray-300 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
+          className={navButtonClass}
+          aria-label="Next page"
         >
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-          </svg>
+          <ChevronRight className="h-4 w-4" strokeWidth={2} />
         </button>
       </div>
-    </div>
+    </nav>
   );
 };
 

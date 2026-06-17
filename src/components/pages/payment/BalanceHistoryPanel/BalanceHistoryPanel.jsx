@@ -1,8 +1,9 @@
 import { Scale, X } from 'lucide-react';
-import { LottieLoader, Pagination } from '../../../common';
+import { LottieLoader, Pagination, UserAvatar } from '../../../common';
 import {
   BALANCE_TRANSACTION_LABELS,
   BALANCE_TRANSACTION_STYLES,
+  formatDate,
   formatDateTime,
   formatMoney,
 } from '../paymentUtils';
@@ -15,6 +16,8 @@ const BalanceHistoryPanel = ({
   isLoading,
   currentPage,
   totalPages,
+  totalItems,
+  itemsPerPage = 10,
   onPageChange,
   onClose,
   onAdjust,
@@ -23,6 +26,7 @@ const BalanceHistoryPanel = ({
 
   const items = transactions?.items || [];
   const displayName = employee.employee_name || employee.name;
+  const showPagination = totalItems > itemsPerPage;
 
   return (
     <div
@@ -38,13 +42,21 @@ const BalanceHistoryPanel = ({
         aria-labelledby="balance-history-title"
       >
         <div className="flex items-center justify-between border-b border-gray-100 px-5 py-4">
-          <div>
-            <h2 id="balance-history-title" className="text-lg font-semibold text-gray-900">
-              Balance history
-            </h2>
-            <p className="text-sm text-gray-500">
-              {displayName} · {employee.employee_code}
-            </p>
+          <div className="flex items-center gap-3">
+            <UserAvatar
+              className="h-10 w-10 shrink-0 rounded-full object-cover ring-1 ring-gray-100"
+              src={employee.profilePhotoUrl || employee.photo || employee.avatar}
+              name={displayName}
+              seed={employee.employee_id || employee.id}
+            />
+            <div>
+              <h2 id="balance-history-title" className="text-lg font-semibold text-gray-900">
+                Balance history
+              </h2>
+              <p className="text-sm text-gray-500">
+                {displayName} · {employee.employee_code}
+              </p>
+            </div>
           </div>
           <button
             type="button"
@@ -101,6 +113,10 @@ const BalanceHistoryPanel = ({
                         </span>
                       </p>
                       <p className="mt-1 text-xs text-gray-500">
+                        {formatDate(item.transaction_date)}
+                        {item.reference ? ` · Ref ${item.reference}` : ''}
+                      </p>
+                      <p className="mt-0.5 text-xs text-gray-500">
                         Balance after {formatMoney(item.balance_after)}
                       </p>
                     </div>
@@ -115,11 +131,13 @@ const BalanceHistoryPanel = ({
           )}
         </div>
 
-        {totalPages > 1 && (
+        {showPagination && (
           <div className="border-t border-gray-100 px-5 py-4">
             <Pagination
               currentPage={currentPage}
               totalPages={totalPages}
+              totalItems={totalItems}
+              itemsPerPage={itemsPerPage}
               onPageChange={onPageChange}
             />
           </div>

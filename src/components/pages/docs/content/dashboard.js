@@ -22,7 +22,14 @@ export const dashboardContent = {
           'Workforce — how many staff you have, new joiners this month, and face registration status.',
           'Today — who is present, absent, or late right now. Tap any number to see more detail.',
           'Actions — staff who still need face registration, missing profile details, or kiosk setup.',
-          'Holidays — public holidays in India for today and upcoming dates (for your information).',
+          'Pay schedule — next salary pay day, days remaining, and how many monthly salaries are generated.',
+        ],
+      },
+      {
+        title: 'Payroll',
+        list: [
+          'Payroll overview — paid this month, salary due, outstanding advances, and pending counts.',
+          'Payment alerts — pay-day reminders and payroll items that need your attention. Tap an alert to open Payment.',
         ],
       },
       {
@@ -42,6 +49,7 @@ export const dashboardContent = {
           ['Check who is in today — ', docLink('/docs/attendance', 'Live Attendance')],
           ['Manage staff — ', docLink('/docs/employees', 'Employees')],
           ['View monthly trends — ', docLink('/docs/analytics', 'Analytics')],
+          ['Run payroll — ', docLink('/admin/payroll', 'Payment')],
         ],
       },
     ],
@@ -66,7 +74,14 @@ export const dashboardContent = {
           'Workforce — आपके पास कितने स्टाफ हैं, इस महीने नए जुड़ने वाले लोग, और फेस रजिस्ट्रेशन की स्थिति।',
           'Today — अभी कौन मौजूद, अनुपस्थित या देर से है। अधिक जानकारी के लिए किसी भी संख्या पर टैप करें।',
           'Actions — जिन स्टाफ का फेस रजिस्ट्रेशन बाकी है, प्रोफाइल जानकारी अधूरी है, या कियोस्क सेटअप चाहिए।',
-          'Holidays — आज और आने वाली तारीखों के लिए भारत की सार्वजनिक छुट्टियाँ (आपकी जानकारी के लिए)।',
+          'Pay schedule — अगली सैलरी pay day, बचे हुए दिन, और इस अवधि के लिए कितनी मासिक सैलरी जनरेट हुई हैं।',
+        ],
+      },
+      {
+        title: 'पेरोल',
+        list: [
+          'Payroll overview — इस महीने भुगतान, बकाया सैलरी, बकाया एडवांस, और pending गिनती।',
+          'Payment alerts — pay-day रिमाइंडर और ध्यान देने वाले पेरोल आइटम। अलर्ट पर टैप करके Payment खोलें।',
         ],
       },
       {
@@ -110,7 +125,14 @@ export const dashboardContent = {
           'Workforce — നിങ്ങൾക്ക് എത്ര സ്റ്റാഫ് ഉണ്ട്, ഈ മാസം പുതുതായി ചേർന്നവർ, ഫേസ് രജിസ്ട്രേഷൻ നില.',
           'Today — ഇപ്പോൾ ആരൊക്കെ ഹാജർ, ആരൊക്കെ ഹാജരല്ല, അല്ലെങ്കിൽ വൈകിയെത്തിയവർ. കൂടുതൽ വിവരങ്ങൾക്ക് ഏതെങ്കിലും നമ്പറിൽ ടാപ്പ് ചെയ്യുക.',
           'Actions — ഫേസ് രജിസ്ട്രേഷൻ ബാക്കിയുള്ളവർ, പ്രൊഫൈൽ വിവരങ്ങൾ പൂർത്തിയാക്കാത്തവർ, അല്ലെങ്കിൽ കിയോസ്ക് സെറ്റപ്പ് ആവശ്യമുള്ള കാര്യങ്ങൾ.',
-          'Holidays — ഇന്ന്‌യും വരാനിരിക്കുന്ന തീയതികളിലും ഇന്ത്യയിലെ പൊതു അവധികൾ (നിങ്ങളുടെ അറിവിന്).',
+          'Pay schedule — അടുത്ത ശമ്പള pay day, ബാക്കിയുള്ള ദിവസങ്ങൾ, ഈ കാലയളവിൽ എത്ര മാസിക ശമ്പളങ്ങൾ ജനറേറ്റ് ചെയ്തു.',
+        ],
+      },
+      {
+        title: 'പേറോൾ',
+        list: [
+          'Payroll overview — ഈ മാസം അടച്ചത്, ബാക്കി ശമ്പളം, ബാക്കി അഡ്വാൻസ്, pending എണ്ണം.',
+          'Payment alerts — pay-day ഓർമ്മപ്പെടുത്തലുകളും ശ്രദ്ധിക്കേണ്ട പേറോൾ ഇനങ്ങളും. Payment തുറക്കാൻ അലേർട്ടിൽ ടാപ്പ് ചെയ്യുക.',
         ],
       },
       {
@@ -154,7 +176,14 @@ export const dashboardContent = {
           'Workforce — ನಿಮ್ಮಲ್ಲಿ ಎಷ್ಟು ಸಿಬ್ಬಂದಿ ಇದ್ದಾರೆ, ಈ ತಿಂಗಳು ಹೊಸದಾಗಿ ಸೇರಿದವರು, ಮತ್ತು ಮುಖ ನೋಂದಣಿ ಸ್ಥಿತಿ.',
           'Today — ಈಗ ಯಾರು ಹಾಜರಿದ್ದಾರೆ, ಗೈರುಹಾಜರಿದ್ದಾರೆ, ಅಥವಾ ತಡವಾಗಿ ಬಂದಿದ್ದಾರೆ. ಹೆಚ್ಚಿನ ವಿವರಕ್ಕೆ ಯಾವುದೇ ಸಂಖ್ಯೆಯನ್ನು ಟ್ಯಾಪ್ ಮಾಡಿ.',
           'Actions — ಇನ್ನೂ ಮುಖ ನೋಂದಣಿ ಬೇಕಿರುವ ಸಿಬ್ಬಂದಿ, ಅಪೂರ್ಣ ಪ್ರೊಫೈಲ್ ವಿವರಗಳು, ಅಥವಾ ಕಿಯೋಸ್ಕ್ ಸೆಟಪ್.',
-          'Holidays — ಇಂದು ಮತ್ತು ಮುಂದಿನ ದಿನಾಂಕಗಳಿಗೆ ಭಾರತದ ಸಾರ್ವಜನಿಕ ರಜೆಗಳು (ನಿಮ್ಮ ಮಾಹಿತಿಗಾಗಿ).',
+          'Pay schedule — ಮುಂದಿನ ಸಂಬಳ pay day, ಬಾಕಿ ದಿನಗಳು, ಈ ಅವಧಿಗೆ ಎಷ್ಟು ಮಾಸಿಕ ಸಂಬಳಗಳನ್ನು ಜನರೇಟ್ ಮಾಡಲಾಗಿದೆ.',
+        ],
+      },
+      {
+        title: 'ಪೇರೋಲ್',
+        list: [
+          'Payroll overview — ಈ ತಿಂಗಳು ಪಾವತಿಸಿದ್ದು, ಬಾಕಿ ಸಂಬಳ, ಬಾಕಿ ಅಡ್ವಾನ್ಸ್, pending ಎಣಿಕೆ.',
+          'Payment alerts — pay-day ಜ್ಞಾಪನೆಗಳು ಮತ್ತು ಗಮನ ಕೊಡಬೇಕಾದ ಪೇರೋಲ್ ಅಂಶಗಳು. Payment ತೆರೆಯಲು ಅಲರ್ಟ್ ಮೇಲೆ ಟ್ಯಾಪ್ ಮಾಡಿ.',
         ],
       },
       {

@@ -17,11 +17,14 @@ export {
 } from './NotFoundState';
 export { default as UserAvatar } from './UserAvatar';
 export { default as DashboardDatePicker } from './DashboardDatePicker';
+export { default as DashboardEmployeeSelect } from './DashboardEmployeeSelect';
 export { default as DashboardTimePicker } from './DashboardTimePicker';
 export { default as DashboardToast } from './DashboardToast';
 export { dashboardToast } from '../../utils/dashboardToast';
 export {
   usePageTour,
+  usePageDocsHref,
+  resolvePageDocsHref,
   PageInfoOverlay,
   PageTourButtons,
   ANALYTICS_GUIDE_STEPS,
@@ -30,6 +33,7 @@ export {
   EMPLOYEES_GUIDE_STEPS,
   SALARY_GUIDE_STEPS,
   PAYROLL_GUIDE_STEPS,
+  REPORTS_GUIDE_STEPS,
   SETTINGS_ATTENDANCE_STEPS,
   SETTINGS_KIOSK_STEPS,
   SETTINGS_HELP_STEPS,

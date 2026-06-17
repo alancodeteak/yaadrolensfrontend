@@ -9,30 +9,18 @@ import {
 export const employeeApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
     getEmployees: builder.query({
-      query: () => '/org-admin/employees',
-      transformResponse: (response, meta, arg) => {
-        let employees = normalizeEmployees(response);
-        const { search = '', department = 'all', is_active = true } = arg || {};
-
-        if (search) {
-          const term = search.toLowerCase();
-          employees = employees.filter(
-            (employee) =>
-              employee.name?.toLowerCase().includes(term) ||
-              employee.employee_code?.toLowerCase().includes(term) ||
-              employee.phone?.toLowerCase().includes(term)
-          );
-        }
-
-        if (department && department !== 'all') {
-          employees = employees.filter((employee) => employee.department === department);
-        }
-
-        if (is_active !== undefined && is_active !== null && is_active !== 'all') {
-          employees = employees.filter((employee) => employee.is_active === is_active);
-        }
-
-        return employees;
+      query: ({ page = 1, limit = 50 } = {}) => {
+        const skip = Math.max(0, (page - 1) * limit);
+        return `/org-admin/employees?skip=${skip}&limit=${limit}`;
+      },
+      transformResponse: (response) => {
+        const items = normalizeEmployees(response?.items ?? response);
+        return {
+          items,
+          total: response?.total ?? items.length,
+          skip: response?.skip ?? 0,
+          limit: response?.limit ?? items.length,
+        };
       },
       providesTags: ['Employee'],
     }),
@@ -102,6 +90,38 @@ export const employeeApi = baseApi.injectEndpoints({
       transformResponse: (response) => normalizeEmployee(response),
       invalidatesTags: (result, error, id) => [{ type: 'Employee', id }, 'Employee', 'Dashboard'],
     }),
+
+    uploadEmployeeDocument: builder.mutation({
+      query: ({ id, side, file, docType, label }) => {
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('doc_type', docType);
+        if (label) {
+          formData.append('label', label);
+        }
+        return {
+          url: `/org-admin/employees/${id}/document/${side}`,
+          method: 'PUT',
+          body: formData,
+        };
+      },
+      transformResponse: (response) => normalizeEmployee(response),
+      invalidatesTags: (result, error, { id }) => [{ type: 'Employee', id }, 'Employee'],
+    }),
+
+    deleteEmployeeDocument: builder.mutation({
+      query: ({ id, side }) => ({
+        url: `/org-admin/employees/${id}/document/${side}`,
+        method: 'DELETE',
+      }),
+      transformResponse: (response) => normalizeEmployee(response),
+      invalidatesTags: (result, error, { id }) => [{ type: 'Employee', id }, 'Employee'],
+    }),
+
+    getEmployeeDocumentViewUrl: builder.query({
+      query: ({ id, side }) => `/org-admin/employees/${id}/document/${side}/view-url`,
+      keepUnusedDataFor: 60,
+    }),
   }),
 });
 
@@ -114,4 +134,8 @@ export const {
   useResetEmployeeFaceMutation,
   useUploadEmployeeProfilePhotoMutation,
   useDeleteEmployeeProfilePhotoMutation,
+  useUploadEmployeeDocumentMutation,
+  useDeleteEmployeeDocumentMutation,
+  useGetEmployeeDocumentViewUrlQuery,
+  useLazyGetEmployeeDocumentViewUrlQuery,
 } = employeeApi;

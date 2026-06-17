@@ -18,10 +18,22 @@ export const DASHBOARD_GUIDE_STEPS = [
     body: 'Items that need attention: employees pending face enrollment, incomplete profiles, and kiosk pairing status.',
   },
   {
-    id: 'holidays',
-    selector: '[data-tour="holidays"]',
-    title: 'Holidays',
-    body: 'Today\'s public holiday status in India and the next upcoming national holidays.',
+    id: 'pay-schedule',
+    selector: '[data-tour="pay-schedule"]',
+    title: 'Pay schedule',
+    body: 'Next salary pay day, days remaining, and how many monthly salaries are generated for this period.',
+  },
+  {
+    id: 'payroll-stats',
+    selector: '[data-tour="payroll-stats"]',
+    title: 'Payroll overview',
+    body: 'Paid this month, salary due, outstanding advances, and pending payment counts.',
+  },
+  {
+    id: 'payment-alerts',
+    selector: '[data-tour="payment-alerts"]',
+    title: 'Payment alerts',
+    body: 'Upcoming pay-day reminders and payroll items that need your attention. Tap an alert to open Payment.',
   },
   {
     id: 'calendar',

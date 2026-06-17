@@ -1,5 +1,32 @@
 import { getDefaultAvatar } from '../../utils/avatar';
+import { DEFAULT_IDENTITY_DOCUMENT } from '../../utils/employeeDocumentConstants';
 import { resolveEmployeePhotoUrl } from '../../utils/employeePhoto';
+
+/** YYYY-MM-DD in an IANA timezone (e.g. org settings). */
+export function formatDateInTimezone(date = new Date(), timezone = 'UTC') {
+  try {
+    return new Intl.DateTimeFormat('en-CA', {
+      timeZone: timezone,
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+    }).format(date);
+  } catch {
+    return new Date().toISOString().slice(0, 10);
+  }
+}
+
+export function orgToday(timezone = 'UTC') {
+  return formatDateInTimezone(new Date(), timezone);
+}
+
+/** True when the calendar month has not ended yet in org timezone. */
+export function isPayrollPeriodOpen(year, month, timezone = 'UTC') {
+  const today = orgToday(timezone);
+  const lastDay = new Date(year, month, 0).getDate();
+  const periodEnd = `${year}-${String(month).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`;
+  return today < periodEnd;
+}
 
 export function normalizeEmployee(employee) {
   if (!employee) return employee;
@@ -12,6 +39,10 @@ export function normalizeEmployee(employee) {
     training_status: employee.has_face_enrolled ? 'completed' : 'not_started',
     photo,
     avatar: photo || getDefaultAvatar(employee.id || employee.name),
+    identity_document: {
+      ...DEFAULT_IDENTITY_DOCUMENT,
+      ...(employee.identity_document || {}),
+    },
   };
 }
 
@@ -26,9 +57,13 @@ export function toEmployeeCreatePayload(data) {
     department_id: data.department_id || undefined,
     designation: data.designation || data.position || undefined,
   };
-  // salary is monthly amount in USD
+  // salary is monthly amount in INR
   if (data.salary !== undefined && data.salary !== null && data.salary !== '') {
     payload.salary = Number(data.salary);
+  }
+  if (data.weekly_off_days !== undefined) payload.weekly_off_days = data.weekly_off_days;
+  if (data.paid_leaves_per_month !== undefined) {
+    payload.paid_leaves_per_month = data.paid_leaves_per_month;
   }
   return payload;
 }
@@ -45,10 +80,14 @@ export function toEmployeeUpdatePayload(data) {
     payload.status = data.is_active ? 'active' : 'inactive';
   }
   if (data.status !== undefined) payload.status = data.status;
-  // salary is monthly amount in USD
+  // salary is monthly amount in INR
   if (data.salary !== undefined) {
     payload.salary =
       data.salary === null || data.salary === '' ? null : Number(data.salary);
+  }
+  if (data.weekly_off_days !== undefined) payload.weekly_off_days = data.weekly_off_days;
+  if (data.paid_leaves_per_month !== undefined) {
+    payload.paid_leaves_per_month = data.paid_leaves_per_month;
   }
   return payload;
 }
@@ -105,6 +144,16 @@ export function transformMonthlyReport(response) {
   };
 }
 
+export function formatDurationHours(hours) {
+  if (hours == null || Number.isNaN(Number(hours))) return '—';
+  const value = Number(hours);
+  if (value <= 0) return '0h';
+  const h = Math.floor(value);
+  const m = Math.round((value - h) * 60);
+  if (m === 0) return `${h}h`;
+  return `${h}h ${m}m`;
+}
+
 export function formatClockTime(iso) {
   if (!iso) return null;
   return new Date(iso).toLocaleTimeString('en-US', {
@@ -112,6 +161,16 @@ export function formatClockTime(iso) {
     minute: '2-digit',
     hour12: true,
   });
+}
+
+/** Resolve profile photo fields for a daily attendance row. */
+export function resolveRowProfilePhoto(row) {
+  const photo = resolveEmployeePhotoUrl(row?.profile_photo_url);
+  return {
+    profilePhotoUrl: row?.profile_photo_url || null,
+    photo,
+    avatar: photo || getDefaultAvatar(row?.employee_id || row?.name),
+  };
 }
 
 /** Map a daily report row to live-attendance UI employee shape. */
@@ -134,6 +193,8 @@ export function mapDailyRowToLiveEmployee(row) {
       ? formatClockTime(row.clock_in)
       : 'Not seen today';
 
+  const { profilePhotoUrl, photo, avatar } = resolveRowProfilePhoto(row);
+
   return {
     id: row.employee_id,
     employee_code: row.employee_code,
@@ -143,7 +204,9 @@ export function mapDailyRowToLiveEmployee(row) {
     clockIn,
     lastSeen,
     confidence: null,
-    avatar: getDefaultAvatar(row.employee_id || row.name),
+    profilePhotoUrl,
+    photo,
+    avatar,
   };
 }
 
@@ -152,6 +215,7 @@ export function transformDailyRowsToLogs(response) {
   const logs = [];
 
   rows.forEach((row) => {
+    const { profilePhotoUrl, photo, avatar } = resolveRowProfilePhoto(row);
     if (row.clock_in) {
       logs.push({
         id: `${row.employee_id}-in`,
@@ -159,6 +223,9 @@ export function transformDailyRowsToLogs(response) {
         employee_department: '',
         type: 'IN',
         timestamp: row.clock_in,
+        profilePhotoUrl,
+        photo,
+        avatar,
       });
     }
     if (row.clock_out) {
@@ -168,6 +235,9 @@ export function transformDailyRowsToLogs(response) {
         employee_department: '',
         type: 'OUT',
         timestamp: row.clock_out,
+        profilePhotoUrl,
+        photo,
+        avatar,
       });
     }
   });
@@ -188,11 +258,15 @@ export function transformSettingsResponse(settings) {
 
 export function normalizeSalaryRow(row) {
   if (!row) return row;
+  const photo = resolveEmployeePhotoUrl(row.profile_photo_url);
   return {
     ...row,
     id: row.employee_id,
     is_active: row.status === 'active',
     department: row.department_name || '',
+    profilePhotoUrl: row.profile_photo_url || null,
+    photo,
+    avatar: photo || getDefaultAvatar(row.employee_id || row.name),
     current_salary:
       row.current_salary != null && row.current_salary !== ''
         ? Number(row.current_salary)
@@ -322,11 +396,24 @@ export function normalizeBalanceTransactions(response) {
   return {
     ...response,
     running_balance: toMoney(response.running_balance) ?? 0,
-    items: (response.items || []).map((item) => ({
-      ...item,
-      amount: toMoney(item.amount) ?? 0,
-      balance_after: toMoney(item.balance_after) ?? 0,
-    })),
+    items: (response.items || []).map(normalizeBalanceTransaction),
+  };
+}
+
+export function normalizeBalanceTransaction(item) {
+  if (!item) return item;
+  return {
+    ...item,
+    amount: toMoney(item.amount) ?? 0,
+    balance_after: toMoney(item.balance_after) ?? 0,
+  };
+}
+
+export function normalizeBalanceLedger(response) {
+  if (!response) return { items: [], total: 0, skip: 0, limit: 50 };
+  return {
+    ...response,
+    items: (response.items || []).map(normalizeBalanceTransaction),
   };
 }
 
@@ -334,6 +421,8 @@ export function toBalanceAdjustPayload(data) {
   return {
     transaction_type: data.transaction_type,
     amount: Number(data.amount),
+    transaction_date: data.transaction_date,
+    reference: data.reference || undefined,
     notes: data.notes,
   };
 }

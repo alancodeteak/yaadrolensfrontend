@@ -6,6 +6,7 @@ import {
   EmployeesGuide,
   SalaryGuide,
   PayrollGuide,
+  ReportsGuide,
   LiveAttendanceGuide,
   AnalyticsGuide,
   SettingsGuide,
@@ -40,6 +41,7 @@ const Docs = () => (
           <Route path="employees" element={<EmployeesGuide />} />
           <Route path="salary" element={<SalaryGuide />} />
           <Route path="payroll" element={<PayrollGuide />} />
+          <Route path="reports" element={<ReportsGuide />} />
           <Route path="attendance" element={<LiveAttendanceGuide />} />
           <Route path="analytics" element={<AnalyticsGuide />} />
           <Route path="settings" element={<SettingsGuide />} />

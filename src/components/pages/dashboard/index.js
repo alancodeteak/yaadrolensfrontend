@@ -4,6 +4,8 @@ export { default as DashboardWidgetCard } from './DashboardWidgetCard';
 export { default as AttendanceMonthCalendar } from './AttendanceMonthCalendar';
 export { default as RecentActivityFeed } from './RecentActivityFeed';
 export { default as IndiaHolidaysCard } from './IndiaHolidaysCard';
+export { default as PaymentScheduleCard } from './PaymentScheduleCard';
+export { default as PaymentAlertsFeed } from './PaymentAlertsFeed';
 export {
   DASHBOARD_PANEL,
   DASHBOARD_ACCENTS,

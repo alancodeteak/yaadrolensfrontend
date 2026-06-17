@@ -26,7 +26,7 @@ export const ATTENDANCE_GUIDE_STEPS = [
   {
     id: 'hourly-chart',
     selector: '[data-tour="hourly-chart"]',
-    title: 'Clock-ins by hour',
-    body: 'Bar chart showing when employees arrived throughout the day — useful for spotting peak arrival times.',
+    title: 'Attendance timeline',
+    body: 'Animated line chart of on-site headcount through the day. Employee avatars mark each clock-in (green) and clock-out (red).',
   },
 ];

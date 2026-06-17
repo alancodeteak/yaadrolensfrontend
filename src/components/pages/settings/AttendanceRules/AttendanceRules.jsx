@@ -1,13 +1,12 @@
 import { useState, useEffect, useMemo } from 'react';
 import { DashboardTimePicker, LoadingScreen, LottieLoader, dashboardToast } from '../../../common';
-import { Clock } from 'lucide-react';
 import SettingsSection, {
   settingsInputClass,
   settingsLabelClass,
-  SettingsPageHeader,
+  SettingsSectionMeta,
   SettingsContentGrid,
-} from '../SettingsSection';
-import { SETTINGS_PANEL } from '../settingsTheme';
+} from '../SettingsSection/SettingsSection';
+import { DASHBOARD_BTN_PRIMARY, SETTINGS_PANEL } from '../settingsTheme';
 import {
   useGetAttendanceRulesQuery,
   useUpdateAttendanceRulesMutation,
@@ -19,22 +18,24 @@ const normalizeTime = (value, fallback) => {
   return str.length >= 5 ? str.slice(0, 5) : str;
 };
 
-const buildApiPayload = (workingHours, gracePeriods) => ({
+const buildApiPayload = (workingHours, gracePeriods, kioskScan) => ({
   work_start_time: normalizeTime(workingHours.startTime, '09:00'),
   work_end_time: normalizeTime(workingHours.endTime, '17:00'),
   late_arrival_grace_minutes: Number(gracePeriods.lateArrival ?? 10),
   early_departure_grace_minutes: Number(gracePeriods.earlyDeparture ?? 5),
+  minimum_clock_out_minutes: Number(kioskScan.minimumClockOutMinutes ?? 30),
 });
 
-const hasApiChanges = (saved, workingHours, gracePeriods) => {
+const hasApiChanges = (saved, workingHours, gracePeriods, kioskScan) => {
   if (!saved) return false;
 
-  const current = buildApiPayload(workingHours, gracePeriods);
+  const current = buildApiPayload(workingHours, gracePeriods, kioskScan);
   return (
     normalizeTime(saved.work_start_time, '09:00') !== current.work_start_time ||
     normalizeTime(saved.work_end_time, '17:00') !== current.work_end_time ||
     Number(saved.late_arrival_grace_minutes ?? 10) !== current.late_arrival_grace_minutes ||
-    Number(saved.early_departure_grace_minutes ?? 5) !== current.early_departure_grace_minutes
+    Number(saved.early_departure_grace_minutes ?? 5) !== current.early_departure_grace_minutes ||
+    Number(saved.minimum_clock_out_minutes ?? 30) !== current.minimum_clock_out_minutes
   );
 };
 
@@ -48,6 +49,7 @@ const AttendanceRules = () => {
     breakDuration: 60,
   });
   const [gracePeriods, setGracePeriods] = useState({ lateArrival: 10, earlyDeparture: 5 });
+  const [kioskScan, setKioskScan] = useState({ minimumClockOutMinutes: 30 });
   const [overtimeRules, setOvertimeRules] = useState({ enabled: true, rateMultiplier: 1.5 });
   const [weekendHolidays, setWeekendHolidays] = useState({ weekendDays: ['saturday', 'sunday'] });
 
@@ -62,6 +64,9 @@ const AttendanceRules = () => {
       lateArrival: attendanceRules.late_arrival_grace_minutes ?? 10,
       earlyDeparture: attendanceRules.early_departure_grace_minutes ?? 5,
     });
+    setKioskScan({
+      minimumClockOutMinutes: attendanceRules.minimum_clock_out_minutes ?? 30,
+    });
     setOvertimeRules({
       enabled: attendanceRules.allow_overtime ?? true,
       rateMultiplier: attendanceRules.overtime_rate_multiplier || 1.5,
@@ -72,8 +77,8 @@ const AttendanceRules = () => {
   }, [attendanceRules]);
 
   const isDirty = useMemo(
-    () => hasApiChanges(attendanceRules, workingHours, gracePeriods),
-    [attendanceRules, workingHours, gracePeriods]
+    () => hasApiChanges(attendanceRules, workingHours, gracePeriods, kioskScan),
+    [attendanceRules, workingHours, gracePeriods, kioskScan]
   );
 
   const validateForm = () => {
@@ -89,6 +94,9 @@ const AttendanceRules = () => {
     }
     if (gracePeriods.earlyDeparture < 0 || gracePeriods.earlyDeparture > 60) {
       errors.push('Early departure grace must be between 0 and 60 minutes');
+    }
+    if (kioskScan.minimumClockOutMinutes < 0 || kioskScan.minimumClockOutMinutes > 480) {
+      errors.push('Minimum clock-out wait must be between 0 and 480 minutes');
     }
     if (
       overtimeRules.enabled &&
@@ -109,7 +117,7 @@ const AttendanceRules = () => {
     }
 
     try {
-      await updateAttendanceRules(buildApiPayload(workingHours, gracePeriods)).unwrap();
+      await updateAttendanceRules(buildApiPayload(workingHours, gracePeriods, kioskScan)).unwrap();
       dashboardToast.success('Your attendance rules were updated.', 'Changes saved');
       refetch();
     } catch (err) {
@@ -126,13 +134,9 @@ const AttendanceRules = () => {
 
   if (error) {
     return (
-      <div className={`${SETTINGS_PANEL} px-5 py-8 text-center`}>
-        <p className="text-sm font-medium text-red-800">Failed to load attendance rules</p>
-        <button
-          type="button"
-          onClick={() => refetch()}
-          className="mt-3 rounded-xl bg-[#007AFF] px-4 py-2 text-sm font-semibold text-white hover:bg-[#0066DD]"
-        >
+      <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+        <p>Could not load attendance rules. Please try again.</p>
+        <button type="button" onClick={() => refetch()} className={`${DASHBOARD_BTN_PRIMARY} mt-3`}>
           Retry
         </button>
       </div>
@@ -141,17 +145,11 @@ const AttendanceRules = () => {
 
   return (
     <div className="space-y-6">
-      <SettingsPageHeader
-        icon={Clock}
-        tone="attendance"
-        title="Attendance rules"
-        subtitle="Work hours, grace periods, overtime, and weekend settings"
-        meta={
-          attendanceRules?.updated_at
-            ? `Last updated ${new Date(attendanceRules.updated_at).toLocaleString()}`
-            : undefined
-        }
-      />
+      {attendanceRules?.updated_at && (
+        <SettingsSectionMeta>
+          Last updated {new Date(attendanceRules.updated_at).toLocaleString()}
+        </SettingsSectionMeta>
+      )}
 
       <SettingsContentGrid>
         <SettingsSection title="Working hours" tourId="working-hours">
@@ -230,6 +228,33 @@ const AttendanceRules = () => {
           </div>
         </SettingsSection>
 
+        <SettingsSection
+          title="Kiosk scan"
+          subtitle="Rules for clock-in and clock-out on the attendance tablet"
+          tourId="kiosk-scan-rules"
+        >
+          <div className="max-w-xs">
+            <label className={settingsLabelClass}>Minimum minutes before clock-out</label>
+            <input
+              type="number"
+              value={kioskScan.minimumClockOutMinutes}
+              onChange={(e) =>
+                setKioskScan((p) => ({
+                  ...p,
+                  minimumClockOutMinutes: parseInt(e.target.value, 10) || 0,
+                }))
+              }
+              className={settingsInputClass}
+              min="0"
+              max="480"
+            />
+            <p className="mt-2 text-xs text-gray-500">
+              Staff must wait this long after clock-in before a scan can record clock-out.
+              Set to 0 to allow immediate clock-out.
+            </p>
+          </div>
+        </SettingsSection>
+
         <SettingsSection title="Overtime" tourId="overtime-rules">
           <div className="space-y-3">
             <label className="flex items-center justify-between gap-3">
@@ -302,13 +327,13 @@ const AttendanceRules = () => {
 
       <div
         data-tour="save-actions"
-        className={`${SETTINGS_PANEL} flex justify-end px-4 py-4 sm:px-5`}
+        className={`${SETTINGS_PANEL} flex justify-end px-4 py-4`}
       >
         <button
           type="button"
           onClick={handleSave}
           disabled={isUpdating || !isDirty}
-          className="inline-flex items-center gap-2 rounded-xl bg-[#007AFF] px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-[#0066DD] disabled:cursor-not-allowed disabled:opacity-60"
+          className={DASHBOARD_BTN_PRIMARY}
         >
           {isUpdating ? (
             <>

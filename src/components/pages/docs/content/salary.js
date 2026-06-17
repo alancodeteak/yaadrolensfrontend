@@ -7,7 +7,7 @@ const enSections = [
       [
         'The ',
         docLink('/admin/salary', 'Salary'),
-        ' page lets you set and update each employee\'s monthly salary (USD) and review a full change history.',
+        ' page lets you set and update each employee\'s monthly salary (INR) and review a full change history.',
       ],
     ],
   },

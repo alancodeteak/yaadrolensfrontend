@@ -4,8 +4,10 @@ import { X } from 'lucide-react';
 import { LottieLoader, dashboardToast } from '../../../common';
 import { useGetDepartmentsQuery } from '../../../../store/api/settingsApi';
 import ProfilePhotoField from '../ProfilePhotoField';
+import EmployeeDocumentsField from '../EmployeeDocumentsField';
+import { EMPTY_DOCUMENT_STATE } from '../../../../utils/employeeDocumentConstants';
 
-const labelClass = 'mb-1.5 block text-xs font-medium text-gray-500';
+const labelClass = 'mb-1 block text-[10px] font-medium uppercase tracking-wide text-gray-400';
 const inputClass =
   'w-full rounded-xl border border-gray-200/60 bg-white px-3.5 py-2.5 text-sm text-gray-900 shadow-[0_2px_16px_rgba(0,0,0,0.04)] placeholder:text-gray-400 transition-colors duration-200 focus:border-[#007AFF] focus:outline-none focus:ring-2 focus:ring-[#007AFF]/20 disabled:opacity-50';
 
@@ -21,6 +23,7 @@ const EmployeeModal = ({ isOpen, onClose, onSave, isLoading }) => {
   const [errors, setErrors] = useState({});
   const [photoFile, setPhotoFile] = useState(null);
   const [photoError, setPhotoError] = useState('');
+  const [documentState, setDocumentState] = useState(EMPTY_DOCUMENT_STATE);
   const {
     data: departments = [],
     isLoading: departmentsLoading,
@@ -55,6 +58,7 @@ const EmployeeModal = ({ isOpen, onClose, onSave, isLoading }) => {
     setErrors({});
     setPhotoFile(null);
     setPhotoError('');
+    setDocumentState(EMPTY_DOCUMENT_STATE);
   };
 
   const handleSubmit = async (e) => {
@@ -73,7 +77,7 @@ const EmployeeModal = ({ isOpen, onClose, onSave, isLoading }) => {
         ...(formData.salary !== '' && { salary: formData.salary }),
       };
 
-      await onSave(employeeData, { photoFile });
+      await onSave(employeeData, { photoFile, documentState });
       resetForm();
       onClose();
     } catch {
@@ -232,7 +236,15 @@ const EmployeeModal = ({ isOpen, onClose, onSave, isLoading }) => {
             </div>
           </div>
 
-          <div className="mt-4 rounded-xl border border-blue-100 bg-blue-50/60 px-3.5 py-3">
+          <div className="md:col-span-2 mt-2 rounded-xl border border-gray-200/60 bg-gray-50/40 p-4">
+            <EmployeeDocumentsField
+              identityDocument={null}
+              documentState={documentState}
+              onDocumentStateChange={setDocumentState}
+            />
+          </div>
+
+          <div className="md:col-span-2 mt-4 rounded-xl border border-blue-100 bg-blue-50/60 px-3.5 py-3">
             <p className="text-xs font-medium text-[#007AFF]">Face enrollment</p>
             <p className="mt-0.5 text-[11px] text-gray-600">
               Face recognition training can be added later from the employee details page.

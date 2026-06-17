@@ -1,6 +1,11 @@
 import { useEffect, useState } from 'react';
 import { X } from 'lucide-react';
-import { ButtonSpinner, DashboardDatePicker, dashboardToast } from '../../../common';
+import {
+  ButtonSpinner,
+  DashboardDatePicker,
+  DashboardEmployeeSelect,
+  dashboardToast,
+} from '../../../common';
 
 const labelClass = 'mb-1.5 block text-xs font-medium text-gray-500';
 const inputClass =
@@ -125,20 +130,15 @@ const PaymentRecordModal = ({
               <label htmlFor="payment-employee" className={labelClass}>
                 Employee
               </label>
-              <select
+              <DashboardEmployeeSelect
                 id="payment-employee"
                 value={formData.employee_id}
-                onChange={(e) => setFormData((p) => ({ ...p, employee_id: e.target.value }))}
-                className={inputClass}
+                onChange={(employeeId) =>
+                  setFormData((p) => ({ ...p, employee_id: employeeId }))
+                }
+                employees={employees}
                 disabled={isLoading || Boolean(prefillEmployee)}
-              >
-                <option value="">Select employee...</option>
-                {employees.map((emp) => (
-                  <option key={emp.id} value={emp.id}>
-                    {emp.name} ({emp.employee_code})
-                  </option>
-                ))}
-              </select>
+              />
               {errors.employee_id && (
                 <p className="mt-1 text-xs text-red-600">{errors.employee_id}</p>
               )}
@@ -165,7 +165,7 @@ const PaymentRecordModal = ({
 
             <div>
               <label htmlFor="payment-amount" className={labelClass}>
-                Amount (USD)
+                Amount (INR)
               </label>
               <input
                 id="payment-amount"

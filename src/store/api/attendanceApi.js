@@ -53,6 +53,16 @@ export const attendanceApi = baseApi.injectEndpoints({
       providesTags: ['Attendance'],
     }),
 
+    getEmployeeMonthCalendar: builder.query({
+      query: ({ employee_id, year, month } = {}) => ({
+        url: '/org-admin/reports/employee-calendar',
+        params: { employee_id, year, month },
+      }),
+      providesTags: (result, error, arg) => [
+        { type: 'Attendance', id: `employee-calendar-${arg?.employee_id}` },
+      ],
+    }),
+
     getEmployeeReport: builder.query({
       query: ({ employee_id, start_date, end_date } = {}) => {
         const end = end_date || today();
@@ -92,6 +102,7 @@ export const {
   useGetAttendanceStatsQuery,
   useGetAttendanceLogsQuery,
   useGetLiveAttendanceQuery,
+  useGetEmployeeMonthCalendarQuery,
   useGetEmployeeReportQuery,
   useGetLateCountReportQuery,
 } = attendanceApi;

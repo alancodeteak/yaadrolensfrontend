@@ -1,8 +1,9 @@
 import { X } from 'lucide-react';
-import { LottieLoader, Pagination } from '../../../common';
+import { LottieLoader, Pagination, UserAvatar } from '../../../common';
+import { formatCurrency } from '../../../../utils/helpers';
 
 const formatSalary = (value) =>
-  value != null ? `$${Number(value).toLocaleString()}` : '—';
+  value != null ? formatCurrency(value, { maximumFractionDigits: 0 }) : '—';
 
 const formatDate = (value) => {
   if (!value) return '—';
@@ -31,12 +32,15 @@ const SalaryHistoryPanel = ({
   isLoading,
   currentPage,
   totalPages,
+  totalItems,
+  itemsPerPage = 10,
   onPageChange,
   onClose,
 }) => {
   if (!isOpen || !employee) return null;
 
   const items = history?.items || [];
+  const showPagination = totalItems > itemsPerPage;
 
   return (
     <div
@@ -53,13 +57,21 @@ const SalaryHistoryPanel = ({
         data-tour="salary-history"
       >
         <div className="flex items-center justify-between border-b border-gray-100 px-5 py-4">
-          <div>
-            <h2 id="salary-history-title" className="text-lg font-semibold text-gray-900">
-              Salary history
-            </h2>
-            <p className="text-sm text-gray-500">
-              {employee.name} · {employee.employee_code}
-            </p>
+          <div className="flex items-center gap-3">
+            <UserAvatar
+              className="h-10 w-10 shrink-0 rounded-full object-cover ring-1 ring-gray-100"
+              src={employee.profilePhotoUrl || employee.photo || employee.avatar}
+              name={employee.name}
+              seed={employee.employee_id || employee.id}
+            />
+            <div>
+              <h2 id="salary-history-title" className="text-lg font-semibold text-gray-900">
+                Salary history
+              </h2>
+              <p className="text-sm text-gray-500">
+                {employee.name} · {employee.employee_code}
+              </p>
+            </div>
           </div>
           <button
             type="button"
@@ -77,7 +89,9 @@ const SalaryHistoryPanel = ({
               <LottieLoader size={48} />
             </div>
           ) : items.length === 0 ? (
-            <p className="py-12 text-center text-sm text-gray-500">No salary changes recorded yet.</p>
+            <p className="py-12 text-center text-sm text-gray-500">
+              No salary changes recorded yet.
+            </p>
           ) : (
             <ul className="space-y-3">
               {items.map((item) => (
@@ -108,11 +122,13 @@ const SalaryHistoryPanel = ({
           )}
         </div>
 
-        {totalPages > 1 && (
+        {showPagination && (
           <div className="border-t border-gray-100 px-5 py-4">
             <Pagination
               currentPage={currentPage}
               totalPages={totalPages}
+              totalItems={totalItems}
+              itemsPerPage={itemsPerPage}
               onPageChange={onPageChange}
             />
           </div>

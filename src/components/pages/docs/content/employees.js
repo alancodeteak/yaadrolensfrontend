@@ -33,6 +33,10 @@ export const employeesContent = {
             ' page for full history.',
           ],
           'You can upload a profile photo (JPEG, PNG, or WebP, up to 2 MB).',
+          [
+            docStrong('Identity documents'),
+            ' — optionally upload one ID (Aadhaar, PAN, driving license, or other): pick the type, then upload front and/or back (at least one side, up to 5 MB each). Stored privately; view links expire and each view is logged. Not on kiosk.',
+          ],
           'Mark someone inactive when they leave. You can turn them active again later.',
           '"Face enrolled" means they have registered on the kiosk and can clock in.',
         ],
@@ -40,7 +44,7 @@ export const employeesContent = {
       {
         title: 'Employee profile page',
         list: [
-          'Personal — contact and job details.',
+          'Personal — contact, job details, and identity documents (view secure links from the profile).',
           'Attendance — history view (being improved).',
           'Training — face registration status.',
           "You can also see today's summary and monthly report for each person.",
@@ -51,6 +55,7 @@ export const employeesContent = {
         list: [
           'Always add employees here before registering them on the kiosk.',
           'Profile photos are for display only — face scanning is separate.',
+          'Identity documents are admin-only, stored privately, and never shared with the kiosk app.',
           'Departments are set up by your system provider and appear in the dropdown.',
         ],
         footer: ['Ready for the kiosk? See ', docLink('/docs/kiosk', 'Kiosk setup'), '.'],
@@ -84,6 +89,10 @@ export const employeesContent = {
         list: [
           'नाम जरूरी है। विभाग, पद, फोन और वेतन वैकल्पिक हैं।',
           'आप प्रोफाइल फोटो अपलोड कर सकते हैं (JPEG, PNG, या WebP, 2 MB तक)।',
+          [
+            docStrong('पहचान दस्तावेज़'),
+            ' — वैकल्पिक रूप से एक ID दस्तावेज़ (आधार, PAN, ड्राइविंग लाइसेंस या अन्य — ड्रॉपडाउन से प्रकार चुनें, 5 MB तक)। निजी क्लाउड में सुरक्षित; देखने के लिंक समाप्त होते हैं और लॉग बनता है। कियोस्क पर नहीं दिखते।',
+          ],
           'जब कोई व्यक्ति छोड़कर जाए, तो उसे inactive मार्क करें। बाद में फिर active कर सकते हैं।',
           '"Face enrolled" का मतलब है कि व्यक्ति ने कियोस्क पर रजिस्ट्रेशन कर लिया है और clock in कर सकता है।',
         ],
@@ -91,7 +100,7 @@ export const employeesContent = {
       {
         title: 'Employee profile पेज',
         list: [
-          'Personal — संपर्क और नौकरी से जुड़ी जानकारी।',
+          'Personal — संपर्क, नौकरी की जानकारी और पहचान दस्तावेज़ (प्रोफाइल से सुरक्षित लिंक से देखें)।',
           'Attendance — इतिहास दृश्य (इसमें सुधार चल रहा है)।',
           'Training — फेस रजिस्ट्रेशन की स्थिति।',
           'हर व्यक्ति के लिए आज का सारांश और मासिक रिपोर्ट भी देख सकते हैं।',
@@ -102,6 +111,7 @@ export const employeesContent = {
         list: [
           'कियोस्क पर रजिस्टर करने से पहले कर्मचारियों को हमेशा यहाँ जोड़ें।',
           'प्रोफाइल फोटो केवल दिखाने के लिए हैं — फेस स्कैनिंग अलग है।',
+          'पहचान दस्तावेज़ केवल एडमिन के लिए हैं, निजी रूप से संग्रहीत हैं, और कियोस्क ऐप के साथ साझा नहीं होते।',
           'विभाग आपके सिस्टम प्रदाता द्वारा सेट किए जाते हैं और ड्रॉपडाउन में दिखते हैं।',
         ],
         footer: ['कियोस्क के लिए तैयार हैं? ', docLink('/docs/kiosk', 'Kiosk setup'), ' देखें।'],

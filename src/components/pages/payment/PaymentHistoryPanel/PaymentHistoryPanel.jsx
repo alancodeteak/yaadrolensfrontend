@@ -1,11 +1,15 @@
 import { Scale, X } from 'lucide-react';
-import { LottieLoader, Pagination } from '../../../common';
+import { LottieLoader, Pagination, UserAvatar } from '../../../common';
 import {
   formatDate,
   formatDateTime,
   formatMoney,
   PAYMENT_TYPE_LABELS,
 } from '../paymentUtils';
+import { MONTHS } from '../PaymentPeriodBar';
+
+const periodLabel = (year, month) =>
+  year && month ? `${MONTHS[(month || 1) - 1]} ${year}` : '';
 
 const PaymentHistoryPanel = ({
   isOpen,
@@ -16,6 +20,8 @@ const PaymentHistoryPanel = ({
   summaryLoading,
   currentPage,
   totalPages,
+  totalItems,
+  itemsPerPage = 10,
   onPageChange,
   onClose,
   onAdjustBalance,
@@ -25,6 +31,7 @@ const PaymentHistoryPanel = ({
   const items = history?.items || [];
   const displayName = employee.employee_name || employee.name;
   const displayCode = employee.employee_code;
+  const showPagination = totalItems > itemsPerPage;
 
   return (
     <div
@@ -40,13 +47,21 @@ const PaymentHistoryPanel = ({
         aria-labelledby="payment-history-title"
       >
         <div className="flex items-center justify-between border-b border-gray-100 px-5 py-4">
-          <div>
-            <h2 id="payment-history-title" className="text-lg font-semibold text-gray-900">
-              Payment history
-            </h2>
-            <p className="text-sm text-gray-500">
-              {displayName} · {displayCode}
-            </p>
+          <div className="flex items-center gap-3">
+            <UserAvatar
+              className="h-10 w-10 shrink-0 rounded-full object-cover ring-1 ring-gray-100"
+              src={employee.profilePhotoUrl || employee.photo || employee.avatar}
+              name={displayName}
+              seed={employee.employee_id || employee.id}
+            />
+            <div>
+              <h2 id="payment-history-title" className="text-lg font-semibold text-gray-900">
+                Payment history
+              </h2>
+              <p className="text-sm text-gray-500">
+                {displayName} · {displayCode}
+              </p>
+            </div>
           </div>
           <button
             type="button"
@@ -128,7 +143,7 @@ const PaymentHistoryPanel = ({
                       <p className="mt-1 text-xs text-gray-500">
                         Paid {formatDate(item.payment_date)}
                         {item.period_year && item.period_month
-                          ? ` · Period ${item.period_month}/${item.period_year}`
+                          ? ` · ${periodLabel(item.period_year, item.period_month)}`
                           : ''}
                       </p>
                     </div>
@@ -143,11 +158,13 @@ const PaymentHistoryPanel = ({
           )}
         </div>
 
-        {totalPages > 1 && (
+        {showPagination && (
           <div className="border-t border-gray-100 px-5 py-4">
             <Pagination
               currentPage={currentPage}
               totalPages={totalPages}
+              totalItems={totalItems}
+              itemsPerPage={itemsPerPage}
               onPageChange={onPageChange}
             />
           </div>

@@ -3,6 +3,7 @@ export { dashboardContent } from './dashboard';
 export { employeesContent } from './employees';
 export { salaryContent } from './salary';
 export { payrollContent } from './payroll';
+export { reportsContent } from './reports';
 export { attendanceContent } from './attendance';
 export { analyticsContent } from './analytics';
 export { settingsContent } from './settings';

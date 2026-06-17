@@ -1,81 +1,41 @@
 import { useMemo } from 'react';
-import Chart from 'react-apexcharts';
-import { USE_DUMMY_LIVE_ATTENDANCE, DUMMY_HOURLY_COUNTS } from '../liveAttendanceDummy';
-
-const PANEL =
-  'rounded-2xl border border-gray-200/60 bg-white shadow-[0_2px_16px_rgba(0,0,0,0.06)]';
-
-const WORK_HOURS = Array.from({ length: 15 }, (_, i) => i + 6);
-
-const chartBase = {
-  chart: { toolbar: { show: false }, background: 'transparent', fontFamily: 'inherit' },
-  grid: { borderColor: '#F3F4F6', strokeDashArray: 4 },
-  dataLabels: { enabled: false },
-  tooltip: { theme: 'light', style: { fontSize: '11px' } },
-};
-
-function hasRealHourlyData(buckets) {
-  return buckets.some((count) => count > 0);
-}
+import { DASHBOARD_PANEL } from '../../dashboard/dashboardTheme';
+import {
+  USE_DUMMY_LIVE_ATTENDANCE,
+  DUMMY_CLOCK_EVENTS,
+} from '../liveAttendanceDummy';
+import ClockEventTimelineChart, { buildClockEventsFromRows } from './ClockEventTimelineChart';
 
 const LiveAttendanceInsights = ({ rows = [], selectedDay }) => {
-  const realHourlyCounts = useMemo(() => {
-    const buckets = Array(24).fill(0);
-    rows.forEach((row) => {
-      if (row.clock_in) {
-        buckets[new Date(row.clock_in).getHours()] += 1;
-      }
-    });
-    return buckets;
-  }, [rows]);
+  const realEvents = useMemo(() => buildClockEventsFromRows(rows), [rows]);
 
-  const useDummyHourly = USE_DUMMY_LIVE_ATTENDANCE && !hasRealHourlyData(realHourlyCounts);
-  const hourlyCounts = useDummyHourly ? DUMMY_HOURLY_COUNTS : realHourlyCounts;
-  const hourlySeries = WORK_HOURS.map((h) => hourlyCounts[h]);
-
-  const hourlyChartOptions = {
-    ...chartBase,
-    chart: { ...chartBase.chart, type: 'bar', height: 220 },
-    plotOptions: { bar: { borderRadius: 6, columnWidth: '55%' } },
-    colors: ['#007AFF'],
-    xaxis: {
-      categories: WORK_HOURS.map((h) => {
-        const suffix = h >= 12 ? 'PM' : 'AM';
-        const hour = h % 12 || 12;
-        return `${hour}${suffix}`;
-      }),
-      labels: { style: { colors: '#9CA3AF', fontSize: '10px' } },
-      axisBorder: { show: false },
-      axisTicks: { show: false },
-    },
-    yaxis: {
-      labels: { style: { colors: '#9CA3AF', fontSize: '10px' } },
-      tickAmount: 4,
-    },
-  };
+  const useDummy = USE_DUMMY_LIVE_ATTENDANCE && realEvents.length === 0;
+  const events = useDummy ? DUMMY_CLOCK_EVENTS : realEvents;
+  const hasData = events.length > 0;
 
   return (
-    <div className={PANEL}>
+    <div className={DASHBOARD_PANEL}>
       <div className="border-b border-gray-100 px-4 py-3">
         <div className="flex flex-wrap items-center gap-2">
-          <h2 className="text-sm font-semibold text-gray-900">Clock-ins by hour</h2>
-          {useDummyHourly && (
+          <h2 className="text-sm font-semibold text-gray-900">Attendance timeline</h2>
+          {useDummy && (
             <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[9px] font-medium text-amber-800">
               Sample data
             </span>
           )}
         </div>
         <p className="text-[11px] text-gray-500">
-          Arrival distribution · {selectedDay || 'today'}
+          Clock in / out timeline · {selectedDay || 'today'}
         </p>
       </div>
-      <div className="p-4">
-        <Chart
-          type="bar"
-          height={220}
-          options={hourlyChartOptions}
-          series={[{ name: 'Clock-ins', data: hourlySeries }]}
-        />
+      <div className="px-3 py-3 sm:px-4">
+        {hasData ? (
+          <ClockEventTimelineChart events={events} />
+        ) : (
+          <p className="py-8 text-center text-sm text-gray-500">
+            No clock-in or clock-out events for this date.
+          </p>
+        )}
       </div>
     </div>
   );

@@ -5,25 +5,25 @@ export const SETTINGS_NAV_ITEMS = [
     name: 'Attendance rules',
     href: '/admin/settings/attendance',
     icon: Clock,
-    tone: 'attendance',
+    subtitle: 'Work hours, grace periods, overtime, and weekend settings',
   },
   {
     name: 'Payment rules',
     href: '/admin/settings/payment',
     icon: Wallet,
-    tone: 'payment',
+    subtitle: 'Salary generation, weekly off days, and leave policy',
   },
   {
     name: 'Kiosk',
     href: '/admin/settings/cameras',
     icon: TabletSmartphone,
-    tone: 'kiosk',
+    subtitle: 'Pair attendance kiosks and monitor device status',
   },
   {
     name: 'Help & support',
     href: '/admin/settings/help',
     icon: CircleHelp,
-    tone: 'help',
+    subtitle: 'Contact CodeTeak for product support and office locations',
   },
 ];
 

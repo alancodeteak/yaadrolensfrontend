@@ -28,8 +28,9 @@ export const kioskContent = {
           '1. Make sure employees are added on this website first.',
           "2. Register each person's face on the kiosk (one-time setup per employee).",
           '3. Staff scan their face to clock in when they arrive.',
-          '4. They scan again to clock out when they leave.',
-          '5. You can also upload a profile photo from the kiosk if needed.',
+          '4. They must wait at least the minimum time set in Settings → Attendance (default 30 minutes) after clock-in before scanning again to clock out. Scanning too soon shows a message on the kiosk and does not record a clock-out.',
+          '5. They scan again to clock out when they leave (after that wait period).',
+          '6. You can also upload a profile photo from the kiosk if needed.',
         ],
       },
       {
@@ -38,6 +39,7 @@ export const kioskContent = {
           'Make sure the tablet date and time are correct.',
           'Good lighting helps face scanning work better.',
           'If the kiosk stops working, try signing in again on the app.',
+          'An accidental double-tap right after clock-in will not clock someone out immediately — the configured minimum wait still applies.',
           'Attendance will start showing on your Dashboard and Live Attendance pages.',
         ],
         tip: [
@@ -77,8 +79,9 @@ export const kioskContent = {
           '1. पहले सुनिश्चित करें कि कर्मचारी इस वेबसाइट पर जोड़े गए हैं।',
           '2. हर व्यक्ति का चेहरा कियोस्क पर रजिस्टर करें (हर कर्मचारी के लिए एक बार का सेटअप)।',
           '3. स्टाफ आने पर clock in करने के लिए अपना चेहरा स्कैन करते हैं।',
-          '4. जाने पर वे फिर से स्कैन करके clock out करते हैं।',
-          '5. जरूरत हो तो कियोस्क से प्रोफाइल फोटो भी अपलोड कर सकते हैं।',
+          '4. clock out के लिए दोबारा स्कैन करने से पहले clock-in के बाद Settings → Attendance में सेट न्यूनतम समय (डिफ़ॉल्ट 30 मिनट) इंतज़ार करना ज़रूरी है। जल्दी स्कैन करने पर कियोस्क पर संदेश दिखता है और clock-out दर्ज नहीं होता।',
+          '5. जाने पर (उस प्रतीक्षा अवधि के बाद) वे फिर से स्कैन करके clock out करते हैं।',
+          '6. जरूरत हो तो कियोस्क से प्रोफाइल फोटो भी अपलोड कर सकते हैं।',
         ],
       },
       {
@@ -87,6 +90,7 @@ export const kioskContent = {
           'सुनिश्चित करें कि टैबलेट की तारीख और समय सही हैं।',
           'अच्छी रोशनी से फेस स्कैनिंग बेहतर काम करती है।',
           'अगर कियोस्क काम करना बंद कर दे, तो ऐप में फिर से साइन इन करें।',
+          'clock-in के तुरंत बाद गलती से दो बार टैप करने से तुरंत clock out नहीं होगा — सेट किया गया न्यूनतम इंतज़ार अभी भी लागू रहता है।',
           'हाजिरी आपके Dashboard और Live Attendance पेजों पर दिखना शुरू हो जाएगी।',
         ],
         tip: [
@@ -126,8 +130,9 @@ export const kioskContent = {
           '1. ആദ്യം ജീവനക്കാരെ ഈ വെബ്സൈറ്റിൽ ചേർത്തിട്ടുണ്ടെന്ന് ഉറപ്പാക്കുക.',
           '2. ഓരോ വ്യക്തിയുടെയും മുഖം കിയോസ്കിൽ രജിസ്റ്റർ ചെയ്യുക (ഓരോ ജീവനക്കാരനും ഒരിക്കൽ മാത്രം സെറ്റപ്പ്).',
           '3. സ്റ്റാഫ് എത്തുമ്പോൾ clock in ചെയ്യാൻ മുഖം സ്കാൻ ചെയ്യുന്നു.',
-          '4. പോകുമ്പോൾ clock out ചെയ്യാൻ വീണ്ടും സ്കാൻ ചെയ്യുന്നു.',
-          '5. ആവശ്യമെങ്കിൽ കിയോസ്കിൽ നിന്ന് പ്രൊഫൈൽ ഫോട്ടോയും അപ്‌ലോഡ് ചെയ്യാം.',
+          '4. clock out ചെയ്യാൻ വീണ്ടും സ്കാൻ ചെയ്യുന്നതിന് മുമ്പ് clock-in-ന് ശേഷം Settings → Attendance-ൽ നിശ്ചയിച്ച ഏറ്റവും കുറഞ്ഞ സമയം (ഡിഫോൾട്ട് 30 മിനിറ്റ്) കാത്തിരിക്കണം. നേരത്തെ സ്കാൻ ചെയ്താൽ കിയോസ്കിൽ സന്ദേശം കാണിക്കും; clock-out രേഖപ്പെടുത്തില്ല.',
+          '5. പോകുമ്പോൾ (ആ കാത്തിരിപ്പ് കഴിഞ്ഞ്) clock out ചെയ്യാൻ വീണ്ടും സ്കാൻ ചെയ്യുന്നു.',
+          '6. ആവശ്യമെങ്കിൽ കിയോസ്കിൽ നിന്ന് പ്രൊഫൈൽ ഫോട്ടോയും അപ്‌ലോഡ് ചെയ്യാം.',
         ],
       },
       {
@@ -136,6 +141,7 @@ export const kioskContent = {
           'ടാബ്ലെറ്റിന്റെ തീയതിയും സമയവും ശരിയാണെന്ന് ഉറപ്പാക്കുക.',
           'നല്ല വെളിച്ചം ഫേസ് സ്കാനിംഗ് മികച്ചതായി പ്രവർത്തിക്കാൻ സഹായിക്കുന്നു.',
           'കിയോസ്ക് പ്രവർത്തിക്കാതെയായാൽ ആപ്പിൽ വീണ്ടും sign in ചെയ്യാൻ ശ്രമിക്കുക.',
+          'clock-in-ന് ഉടനെ തെറ്റായി രണ്ടുതവണ ടാപ്പ് ചെയ്താലും ഉടൻ clock out ആകില്ല — ക്രമീകരിച്ച ഏറ്റവും കുറഞ്ഞ കാത്തിരിപ്പ് ബാധകമാണ്.',
           'ഹാജർ നിങ്ങളുടെ Dashboard, Live Attendance പേജുകളിൽ കാണാൻ തുടങ്ങും.',
         ],
         tip: [
@@ -175,8 +181,9 @@ export const kioskContent = {
           '1. ಉದ್ಯೋಗಿಗಳನ್ನು ಮೊದಲು ಈ ವೆಬ್‌ಸೈಟ್‌ನಲ್ಲಿ ಸೇರಿಸಲಾಗಿದೆ ಎಂದು ಖಚಿತಪಡಿಸಿಕೊಳ್ಳಿ.',
           '2. ಪ್ರತಿಯೊಬ್ಬರ ಮುಖವನ್ನು ಕಿಯೋಸ್ಕ್‌ನಲ್ಲಿ ನೋಂದಾಯಿಸಿ (ಪ್ರತಿ ಉದ್ಯೋಗಿಗೆ ಒಂದು ಬಾರಿ ಸೆಟಪ್).',
           '3. ಸಿಬ್ಬಂದಿ ಬಂದಾಗ clock in ಮಾಡಲು ಮುಖವನ್ನು ಸ್ಕ್ಯಾನ್ ಮಾಡುತ್ತಾರೆ.',
-          '4. ಹೊರಡುವಾಗ clock out ಮಾಡಲು ಮತ್ತೆ ಸ್ಕ್ಯಾನ್ ಮಾಡುತ್ತಾರೆ.',
-          '5. ಬೇಕಾದರೆ ಕಿಯೋಸ್ಕ್‌ನಿಂದ ಪ್ರೊಫೈಲ್ ಫೋಟೋವನ್ನೂ ಅಪ್‌ಲೋಡ್ ಮಾಡಬಹುದು.',
+          '4. clock out ಮಾಡಲು ಮತ್ತೆ ಸ್ಕ್ಯಾನ್ ಮಾಡುವ ಮೊದಲು clock-in ನಂತರ Settings → Attendance ನಲ್ಲಿ ಹೊಂದಿಸಿದ ಕನಿಷ್ಠ ಸಮಯ (ಡೀಫಾಲ್ಟ್ 30 ನಿಮಿಷಗಳು) ಕಾಯಬೇಕು. ಬೇಗ ಸ್ಕ್ಯಾನ್ ಮಾಡಿದರೆ ಕಿಯೋಸ್ಕ್‌ನಲ್ಲಿ ಸಂದೇಶ ಕಾಣಿಸುತ್ತದೆ; clock-out ದಾಖಲಾಗುವುದಿಲ್ಲ.',
+          '5. ಹೊರಡುವಾಗ (ಆ ಕಾಯುವ ಅವಧಿಯ ನಂತರ) clock out ಮಾಡಲು ಮತ್ತೆ ಸ್ಕ್ಯಾನ್ ಮಾಡುತ್ತಾರೆ.',
+          '6. ಬೇಕಾದರೆ ಕಿಯೋಸ್ಕ್‌ನಿಂದ ಪ್ರೊಫೈಲ್ ಫೋಟೋವನ್ನೂ ಅಪ್‌ಲೋಡ್ ಮಾಡಬಹುದು.',
         ],
       },
       {
@@ -185,6 +192,7 @@ export const kioskContent = {
           'ಟ್ಯಾಬ್ಲೆಟ್ ದಿನಾಂಕ ಮತ್ತು ಸಮಯ ಸರಿಯಾಗಿದೆ ಎಂದು ಖಚಿತಪಡಿಸಿಕೊಳ್ಳಿ.',
           'ಉತ್ತಮ ಬೆಳಕು ಮುಖ ಸ್ಕ್ಯಾನಿಂಗ್ ಉತ್ತಮವಾಗಿ ಕೆಲಸ ಮಾಡಲು ಸಹಾಯ ಮಾಡುತ್ತದೆ.',
           'ಕಿಯೋಸ್ಕ್ ಕೆಲಸ ನಿಲ್ಲಿಸಿದರೆ, ಆಪ್‌ನಲ್ಲಿ ಮತ್ತೆ sign in ಮಾಡಲು ಪ್ರಯತ್ನಿಸಿ.',
+          'clock-in ನಂತರ ತಪ್ಪಾಗಿ ಎರಡು ಬಾರಿ ಟ್ಯಾಪ್ ಮಾಡಿದರೂ ತಕ್ಷಣ clock out ಆಗುವುದಿಲ್ಲ — ಹೊಂದಿಸಿದ ಕನಿಷ್ಠ ಕಾಯುವ ಅವಧಿ ಅನ್ವಯಿಸುತ್ತದೆ.',
           'ಹಾಜರಾತಿ ನಿಮ್ಮ Dashboard ಮತ್ತು Live Attendance ಪುಟಗಳಲ್ಲಿ ಕಾಣಲು ಶುರುವಾಗುತ್ತದೆ.',
         ],
         tip: [

@@ -1,9 +1,9 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import clsx from 'clsx';
-import { Search, ChevronDown, ArrowUpDown } from 'lucide-react';
+import { Search, ChevronDown, ArrowUpDown, Filter } from 'lucide-react';
 
 const menuClass =
-  'absolute z-10 mt-2 w-48 overflow-hidden rounded-2xl border border-gray-200/60 bg-white py-1 shadow-[0_2px_16px_rgba(0,0,0,0.06)]';
+  'absolute z-10 mt-2 w-52 overflow-hidden rounded-2xl border border-gray-200/60 bg-white py-1 shadow-[0_2px_16px_rgba(0,0,0,0.06)]';
 
 const menuItemClass = (active) =>
   clsx(
@@ -15,7 +15,21 @@ const triggerClass =
   'inline-flex items-center gap-2 rounded-xl border border-gray-200/60 bg-white px-3 py-2 text-sm font-medium text-gray-700 shadow-[0_2px_16px_rgba(0,0,0,0.04)] transition-colors duration-200 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-[#007AFF]/20';
 
 const inputClass =
-  'w-full rounded-xl border border-gray-200/60 bg-white py-2.5 pl-10 pr-4 text-sm text-gray-900 shadow-[0_2px_16px_rgba(0,0,0,0.04)] placeholder:text-gray-400 transition-colors duration-200 focus:border-[#007AFF] focus:outline-none focus:ring-2 focus:ring-[#007AFF]/20';
+  'block w-full rounded-xl border border-gray-200/60 bg-white py-2.5 pl-9 pr-4 text-sm text-gray-900 shadow-[0_2px_16px_rgba(0,0,0,0.04)] placeholder:text-gray-400 focus:border-[#007AFF] focus:outline-none focus:ring-2 focus:ring-[#007AFF]/20';
+
+const STATUS_OPTIONS = [
+  { value: 'all', label: 'All employees' },
+  { value: 'active', label: 'Active only' },
+  { value: 'inactive', label: 'Inactive only' },
+  { value: 'unset', label: 'Salary not set' },
+];
+
+const SORT_OPTIONS = [
+  { value: 'name', label: 'Name' },
+  { value: 'salary', label: 'Salary' },
+  { value: 'last_changed', label: 'Last changed' },
+  { value: 'department', label: 'Department' },
+];
 
 const SalaryFilterBar = ({
   searchTerm,
@@ -24,46 +38,80 @@ const SalaryFilterBar = ({
   onStatusFilterChange,
   sortBy,
   onSortChange,
+  onClearFilters,
+  hasActiveFilters,
 }) => {
   const [isStatusOpen, setIsStatusOpen] = useState(false);
   const [isSortOpen, setIsSortOpen] = useState(false);
+  const statusRef = useRef(null);
+  const sortRef = useRef(null);
 
-  const statusOptions = [
-    { value: 'all', label: 'All employees' },
-    { value: 'active', label: 'Active only' },
-    { value: 'inactive', label: 'Inactive only' },
-    { value: 'unset', label: 'Salary not set' },
-  ];
+  const activeStatusLabel =
+    STATUS_OPTIONS.find((opt) => opt.value === statusFilter)?.label ?? 'All employees';
+  const activeSortLabel = SORT_OPTIONS.find((opt) => opt.value === sortBy)?.label ?? 'Name';
 
-  const sortOptions = [
-    { value: 'name', label: 'Name' },
-    { value: 'salary', label: 'Salary' },
-    { value: 'last_changed', label: 'Last changed' },
-    { value: 'department', label: 'Department' },
-  ];
+  useEffect(() => {
+    const handlePointerDown = (event) => {
+      if (statusRef.current && !statusRef.current.contains(event.target)) {
+        setIsStatusOpen(false);
+      }
+      if (sortRef.current && !sortRef.current.contains(event.target)) {
+        setIsSortOpen(false);
+      }
+    };
+
+    const handleEscape = (event) => {
+      if (event.key === 'Escape') {
+        setIsStatusOpen(false);
+        setIsSortOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handlePointerDown);
+    document.addEventListener('keydown', handleEscape);
+    return () => {
+      document.removeEventListener('mousedown', handlePointerDown);
+      document.removeEventListener('keydown', handleEscape);
+    };
+  }, []);
 
   return (
-    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between" data-tour="salary-filters">
-      <div className="relative max-w-md flex-1">
-        <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+    <div
+      className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between"
+      data-tour="salary-filters"
+    >
+      <div className="relative w-full lg:max-w-sm">
+        <Search
+          className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400"
+          strokeWidth={2}
+          aria-hidden="true"
+        />
         <input
           type="search"
           value={searchTerm}
           onChange={(e) => onSearchChange(e.target.value)}
-          placeholder="Search by name or employee code..."
+          placeholder="Search by name or code…"
           className={inputClass}
         />
       </div>
 
       <div className="flex flex-wrap items-center gap-3">
-        <div className="relative">
-          <button type="button" onClick={() => setIsStatusOpen(!isStatusOpen)} className={triggerClass}>
-            Status
+        <div className="relative" ref={statusRef}>
+          <button
+            type="button"
+            onClick={() => {
+              setIsStatusOpen((open) => !open);
+              setIsSortOpen(false);
+            }}
+            className={triggerClass}
+          >
+            <Filter className="h-4 w-4 text-gray-500" strokeWidth={2} />
+            {activeStatusLabel}
             <ChevronDown className="h-4 w-4 text-gray-400" strokeWidth={2} />
           </button>
           {isStatusOpen && (
             <div className={menuClass}>
-              {statusOptions.map((opt) => (
+              {STATUS_OPTIONS.map((opt) => (
                 <button
                   key={opt.value}
                   type="button"
@@ -80,15 +128,22 @@ const SalaryFilterBar = ({
           )}
         </div>
 
-        <div className="relative">
-          <button type="button" onClick={() => setIsSortOpen(!isSortOpen)} className={triggerClass}>
+        <div className="relative" ref={sortRef}>
+          <button
+            type="button"
+            onClick={() => {
+              setIsSortOpen((open) => !open);
+              setIsStatusOpen(false);
+            }}
+            className={triggerClass}
+          >
             <ArrowUpDown className="h-4 w-4 text-gray-500" strokeWidth={2} />
-            Sort
+            {activeSortLabel}
             <ChevronDown className="h-4 w-4 text-gray-400" strokeWidth={2} />
           </button>
           {isSortOpen && (
             <div className={menuClass}>
-              {sortOptions.map((opt) => (
+              {SORT_OPTIONS.map((opt) => (
                 <button
                   key={opt.value}
                   type="button"
@@ -104,6 +159,16 @@ const SalaryFilterBar = ({
             </div>
           )}
         </div>
+
+        {hasActiveFilters && (
+          <button
+            type="button"
+            onClick={onClearFilters}
+            className="text-sm font-medium text-[#007AFF] hover:text-[#0066DD]"
+          >
+            Clear filters
+          </button>
+        )}
       </div>
     </div>
   );

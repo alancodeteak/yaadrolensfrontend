@@ -9,7 +9,7 @@ export const SALARY_GUIDE_STEPS = [
     id: 'salary-filters',
     selector: '[data-tour="salary-filters"]',
     title: 'Search and filter',
-    body: 'Find employees by name or code. Filter by status or show only those without a salary set.',
+    body: 'Find employees by name or code. Filter by active/inactive status or show only those without a salary set.',
   },
   {
     id: 'salary-table',

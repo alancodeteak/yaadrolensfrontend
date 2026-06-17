@@ -5,6 +5,8 @@ import './api/employeeApi';
 import './api/salaryApi';
 import './api/settingsApi';
 import './api/paymentApi';
+import './api/reportsApi';
+import './api/dashboardApi';
 import { 
   authReducer,
   employeeReducer,
