@@ -9,9 +9,6 @@ export const authApi = baseApi.injectEndpoints({
         body: {
           login_id: String(credentials.login_id).trim(),
           password: credentials.password,
-          ...(credentials.organization_code
-            ? { organization_code: String(credentials.organization_code).trim() }
-            : {}),
         },
       }),
     }),
