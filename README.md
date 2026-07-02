@@ -2,7 +2,7 @@
 
 A modern React web application built with Vite for comprehensive admin management including user management, payroll, attendance monitoring, and reporting.
 
-## Features.
+## Features..
 
 - **User Management**: Complete CRUD operations for user accounts
 - **User Registration**: Self-service registration with admin approval workflow
