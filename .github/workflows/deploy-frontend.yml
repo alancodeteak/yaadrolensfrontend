@@ -50,9 +50,25 @@ jobs:
       - name: Upload dist to GCS
         run: |
           set -euo pipefail
-          gcloud storage rsync -r --delete-unmatched-destination-objects dist "gs://${GCS_BUCKET}"
-          gcloud storage objects update "gs://${GCS_BUCKET}/index.html" \
-            --cache-control="no-cache, max-age=0"
+          DEST="gs://${GCS_BUCKET}"
+
+          # Sync hashed bundles only (never rsync index.html — parallel patch fails on GCS)
+          if [ -d dist/assets ]; then
+            gsutil -m rsync -r -d dist/assets "${DEST}/assets/"
+          fi
+
+          # Copy other root files (favicon, icons, etc.) except index.html
+          for file in dist/*; do
+            [ -f "${file}" ] || continue
+            name="$(basename "${file}")"
+            [ "${name}" = "index.html" ] && continue
+            gsutil cp "${file}" "${DEST}/${name}"
+          done
+
+          # Upload SPA shell last with no-cache headers
+          gsutil -h "Cache-Control:no-cache, max-age=0" \
+            -h "Content-Type:text/html" \
+            cp dist/index.html "${DEST}/index.html"
 
       - name: Smoke test
         run: |

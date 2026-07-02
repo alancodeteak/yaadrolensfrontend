@@ -19,9 +19,22 @@ steps:
       - -c
       - |
         set -euo pipefail
-        gcloud storage rsync -r --delete-unmatched-destination-objects dist gs://${_GCS_BUCKET}
-        gcloud storage objects update gs://${_GCS_BUCKET}/index.html \
-          --cache-control="no-cache, max-age=0"
+        DEST="gs://${_GCS_BUCKET}"
+
+        if [ -d dist/assets ]; then
+          gsutil -m rsync -r -d dist/assets "${DEST}/assets/"
+        fi
+
+        for file in dist/*; do
+          [ -f "${file}" ] || continue
+          name="$(basename "${file}")"
+          [ "${name}" = "index.html" ] && continue
+          gsutil cp "${file}" "${DEST}/${name}"
+        done
+
+        gsutil -h "Cache-Control:no-cache, max-age=0" \
+          -h "Content-Type:text/html" \
+          cp dist/index.html "${DEST}/index.html"
 
 options:
   logging: CLOUD_LOGGING_ONLY
