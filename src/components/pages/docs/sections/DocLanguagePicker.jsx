@@ -1,7 +1,8 @@
 import clsx from 'clsx';
+import { DOCS_PANEL } from '../docsTheme';
 
 const DocLanguagePicker = ({ languages, value, onChange, label }) => (
-  <div className="rounded-2xl border border-gray-200/80 bg-white px-4 py-4 shadow-[0_2px_12px_rgba(0,0,0,0.04)] sm:px-5">
+  <div className={clsx(DOCS_PANEL, 'px-4 py-4 sm:px-5')}>
     <p className="mb-3 text-sm font-medium text-gray-700">{label}</p>
     <div className="flex flex-wrap gap-2" role="group" aria-label={label}>
       {languages.map((lang) => {

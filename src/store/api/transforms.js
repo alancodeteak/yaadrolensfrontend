@@ -506,20 +506,28 @@ export function toAdvanceRecoverPayload(data) {
 }
 
 export function buildUserFromToken(accessToken, loginData) {
+  const loginId = typeof loginData === 'string' ? loginData : loginData?.login_id;
+  const organizationCode =
+    typeof loginData === 'object' && loginData?.organization_code
+      ? String(loginData.organization_code).trim()
+      : undefined;
+
   try {
     const payload = JSON.parse(atob(accessToken.split('.')[1]));
     return {
       id: payload.sub,
       role: payload.role,
       organization_id: payload.organization_id,
-      login_id: loginData.login_id,
-      name: loginData.login_id,
+      login_id: loginId,
+      name: loginId,
+      ...(organizationCode ? { organization_code: organizationCode } : {}),
     };
   } catch {
     return {
-      login_id: loginData.login_id,
-      name: loginData.login_id,
+      login_id: loginId,
+      name: loginId,
       role: 'org_admin',
+      ...(organizationCode ? { organization_code: organizationCode } : {}),
     };
   }
 }

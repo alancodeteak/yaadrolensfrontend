@@ -1,5 +1,5 @@
-/** TODO: set false once real analytics data is verified */
-export const USE_DUMMY_ANALYTICS = true;
+/** Sample analytics data disabled — use real API data only */
+export const USE_DUMMY_ANALYTICS = false;
 
 const DUMMY_EMPLOYEES = [
   { employee_id: 'd1', employee_code: 'EMP-001', name: 'Priya Sharma', days_present: 18, late_count: 4, incomplete_days: 1, total_hours: 142.5 },

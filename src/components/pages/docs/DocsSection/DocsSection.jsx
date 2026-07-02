@@ -17,14 +17,36 @@ export const DocList = ({ items }) => (
   </ul>
 );
 
+export const DocStepList = ({ items }) => (
+  <ol className="space-y-2.5">
+    {items.map((item, index) => (
+      <li key={index} className="flex gap-3">
+        <span
+          className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#007AFF]/10 text-xs font-semibold tabular-nums text-[#007AFF]"
+          aria-hidden="true"
+        >
+          {index + 1}
+        </span>
+        <span className="min-w-0 pt-0.5 text-[15px] leading-relaxed text-gray-700">{item}</span>
+      </li>
+    ))}
+  </ol>
+);
+
 export const DocParagraph = ({ children }) => (
   <p className="text-[15px] leading-relaxed text-gray-700">{children}</p>
 );
 
+export const DocFooter = ({ children }) => (
+  <div className="mt-1 border-t border-gray-100 pt-3 text-sm leading-relaxed text-gray-600">
+    {children}
+  </div>
+);
+
 export const DocPageHeader = ({ title, subtitle }) => (
-  <div className="mb-2">
-    <h2 className="text-2xl font-bold text-gray-900">{title}</h2>
-    {subtitle && <p className="mt-1.5 text-base text-gray-500">{subtitle}</p>}
+  <div>
+    <h1 className="text-2xl font-bold text-gray-900 sm:text-3xl">{title}</h1>
+    {subtitle && <p className="mt-1.5 text-sm text-gray-500 sm:text-base">{subtitle}</p>}
   </div>
 );
 
@@ -42,7 +64,7 @@ export const DocTip = ({ children }) => (
 );
 
 const DocsSection = ({ title, subtitle, children, className }) => (
-  <section className={clsx(DOCS_PANEL, 'h-full overflow-hidden', className)}>
+  <section className={clsx(DOCS_PANEL, 'overflow-hidden', className)}>
     {(title || subtitle) && (
       <div className="border-b border-gray-100 px-4 py-3 sm:px-5 sm:py-4">
         {title && <h3 className="text-sm font-semibold text-gray-900 sm:text-base">{title}</h3>}
