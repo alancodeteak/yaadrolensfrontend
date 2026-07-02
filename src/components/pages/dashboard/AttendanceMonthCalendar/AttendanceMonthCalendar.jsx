@@ -15,8 +15,8 @@ function normalizeDateKey(value) {
   return String(value).slice(0, 10);
 }
 
-/** TODO: set false once real attendance data is verified */
-const USE_DUMMY_CALENDAR = true;
+/** Use real attendance calendar data from the API */
+const USE_DUMMY_CALENDAR = false;
 
 const DUMMY_TOTAL_EMPLOYEES = 10;
 

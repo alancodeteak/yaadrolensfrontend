@@ -6,6 +6,7 @@ import {
   SETTINGS_ATTENDANCE_STEPS,
   SETTINGS_HELP_STEPS,
   SETTINGS_KIOSK_STEPS,
+  SETTINGS_PAYMENT_STEPS,
   usePageTour,
 } from '../../components/common';
 import {
@@ -18,9 +19,17 @@ import {
 import { getSettingsNavItem } from '../../components/pages/settings/settingsNav';
 
 function getSettingsTourSteps(pathname) {
+  if (pathname.includes('/payment')) return SETTINGS_PAYMENT_STEPS;
   if (pathname.includes('/cameras')) return SETTINGS_KIOSK_STEPS;
   if (pathname.includes('/help')) return SETTINGS_HELP_STEPS;
   return SETTINGS_ATTENDANCE_STEPS;
+}
+
+function getSettingsTourStorageKey(pathname) {
+  if (pathname.includes('/payment')) return 'settings_tour_completed_payment';
+  if (pathname.includes('/cameras')) return 'settings_tour_completed_kiosk';
+  if (pathname.includes('/help')) return 'settings_tour_completed_help';
+  return 'settings_tour_completed_attendance';
 }
 
 const Settings = () => {
@@ -30,7 +39,7 @@ const Settings = () => {
   const activeSection = getSettingsNavItem(location.pathname);
   const { infoOpen, startTutorial, startInfo, closeInfo } = usePageTour(
     steps,
-    'settings_tour_completed'
+    getSettingsTourStorageKey(location.pathname)
   );
 
   return (

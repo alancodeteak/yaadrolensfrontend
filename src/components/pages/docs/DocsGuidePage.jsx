@@ -1,10 +1,12 @@
 import DocsSection, {
   DocLink,
   DocList,
+  DocStepList,
   DocParagraph,
   DocPageHeader,
   DocContentGrid,
   DocTip,
+  DocFooter,
 } from './DocsSection';
 import DocLanguagePicker from './sections/DocLanguagePicker';
 import { DOCS_LANGUAGE_LABEL, DOCS_LANGUAGES } from './docsI18n';
@@ -56,30 +58,46 @@ const DocsGuidePage = ({ contentByLang }) => {
   const { language, setLanguage } = useDocsLanguage();
   const content = contentByLang[language] || contentByLang.en;
 
+  const renderSectionList = (section) => {
+    const items = section.list.map(renderListItem);
+    if (section.listStyle === 'steps') {
+      return <DocStepList items={items} />;
+    }
+    return <DocList items={items} />;
+  };
+
   return (
     <div className="space-y-6" lang={language}>
-      <DocPageHeader title={content.pageTitle} subtitle={content.pageSubtitle} />
-
-      <DocLanguagePicker
-        languages={DOCS_LANGUAGES}
-        value={language}
-        onChange={setLanguage}
-        label={DOCS_LANGUAGE_LABEL[language]}
-      />
+      <div className="space-y-4">
+        <DocPageHeader title={content.pageTitle} subtitle={content.pageSubtitle} />
+        <DocLanguagePicker
+          languages={DOCS_LANGUAGES}
+          value={language}
+          onChange={setLanguage}
+          label={DOCS_LANGUAGE_LABEL[language]}
+        />
+      </div>
 
       <DocContentGrid>
         {content.sections.map((section) => (
-          <DocsSection key={section.title} title={section.title} subtitle={section.subtitle}>
+          <DocsSection
+            key={section.title}
+            title={section.title}
+            subtitle={section.subtitle}
+            className={section.span === 'full' ? 'xl:col-span-2' : undefined}
+          >
             {section.paragraphs?.map((block, index) => (
               <div key={index}>{renderBlock(block)}</div>
             ))}
-            {section.list && <DocList items={section.list.map(renderListItem)} />}
+            {section.list && renderSectionList(section)}
             {section.tip && (
               <DocTip>
                 {typeof section.tip === 'string' ? section.tip : renderParts(section.tip)}
               </DocTip>
             )}
-            {section.footer && renderBlock(section.footer)}
+            {section.footer && (
+              <DocFooter>{renderParts(section.footer)}</DocFooter>
+            )}
           </DocsSection>
         ))}
       </DocContentGrid>

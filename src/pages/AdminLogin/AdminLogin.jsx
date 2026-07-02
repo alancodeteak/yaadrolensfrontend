@@ -17,6 +17,7 @@ const AdminLogin = () => {
   const [formData, setFormData] = useState({
     login_id: '',
     password: '',
+    organization_code: '',
   });
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -82,7 +83,7 @@ const AdminLogin = () => {
           />
           <span className="mt-4 inline-flex items-center gap-1.5 rounded-full bg-[#007AFF]/10 px-2.5 py-0.5 text-[11px] font-semibold text-[#007AFF]">
             <ShieldCheck className="h-3.5 w-3.5" strokeWidth={2} aria-hidden="true" />
-            
+            Org Admin
           </span>
           <h1 className="login-title mt-3 text-2xl font-bold text-gray-900">Sign in to YaadroLens</h1>
           <p className="login-subtitle mt-1 text-sm text-gray-500">
@@ -118,6 +119,27 @@ const AdminLogin = () => {
                 autoComplete="username"
                 disabled={isLoading}
               />
+            </div>
+
+            <div>
+              <label htmlFor="organization_code" className={labelClass}>
+                Organization code
+              </label>
+              <input
+                type="text"
+                id="organization_code"
+                name="organization_code"
+                value={formData.organization_code}
+                onChange={handleInputChange}
+                placeholder="e.g. ACME"
+                className={inputClass}
+                autoComplete="organization"
+                disabled={isLoading}
+              />
+              <p className="mt-1.5 text-[11px] text-gray-500">
+                Required if your user ID exists in more than one organization. Use the code set when
+                your organization was created.
+              </p>
             </div>
 
             <div>

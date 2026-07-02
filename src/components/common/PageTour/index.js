@@ -12,6 +12,7 @@ export { PAYROLL_GUIDE_STEPS } from './steps/payrollTourSteps';
 export { REPORTS_GUIDE_STEPS } from './steps/reportsTourSteps';
 export {
   SETTINGS_ATTENDANCE_STEPS,
+  SETTINGS_PAYMENT_STEPS,
   SETTINGS_KIOSK_STEPS,
   SETTINGS_HELP_STEPS,
 } from './steps/settingsTourSteps';

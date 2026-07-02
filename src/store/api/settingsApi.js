@@ -16,7 +16,7 @@ export const settingsApi = baseApi.injectEndpoints({
         body: settingsData,
       }),
       transformResponse: transformSettingsResponse,
-      invalidatesTags: ['Settings'],
+      invalidatesTags: ['Settings', 'Dashboard'],
     }),
 
     getAttendanceRules: builder.query({
@@ -71,7 +71,7 @@ export const settingsApi = baseApi.injectEndpoints({
         },
       }),
       transformResponse: transformSettingsResponse,
-      invalidatesTags: ['Settings'],
+      invalidatesTags: ['Settings', 'Dashboard'],
     }),
 
     updateAttendanceRules: builder.mutation({
@@ -87,7 +87,19 @@ export const settingsApi = baseApi.injectEndpoints({
         },
       }),
       transformResponse: transformSettingsResponse,
-      invalidatesTags: ['Settings'],
+      invalidatesTags: ['Settings', 'Dashboard'],
+    }),
+
+    updateKioskSettings: builder.mutation({
+      query: (data) => ({
+        url: '/org-admin/settings',
+        method: 'PUT',
+        body: {
+          ...(data.timezone != null ? { timezone: data.timezone } : {}),
+        },
+      }),
+      transformResponse: transformSettingsResponse,
+      invalidatesTags: ['Settings', 'Dashboard'],
     }),
 
     getDeviceStatus: builder.query({
@@ -109,6 +121,7 @@ export const {
   useGetAttendanceRulesQuery,
   useUpdatePaymentSettingsMutation,
   useUpdateAttendanceRulesMutation,
+  useUpdateKioskSettingsMutation,
   useGetDeviceStatusQuery,
   useGetDepartmentsQuery,
 } = settingsApi;

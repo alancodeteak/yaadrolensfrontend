@@ -252,6 +252,7 @@ const Dashboard = () => {
             calendar={summary?.month?.calendar}
             loading={isLoading}
             summaryDate={summary?.date}
+            useSampleData={false}
           />
         </div>
         <div
@@ -279,6 +280,7 @@ const Dashboard = () => {
             className="h-full"
             compact
             maxItems={5}
+            useSampleData={false}
           />
         </div>
       </div>
