@@ -46,19 +46,15 @@ const AttendanceRules = () => {
   const [workingHours, setWorkingHours] = useState({
     startTime: '09:00',
     endTime: '17:00',
-    breakDuration: 60,
   });
   const [gracePeriods, setGracePeriods] = useState({ lateArrival: 10, earlyDeparture: 5 });
   const [kioskScan, setKioskScan] = useState({ minimumClockOutMinutes: 30 });
-  const [overtimeRules, setOvertimeRules] = useState({ enabled: true, rateMultiplier: 1.5 });
-  const [weekendHolidays, setWeekendHolidays] = useState({ weekendDays: ['saturday', 'sunday'] });
 
   useEffect(() => {
     if (!attendanceRules) return;
     setWorkingHours({
       startTime: normalizeTime(attendanceRules.work_start_time, '09:00'),
       endTime: normalizeTime(attendanceRules.work_end_time, '17:00'),
-      breakDuration: attendanceRules.break_duration_minutes ?? 60,
     });
     setGracePeriods({
       lateArrival: attendanceRules.late_arrival_grace_minutes ?? 10,
@@ -66,13 +62,6 @@ const AttendanceRules = () => {
     });
     setKioskScan({
       minimumClockOutMinutes: attendanceRules.minimum_clock_out_minutes ?? 30,
-    });
-    setOvertimeRules({
-      enabled: attendanceRules.allow_overtime ?? true,
-      rateMultiplier: attendanceRules.overtime_rate_multiplier || 1.5,
-    });
-    setWeekendHolidays({
-      weekendDays: attendanceRules.weekend_days || ['saturday', 'sunday'],
     });
   }, [attendanceRules]);
 
@@ -86,23 +75,14 @@ const AttendanceRules = () => {
     if (workingHours.startTime >= workingHours.endTime) {
       errors.push('End time must be after start time');
     }
-    if (workingHours.breakDuration < 0 || workingHours.breakDuration > 480) {
-      errors.push('Break duration must be between 0 and 480 minutes');
+    if (gracePeriods.lateArrival < 0 || gracePeriods.lateArrival > 120) {
+      errors.push('Late arrival grace must be between 0 and 120 minutes');
     }
-    if (gracePeriods.lateArrival < 0 || gracePeriods.lateArrival > 60) {
-      errors.push('Late arrival grace must be between 0 and 60 minutes');
-    }
-    if (gracePeriods.earlyDeparture < 0 || gracePeriods.earlyDeparture > 60) {
-      errors.push('Early departure grace must be between 0 and 60 minutes');
+    if (gracePeriods.earlyDeparture < 0 || gracePeriods.earlyDeparture > 120) {
+      errors.push('Early departure grace must be between 0 and 120 minutes');
     }
     if (kioskScan.minimumClockOutMinutes < 0 || kioskScan.minimumClockOutMinutes > 480) {
       errors.push('Minimum clock-out wait must be between 0 and 480 minutes');
-    }
-    if (
-      overtimeRules.enabled &&
-      (overtimeRules.rateMultiplier < 1.0 || overtimeRules.rateMultiplier > 3.0)
-    ) {
-      errors.push('Overtime rate multiplier must be between 1.0 and 3.0');
     }
     return errors;
   };
@@ -121,10 +101,14 @@ const AttendanceRules = () => {
       dashboardToast.success('Your attendance rules were updated.', 'Changes saved');
       refetch();
     } catch (err) {
-      dashboardToast.error(
-        err?.data?.message || 'Could not save attendance rules. Please try again.',
-        'Save failed'
-      );
+      const detail = err?.data?.detail;
+      const message =
+        typeof detail === 'string'
+          ? detail
+          : Array.isArray(detail)
+            ? detail.map((e) => e.msg || e.message).join('; ')
+            : 'Could not save attendance rules. Please try again.';
+      dashboardToast.error(message, 'Save failed');
     }
   };
 
@@ -173,22 +157,9 @@ const AttendanceRules = () => {
               />
             </div>
           </div>
-          <div className="mt-3 max-w-xs">
-            <label className={settingsLabelClass}>Break (min)</label>
-            <input
-              type="number"
-              value={workingHours.breakDuration}
-              onChange={(e) =>
-                setWorkingHours((p) => ({
-                  ...p,
-                  breakDuration: parseInt(e.target.value, 10) || 0,
-                }))
-              }
-              className={settingsInputClass}
-              min="0"
-              max="480"
-            />
-          </div>
+          <p className="mt-3 text-xs text-gray-500">
+            Used for late and early-leave detection. Timezone is configured under Kiosk &amp; device.
+          </p>
         </SettingsSection>
 
         <SettingsSection title="Grace periods" subtitle="Minutes before marking late or early" tourId="grace-periods">
@@ -206,7 +177,7 @@ const AttendanceRules = () => {
                 }
                 className={settingsInputClass}
                 min="0"
-                max="60"
+                max="120"
               />
             </div>
             <div>
@@ -222,7 +193,7 @@ const AttendanceRules = () => {
                 }
                 className={settingsInputClass}
                 min="0"
-                max="60"
+                max="120"
               />
             </div>
           </div>
@@ -252,75 +223,6 @@ const AttendanceRules = () => {
               Staff must wait this long after clock-in before a scan can record clock-out.
               Set to 0 to allow immediate clock-out.
             </p>
-          </div>
-        </SettingsSection>
-
-        <SettingsSection title="Overtime" tourId="overtime-rules">
-          <div className="space-y-3">
-            <label className="flex items-center justify-between gap-3">
-              <span className="text-sm text-gray-700">Allow overtime</span>
-              <button
-                type="button"
-                role="switch"
-                aria-checked={overtimeRules.enabled}
-                onClick={() =>
-                  setOvertimeRules((p) => ({ ...p, enabled: !p.enabled }))
-                }
-                className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors ${
-                  overtimeRules.enabled ? 'bg-[#007AFF]' : 'bg-gray-200'
-                }`}
-              >
-                <span
-                  className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                    overtimeRules.enabled ? 'translate-x-6' : 'translate-x-1'
-                  }`}
-                />
-              </button>
-            </label>
-            <div>
-              <label className={settingsLabelClass}>Rate multiplier</label>
-              <input
-                type="number"
-                step="0.1"
-                value={overtimeRules.rateMultiplier}
-                onChange={(e) =>
-                  setOvertimeRules((p) => ({
-                    ...p,
-                    rateMultiplier: parseFloat(e.target.value) || 0,
-                  }))
-                }
-                className={settingsInputClass}
-                min="1.0"
-                max="3.0"
-                disabled={!overtimeRules.enabled}
-              />
-            </div>
-          </div>
-        </SettingsSection>
-
-        <SettingsSection title="Weekend days" tourId="weekend-days">
-          <div className="flex flex-wrap gap-4">
-            {[
-              { value: 'saturday', label: 'Saturday' },
-              { value: 'sunday', label: 'Sunday' },
-            ].map((day) => (
-              <label key={day.value} className="flex items-center gap-2 text-sm text-gray-700">
-                <input
-                  type="checkbox"
-                  checked={weekendHolidays.weekendDays.includes(day.value)}
-                  onChange={() =>
-                    setWeekendHolidays((p) => ({
-                      ...p,
-                      weekendDays: p.weekendDays.includes(day.value)
-                        ? p.weekendDays.filter((d) => d !== day.value)
-                        : [...p.weekendDays, day.value],
-                    }))
-                  }
-                  className="h-4 w-4 rounded border-gray-300 text-[#007AFF] focus:ring-[#007AFF]/20"
-                />
-                {day.label}
-              </label>
-            ))}
           </div>
         </SettingsSection>
       </SettingsContentGrid>

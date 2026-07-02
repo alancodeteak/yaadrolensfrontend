@@ -22,7 +22,7 @@ export const comingSoonContent = {
         title: 'Things to know today',
         list: [
           'You can manage one company per login for now.',
-          'The attendance history tab on an employee profile shows sample data — a live version is coming.',
+          'Employee attendance history on a profile uses live data from your organization.',
           'Company-specific holiday calendars are not available yet — the Dashboard shows India public holidays only.',
           'Some settings fields (like breaks and overtime) are visible but not fully saved yet.',
         ],
@@ -56,7 +56,7 @@ export const comingSoonContent = {
         title: 'आज जानने योग्य बातें',
         list: [
           'अभी एक login से एक ही कंपनी प्रबंधित की जा सकती है।',
-          'Employee profile का attendance history tab sample data दिखाता है — live version आ रहा है।',
+          'Employee profile का attendance history अब आपके organization का live data दिखाता है।',
           'Company-specific holiday calendars अभी उपलब्ध नहीं हैं — Dashboard केवल भारत की public holidays दिखाता है।',
           'कुछ settings fields (जैसे breaks और overtime) दिखते हैं, लेकिन अभी पूरी तरह सेव नहीं होते।',
         ],
@@ -90,7 +90,7 @@ export const comingSoonContent = {
         title: 'ഇന്ന് അറിയേണ്ട കാര്യങ്ങൾ',
         list: [
           'ഇപ്പോൾ ഒരു login ഉപയോഗിച്ച് ഒരു കമ്പനി മാത്രം മാനേജ് ചെയ്യാം.',
-          'Employee profileയിലെ attendance history tab sample data കാണിക്കുന്നു — live version വരുന്നു.',
+          'Employee profileಯിലെ attendance history ഇപ്പോൾ നിങ്ങളുടെ organization-ന്റെ live data കാണിക്കുന്നു.',
           'Company-specific holiday calendars ഇതുവരെ ലഭ്യമല്ല — Dashboard ഇന്ത്യയിലെ public holidays മാത്രം കാണിക്കുന്നു.',
           'ചില settings fields (breaks, overtime പോലുള്ളവ) കാണുന്നുണ്ടെങ്കിലും ഇതുവരെ പൂർണ്ണമായി സേവ് ചെയ്യുന്നില്ല.',
         ],
@@ -124,7 +124,7 @@ export const comingSoonContent = {
         title: 'ಇಂದು ತಿಳಿದುಕೊಳ್ಳಬೇಕಾದವು',
         list: [
           'ಈಗ ಒಂದೇ login ಮೂಲಕ ಒಂದು ಕಂಪನಿಯನ್ನು ಮಾತ್ರ ನಿರ್ವಹಿಸಬಹುದು.',
-          'Employee profile ನ attendance history tab sample data ತೋರಿಸುತ್ತದೆ — live version ಬರುತ್ತಿದೆ.',
+          'Employee profile ನ attendance history ಈಗ ನಿಮ್ಮ organization ನ live data ತೋರಿಸುತ್ತದೆ.',
           'Company-specific holiday calendars ಇನ್ನೂ ಲಭ್ಯವಿಲ್ಲ — Dashboard ಭಾರತ public holidays ಮಾತ್ರ ತೋರಿಸುತ್ತದೆ.',
           'ಕೆಲವು settings fields (breaks ಮತ್ತು overtime ಹೀಗಿನವು) ಕಾಣುತ್ತವೆ, ಆದರೆ ಇನ್ನೂ ಸಂಪೂರ್ಣವಾಗಿ ಉಳಿಸಲಾಗುವುದಿಲ್ಲ.',
         ],

@@ -13,7 +13,7 @@ const DocsSidebar = () => {
       </p>
       <nav
         aria-label="Guide sections"
-        className="flex gap-1 overflow-x-auto pb-1 lg:flex-col lg:overflow-visible lg:pb-0"
+            className="flex gap-1 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] lg:flex-col lg:overflow-visible lg:pb-0 [&::-webkit-scrollbar]:hidden"
       >
         {DOCS_NAV_ITEMS.map((item) => {
           const isActive = location.pathname === item.href;

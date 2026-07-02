@@ -188,6 +188,7 @@ const PaymentRules = () => {
         <SettingsSection
           title="Monthly salary"
           subtitle="Salaries are taken from each employee's pay amount on the Salary page"
+          tourId="payment-monthly-salary"
         >
           <div className="space-y-4">
             <label className="flex items-center justify-between gap-3">
@@ -226,6 +227,7 @@ const PaymentRules = () => {
         <SettingsSection
           title="Weekly off"
           subtitle="Default off days for all employees (can be overridden per employee)"
+          tourId="payment-weekly-off"
         >
           <div className="flex flex-wrap gap-2">
             {WEEKDAY_OPTIONS.map((wd) => (
@@ -266,6 +268,7 @@ const PaymentRules = () => {
         <SettingsSection
           title="Leave policy"
           subtitle="Paid leave quota and rules for marking leave"
+          tourId="payment-leave-policy"
         >
           <div className="space-y-4">
             <div className="max-w-xs">
@@ -350,6 +353,7 @@ const PaymentRules = () => {
         <SettingsSection
           title="Salary calculation"
           subtitle="How monthly salary is computed when salaries are generated"
+          tourId="payment-salary-calculation"
         >
           <div className="space-y-4">
             <div className="max-w-md">
@@ -420,7 +424,7 @@ const PaymentRules = () => {
         </SettingsSection>
       </SettingsContentGrid>
 
-      <div className={`${SETTINGS_PANEL} flex justify-end px-4 py-4`}>
+      <div className={`${SETTINGS_PANEL} flex justify-end px-4 py-4`} data-tour="save-actions">
         <button
           type="button"
           onClick={handleSave}

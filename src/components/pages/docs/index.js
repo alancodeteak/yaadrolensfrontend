@@ -1,6 +1,6 @@
 export { default as DocsSidebar } from './DocsSidebar';
 export { DOCS_PANEL, DASHBOARD_ACCENTS, DOCS_ICON_TONES } from './docsTheme';
-export { default as DocsSection, DocLink, DocList, DocParagraph, DocPageHeader, DocContentGrid, DocTip } from './DocsSection';
+export { default as DocsSection, DocLink, DocList, DocStepList, DocParagraph, DocPageHeader, DocContentGrid, DocTip, DocFooter } from './DocsSection';
 export { DOCS_NAV_ITEMS } from './docsNav';
 export { DocsLanguageProvider, useDocsLanguage } from './DocsLanguageContext';
 export { default as DocsGuidePage } from './DocsGuidePage';

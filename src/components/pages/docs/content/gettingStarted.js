@@ -15,7 +15,7 @@ export const gettingStartedContent = {
       {
         title: 'How to sign in',
         list: [
-          'Go to the login page.',
+          [docLink('/login', 'Open the login page'), '.'],
           'Enter your admin username and password (the same ones you use for this panel).',
           'If asked, enter your company code.',
           'After login, you will see the Dashboard.',
@@ -25,6 +25,8 @@ export const gettingStartedContent = {
       {
         title: 'Setup checklist',
         subtitle: 'Do these steps in order',
+        listStyle: 'steps',
+        span: 'full',
         list: [
           'Your company account is created by your system provider.',
           'Add your employees in the Employees section.',
@@ -73,7 +75,7 @@ export const gettingStartedContent = {
       {
         title: 'लॉगिन कैसे करें',
         list: [
-          'लॉगिन पेज पर जाएँ।',
+          [docLink('/login', 'लॉगिन पेज'), ' खोलें।'],
           'अपना एडमिन यूज़रनेम और पासवर्ड डालें।',
           'अगर माँगा जाए तो कंपनी कोड डालें।',
           'लॉगिन के बाद आपको डैशबोर्ड दिखेगा।',
@@ -83,6 +85,8 @@ export const gettingStartedContent = {
       {
         title: 'सेटअप चेकलिस्ट',
         subtitle: 'इन चरणों को क्रम से करें',
+        listStyle: 'steps',
+        span: 'full',
         list: [
           'आपकी कंपनी अकाउंट सिस्टम प्रदाता बनाता है।',
           'Employees सेक्शन में कर्मचारी जोड़ें।',
@@ -91,6 +95,7 @@ export const gettingStartedContent = {
           'कियोस्क टैबलेट कनेक्ट करें (Kiosk setup देखें)।',
           'हर कर्मचारी का चेहरा कियोस्क पर रजिस्टर करें।',
           'डैशबोर्ड और Live Attendance पर हाजिरी देखें।',
+          'Reports पेज से हाजिरी और पेरोल रिपोर्ट डाउनलोड करें।',
         ],
       },
       {
@@ -110,6 +115,8 @@ export const gettingStartedContent = {
           docLink('/docs/dashboard', 'आपका डैशबोर्ड'),
           ' · ',
           docLink('/docs/kiosk', 'कियोस्क सेटअप'),
+          ' · ',
+          docLink('/docs/reports', 'रिपोर्ट'),
         ],
       },
     ],
@@ -128,7 +135,7 @@ export const gettingStartedContent = {
       {
         title: 'എങ്ങനെ ലോഗിൻ ചെയ്യാം',
         list: [
-          'ലോഗിൻ പേജിലേക്ക് പോകുക.',
+          [docLink('/login', 'ലോഗിൻ പേജ്'), ' തുറക്കുക.'],
           'അഡ്മിൻ യൂസർനെയിമും പാസ്‌വേഡും നൽകുക.',
           'ചോദിച്ചാൽ കമ്പനി കോഡ് നൽകുക.',
           'ലോഗിൻ ചെയ്ത ശേഷം ഡാഷ്‌ബോർഡ് കാണാം.',
@@ -138,6 +145,8 @@ export const gettingStartedContent = {
       {
         title: 'സെറ്റപ്പ് ചെക്ക്ലിസ്റ്റ്',
         subtitle: 'ഈ ഘട്ടങ്ങൾ ക്രമത്തിൽ ചെയ്യുക',
+        listStyle: 'steps',
+        span: 'full',
         list: [
           'നിങ്ങളുടെ കമ്പനി അക്കൗണ്ട് സിസ്റ്റം പ്രൊവൈഡർ സൃഷ്ടിക്കുന്നു.',
           'Employees വിഭാഗത്തിൽ ജീവനക്കാരെ ചേർക്കുക.',
@@ -146,6 +155,7 @@ export const gettingStartedContent = {
           'കിയോസ്ക് ടാബ്ലെറ്റ് കണക്റ്റ് ചെയ്യുക (Kiosk setup കാണുക).',
           'ഓരോ ജീവനക്കാരുടെയും മുഖം കിയോസ്കിൽ രജിസ്റ്റർ ചെയ്യുക.',
           'ഡാഷ്‌ബോർഡിലും Live Attendance-ലും ഹാജർ നിരീക്ഷിക്കുക.',
+          'Reports പേജിൽ നിന്ന് ഹാജർ, പേറോൾ റിപ്പോർട്ടുകൾ ഡൗൺലോഡ് ചെയ്യുക.',
         ],
       },
       {
@@ -165,6 +175,8 @@ export const gettingStartedContent = {
           docLink('/docs/dashboard', 'നിങ്ങളുടെ ഡാഷ്‌ബോർഡ്'),
           ' · ',
           docLink('/docs/kiosk', 'കിയോസ്ക് സെറ്റപ്പ്'),
+          ' · ',
+          docLink('/docs/reports', 'റിപ്പോർട്ടുകൾ'),
         ],
       },
     ],
@@ -183,7 +195,7 @@ export const gettingStartedContent = {
       {
         title: 'ಲಾಗಿನ್ ಹೇಗೆ ಮಾಡುವುದು',
         list: [
-          'ಲಾಗಿನ್ ಪುಟಕ್ಕೆ ಹೋಗಿ.',
+          [docLink('/login', 'ಲಾಗಿನ್ ಪುಟ'), ' ತೆರೆಯಿರಿ.'],
           'ನಿಮ್ಮ ಅಡ್ಮಿನ್ ಯೂಸರ್‌ನೇಮ್ ಮತ್ತು ಪಾಸ್‌ವರ್ಡ್ ನಮೂದಿಸಿ.',
           'ಕೇಳಿದರೆ ಕಂಪನಿ ಕೋಡ್ ನಮೂದಿಸಿ.',
           'ಲಾಗಿನ್ ನಂತರ ಡ್ಯಾಶ್‌ಬೋರ್ಡ್ ಕಾಣಿಸುತ್ತದೆ.',
@@ -193,6 +205,8 @@ export const gettingStartedContent = {
       {
         title: 'ಸೆಟಪ್ ಪರಿಶೀಲನಾ ಪಟ್ಟಿ',
         subtitle: 'ಈ ಹಂತಗಳನ್ನು ಕ್ರಮವಾಗಿ ಮಾಡಿ',
+        listStyle: 'steps',
+        span: 'full',
         list: [
           'ನಿಮ್ಮ ಕಂಪನಿ ಖಾತೆಯನ್ನು ಸಿಸ್ಟಮ್ ಪ್ರೊವೈಡರ್ ರಚಿಸುತ್ತಾರೆ.',
           'Employees ವಿಭಾಗದಲ್ಲಿ ಉದ್ಯೋಗಿಗಳನ್ನು ಸೇರಿಸಿ.',
@@ -201,6 +215,7 @@ export const gettingStartedContent = {
           'ಕಿಯೋಸ್ಕ್ ಟ್ಯಾಬ್ಲೆಟ್ ಸಂಪರ್ಕಿಸಿ (Kiosk setup ನೋಡಿ).',
           'ಪ್ರತಿ ಉದ್ಯೋಗಿಯ ಮುಖವನ್ನು ಕಿಯೋಸ್ಕ್‌ನಲ್ಲಿ ನೋಂದಾಯಿಸಿ.',
           'ಡ್ಯಾಶ್‌ಬೋರ್ಡ್ ಮತ್ತು Live Attendance ನಲ್ಲಿ ಹಾಜರಾತಿ ನೋಡಿ.',
+          'Reports ಪುಟದಿಂದ ಹಾಜರಾತಿ ಮತ್ತು ಪೇರೋಲ್ ವರದಿಗಳನ್ನು ಡೌನ್‌ಲೋಡ್ ಮಾಡಿ.',
         ],
       },
       {
@@ -220,6 +235,8 @@ export const gettingStartedContent = {
           docLink('/docs/dashboard', 'ನಿಮ್ಮ ಡ್ಯಾಶ್‌ಬೋರ್ಡ್'),
           ' · ',
           docLink('/docs/kiosk', 'ಕಿಯೋಸ್ಕ್ ಸೆಟಪ್'),
+          ' · ',
+          docLink('/docs/reports', 'ವರದಿಗಳು'),
         ],
       },
     ],

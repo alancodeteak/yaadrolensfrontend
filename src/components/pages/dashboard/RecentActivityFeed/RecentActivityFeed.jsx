@@ -17,7 +17,7 @@ const RecentActivityFeed = ({
   activities = [],
   loading = false,
   className,
-  useSampleData = true,
+  useSampleData = false,
   showViewAll = true,
   title = 'Recent activity',
   subtitle = "Today's clock in / out",
