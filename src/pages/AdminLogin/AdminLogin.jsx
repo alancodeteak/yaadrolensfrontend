@@ -17,7 +17,6 @@ const AdminLogin = () => {
   const [formData, setFormData] = useState({
     login_id: '',
     password: '',
-    organization_code: '',
   });
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -119,27 +118,6 @@ const AdminLogin = () => {
                 autoComplete="username"
                 disabled={isLoading}
               />
-            </div>
-
-            <div>
-              <label htmlFor="organization_code" className={labelClass}>
-                Organization code
-              </label>
-              <input
-                type="text"
-                id="organization_code"
-                name="organization_code"
-                value={formData.organization_code}
-                onChange={handleInputChange}
-                placeholder="e.g. ACME"
-                className={inputClass}
-                autoComplete="organization"
-                disabled={isLoading}
-              />
-              <p className="mt-1.5 text-[11px] text-gray-500">
-                Required if your user ID exists in more than one organization. Use the code set when
-                your organization was created.
-              </p>
             </div>
 
             <div>

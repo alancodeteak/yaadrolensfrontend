@@ -511,6 +511,10 @@ export function buildUserFromToken(accessToken, loginData) {
     typeof loginData === 'object' && loginData?.organization_code
       ? String(loginData.organization_code).trim()
       : undefined;
+  const organizationName =
+    typeof loginData === 'object' && loginData?.organization_name
+      ? String(loginData.organization_name).trim()
+      : undefined;
 
   try {
     const payload = JSON.parse(atob(accessToken.split('.')[1]));
@@ -521,6 +525,7 @@ export function buildUserFromToken(accessToken, loginData) {
       login_id: loginId,
       name: loginId,
       ...(organizationCode ? { organization_code: organizationCode } : {}),
+      ...(organizationName ? { organization_name: organizationName } : {}),
     };
   } catch {
     return {
@@ -528,6 +533,7 @@ export function buildUserFromToken(accessToken, loginData) {
       name: loginId,
       role: 'org_admin',
       ...(organizationCode ? { organization_code: organizationCode } : {}),
+      ...(organizationName ? { organization_name: organizationName } : {}),
     };
   }
 }
