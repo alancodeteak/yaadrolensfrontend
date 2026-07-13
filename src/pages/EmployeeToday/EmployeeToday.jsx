@@ -21,6 +21,7 @@ const STATUS_BADGE = {
   'Present (Late)': 'bg-orange-100 text-orange-700',
   Absent: 'bg-gray-100 text-gray-600',
   'Clocked Out': 'bg-blue-100 text-blue-700',
+  'Clocked Out (Late)': 'bg-orange-100 text-orange-800',
 };
 
 const ACCENT = {

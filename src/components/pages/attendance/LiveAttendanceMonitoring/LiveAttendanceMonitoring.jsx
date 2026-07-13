@@ -45,9 +45,17 @@ const STATUS_BADGE = {
   'Present (Late)': 'bg-orange-100 text-orange-700',
   Absent: 'bg-gray-100 text-gray-600',
   'Clocked Out': 'bg-blue-100 text-blue-700',
+  'Clocked Out (Late)': 'bg-orange-100 text-orange-800',
 };
 
-const STATUS_OPTIONS = ['All Status', 'Present', 'Present (Late)', 'Absent', 'Clocked Out'];
+const STATUS_OPTIONS = [
+  'All Status',
+  'Present',
+  'Present (Late)',
+  'Absent',
+  'Clocked Out',
+  'Clocked Out (Late)',
+];
 
 const LiveAttendanceMonitoring = () => {
   const navigate = useNavigate();
@@ -87,13 +95,18 @@ const LiveAttendanceMonitoring = () => {
     }
     return {
       currentlyPresent: employees.filter(
-        (emp) => emp.status === 'Present' || emp.status === 'Present (Late)'
+        (emp) =>
+          emp.status === 'Present' ||
+          emp.status === 'Present (Late)' ||
+          emp.status === 'Clocked Out (Late)'
       ).length,
       currentlyAbsent: employees.filter((emp) => emp.status === 'Absent').length,
-      lateArrivalsToday: employees.filter((emp) => emp.status === 'Present (Late)').length,
+      lateArrivalsToday:
+        dailyData?.late_count ??
+        (dailyData?.rows || []).filter((row) => row.attendance_status === 'late').length,
       totalEmployees: employees.length,
     };
-  }, [employees]);
+  }, [employees, dailyData]);
 
   const useDummyTop = USE_DUMMY_LIVE_ATTENDANCE && realSummaryData.totalEmployees === 0;
   const summaryData = useDummyTop ? DUMMY_SUMMARY : realSummaryData;
