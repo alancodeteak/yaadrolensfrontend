@@ -176,11 +176,12 @@ export function resolveRowProfilePhoto(row) {
 /** Map a daily report row to live-attendance UI employee shape. */
 export function mapDailyRowToLiveEmployee(row) {
   let status = 'Absent';
+  const isLate = row.attendance_status === 'late';
   if (row.attendance_status === 'absent' || (!row.clock_in && !row.clock_out)) {
     status = 'Absent';
   } else if (row.clock_out) {
-    status = 'Clocked Out';
-  } else if (row.attendance_status === 'late') {
+    status = isLate ? 'Clocked Out (Late)' : 'Clocked Out';
+  } else if (isLate) {
     status = 'Present (Late)';
   } else if (row.clock_in) {
     status = 'Present';

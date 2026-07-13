@@ -9,7 +9,7 @@ import DocsSection, {
   DocFooter,
 } from './DocsSection';
 import DocLanguagePicker from './sections/DocLanguagePicker';
-import { DOCS_LANGUAGE_LABEL, DOCS_LANGUAGES } from './docsI18n';
+import { DOCS_FALLBACK_NOTICE, DOCS_LANGUAGE_LABEL, DOCS_LANGUAGES, resolveDocsGuideContent } from './docsI18n';
 import { useDocsLanguage } from './DocsLanguageContext';
 
 const renderParts = (parts) =>
@@ -56,7 +56,7 @@ const renderListItem = (item) => {
 
 const DocsGuidePage = ({ contentByLang }) => {
   const { language, setLanguage } = useDocsLanguage();
-  const content = contentByLang[language] || contentByLang.en;
+  const { content, usedFallback } = resolveDocsGuideContent(contentByLang, language);
 
   const renderSectionList = (section) => {
     const items = section.list.map(renderListItem);
@@ -76,6 +76,11 @@ const DocsGuidePage = ({ contentByLang }) => {
           onChange={setLanguage}
           label={DOCS_LANGUAGE_LABEL[language]}
         />
+        {usedFallback && (
+          <p className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+            {DOCS_FALLBACK_NOTICE[language] || DOCS_FALLBACK_NOTICE.en}
+          </p>
+        )}
       </div>
 
       <DocContentGrid>
