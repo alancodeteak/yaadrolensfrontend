@@ -20,8 +20,12 @@ import {
 import { DashboardWidgetCard, RecentActivityFeed } from '../../dashboard';
 import LiveAttendanceInsights from '../LiveAttendanceInsights';
 import { useGetDailySummaryQuery } from '../../../../store/api/attendanceApi';
+import { useGetSettingsQuery } from '../../../../store/api/settingsApi';
 import {
+  isLiveOnSiteStatus,
   mapDailyRowToLiveEmployee,
+  matchesLiveAttendanceStatusFilter,
+  orgToday,
   transformDailyRowsToLogs,
 } from '../../../../store/api/transforms';
 import {
@@ -29,8 +33,6 @@ import {
   DUMMY_SUMMARY,
   DUMMY_LIVE_ACTIVITIES,
 } from '../liveAttendanceDummy';
-
-const today = () => new Date().toISOString().split('T')[0];
 
 const TH =
   'px-4 py-3 text-left text-[10px] font-medium uppercase tracking-wide text-gray-400 first:pl-5 last:pr-5';
@@ -63,12 +65,29 @@ const LiveAttendanceMonitoring = () => {
     ATTENDANCE_GUIDE_STEPS,
     'attendance_tour_completed'
   );
+  const { data: settings } = useGetSettingsQuery();
+  const orgTimezone = settings?.timezone || 'Asia/Kolkata';
+  const todayKey = orgToday(orgTimezone);
+
   const [currentTime, setCurrentTime] = useState(new Date());
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedStatus, setSelectedStatus] = useState('All Status');
-  const [selectedDay, setSelectedDay] = useState(today());
+  const [selectedDay, setSelectedDay] = useState(todayKey);
 
-  const isToday = selectedDay === today();
+  // Align default date with org timezone once settings load (without overriding a manual pick).
+  useEffect(() => {
+    if (!settings?.timezone) return;
+    setSelectedDay((prev) => {
+      const orgDay = orgToday(settings.timezone);
+      // Only auto-correct if still on the previous default "today" guess.
+      if (prev === orgDay) return prev;
+      const utcGuess = new Date().toISOString().split('T')[0];
+      if (prev === utcGuess && utcGuess !== orgDay) return orgDay;
+      return prev;
+    });
+  }, [settings?.timezone]);
+
+  const isToday = selectedDay === todayKey;
 
   const {
     data: dailyData,
@@ -94,12 +113,8 @@ const LiveAttendanceMonitoring = () => {
       return { currentlyPresent: 0, currentlyAbsent: 0, lateArrivalsToday: 0, totalEmployees: 0 };
     }
     return {
-      currentlyPresent: employees.filter(
-        (emp) =>
-          emp.status === 'Present' ||
-          emp.status === 'Present (Late)' ||
-          emp.status === 'Clocked Out (Late)'
-      ).length,
+      // On-site only: clocked in, not yet clocked out (includes late arrivals still present).
+      currentlyPresent: employees.filter((emp) => isLiveOnSiteStatus(emp.status)).length,
       currentlyAbsent: employees.filter((emp) => emp.status === 'Absent').length,
       lateArrivalsToday:
         dailyData?.late_count ??
@@ -137,8 +152,10 @@ const LiveAttendanceMonitoring = () => {
           !term ||
           employee.name.toLowerCase().includes(term) ||
           String(employee.employee_code || '').toLowerCase().includes(term);
-        const matchesStatus =
-          selectedStatus === 'All Status' || employee.status === selectedStatus;
+        const matchesStatus = matchesLiveAttendanceStatusFilter(
+          employee.status,
+          selectedStatus
+        );
         return matchesSearch && matchesStatus;
       })
       .sort((a, b) => a.name.localeCompare(b.name));
@@ -261,7 +278,7 @@ const LiveAttendanceMonitoring = () => {
                 label="Attendance date"
                 value={selectedDay}
                 onChange={setSelectedDay}
-                maxDate={today()}
+                maxDate={todayKey}
               />
             </div>
 

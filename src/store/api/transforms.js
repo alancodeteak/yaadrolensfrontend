@@ -1,6 +1,17 @@
 import { getDefaultAvatar } from '../../utils/avatar';
 import { DEFAULT_IDENTITY_DOCUMENT } from '../../utils/employeeDocumentConstants';
 import { resolveEmployeePhotoUrl } from '../../utils/employeePhoto';
+import {
+  isLiveOnSiteStatus,
+  matchesLiveAttendanceStatusFilter,
+  resolveLiveAttendanceStatus,
+} from './liveAttendanceStatus';
+
+export {
+  isLiveOnSiteStatus,
+  matchesLiveAttendanceStatusFilter,
+  resolveLiveAttendanceStatus,
+};
 
 /** YYYY-MM-DD in an IANA timezone (e.g. org settings). */
 export function formatDateInTimezone(date = new Date(), timezone = 'UTC') {
@@ -173,19 +184,13 @@ export function resolveRowProfilePhoto(row) {
   };
 }
 
-/** Map a daily report row to live-attendance UI employee shape. */
+/**
+ * Live-attendance UI status from a daily row.
+ * Clock state wins: still clocked in → Present / Present (Late);
+ * clocked out → Clocked Out / Clocked Out (Late). Late is an overlay from attendance_status.
+ */
 export function mapDailyRowToLiveEmployee(row) {
-  let status = 'Absent';
-  const isLate = row.attendance_status === 'late';
-  if (row.attendance_status === 'absent' || (!row.clock_in && !row.clock_out)) {
-    status = 'Absent';
-  } else if (row.clock_out) {
-    status = isLate ? 'Clocked Out (Late)' : 'Clocked Out';
-  } else if (isLate) {
-    status = 'Present (Late)';
-  } else if (row.clock_in) {
-    status = 'Present';
-  }
+  const status = resolveLiveAttendanceStatus(row);
 
   const clockIn = formatClockTime(row.clock_in);
   const lastSeen = row.clock_out

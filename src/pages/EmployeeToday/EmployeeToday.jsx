@@ -10,11 +10,11 @@ import {
   formatClockTime,
   formatDurationHours,
   mapDailyRowToLiveEmployee,
+  orgToday,
 } from '../../store/api/transforms';
 import { DashboardWidgetCard } from '../../components/pages/dashboard';
 import { UserAvatar, LoadingScreen, NotFoundState, notFoundActionClass } from '../../components/common';
-
-const today = () => new Date().toISOString().split('T')[0];
+import { useGetSettingsQuery } from '../../store/api/settingsApi';
 
 const STATUS_BADGE = {
   Present: 'bg-emerald-100 text-emerald-700',
@@ -33,7 +33,8 @@ const ACCENT = {
 
 const EmployeeToday = () => {
   const { id } = useParams();
-  const selectedDay = today();
+  const { data: settings } = useGetSettingsQuery();
+  const selectedDay = orgToday(settings?.timezone || 'Asia/Kolkata');
 
   const {
     data: employee,
