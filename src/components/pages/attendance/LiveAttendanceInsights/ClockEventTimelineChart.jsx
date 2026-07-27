@@ -3,8 +3,10 @@ import clsx from 'clsx';
 import { UserAvatar } from '../../../common';
 import { resolveRowProfilePhoto } from '../../../../store/api/transforms';
 
-const WORK_START = 6;
-const WORK_END = 20;
+const DEFAULT_DOMAIN_START = 6;
+const DEFAULT_DOMAIN_END = 20;
+const DOMAIN_PAD_HOURS = 1;
+const MIN_DOMAIN_SPAN = 8;
 const VIEW_W = 800;
 const VIEW_H = 168;
 const PAD = { top: 20, right: 20, bottom: 28, left: 32 };
@@ -14,7 +16,6 @@ const AVATAR_SIZE = 18;
 const RING_WIDTH = 1.25;
 const LINE_WIDTH = 1;
 
-const X_TICKS = [6, 9, 12, 15, 18, 20];
 const WORK_MARKER_COLOR = '#F59E0B';
 
 function timeFraction(iso) {
@@ -36,8 +37,9 @@ function parseClockTime(value) {
 }
 
 function formatTick(hour) {
-  const suffix = hour >= 12 ? 'PM' : 'AM';
-  const h = hour % 12 || 12;
+  const normalized = ((hour % 24) + 24) % 24;
+  const suffix = normalized >= 12 ? 'PM' : 'AM';
+  const h = normalized % 12 || 12;
   return `${h}${suffix}`;
 }
 
@@ -57,17 +59,77 @@ function formatEventTime(iso) {
   });
 }
 
-function clampTime(fraction) {
-  return Math.min(WORK_END, Math.max(WORK_START, fraction));
+/**
+ * Chart X domain from org work hours, padded and expanded to fit punch events.
+ * Overnight shifts (end <= start) span through midnight up to 24.
+ */
+export function resolveChartDomain(workStartTime, workEndTime, events = []) {
+  const workStart = parseClockTime(workStartTime);
+  const workEnd = parseClockTime(workEndTime);
+
+  let domainStart = workStart != null ? workStart : DEFAULT_DOMAIN_START;
+  let domainEnd = workEnd != null ? workEnd : DEFAULT_DOMAIN_END;
+
+  if (domainEnd <= domainStart) {
+    // Overnight / invalid end: show through end of day from start.
+    domainEnd = 24;
+  }
+
+  domainStart = Math.max(0, Math.floor(domainStart) - DOMAIN_PAD_HOURS);
+  domainEnd = Math.min(24, Math.ceil(domainEnd) + DOMAIN_PAD_HOURS);
+
+  events.forEach((event) => {
+    if (!event?.timestamp) return;
+    const fraction = timeFraction(event.timestamp);
+    if (!Number.isFinite(fraction)) return;
+    domainStart = Math.min(domainStart, Math.max(0, Math.floor(fraction)));
+    domainEnd = Math.max(domainEnd, Math.min(24, Math.ceil(fraction)));
+  });
+
+  if (domainEnd - domainStart < MIN_DOMAIN_SPAN) {
+    const mid = (domainStart + domainEnd) / 2;
+    domainStart = Math.max(0, mid - MIN_DOMAIN_SPAN / 2);
+    domainEnd = Math.min(24, domainStart + MIN_DOMAIN_SPAN);
+    domainStart = Math.max(0, domainEnd - MIN_DOMAIN_SPAN);
+  }
+
+  if (domainEnd <= domainStart) {
+    domainStart = DEFAULT_DOMAIN_START;
+    domainEnd = DEFAULT_DOMAIN_END;
+  }
+
+  return { domainStart, domainEnd };
 }
 
-function timeToX(fraction) {
-  const clamped = clampTime(fraction);
-  return PAD.left + ((clamped - WORK_START) / (WORK_END - WORK_START)) * CHART_W;
+function buildXTicks(domainStart, domainEnd) {
+  const span = domainEnd - domainStart;
+  const step = span <= 8 ? 1 : span <= 14 ? 2 : 3;
+  const ticks = [];
+  const first = Math.ceil(domainStart / step) * step;
+  for (let hour = first; hour <= domainEnd + 1e-9; hour += step) {
+    ticks.push(Number(hour.toFixed(4)));
+  }
+  if (ticks.length === 0 || ticks[0] > domainStart + 0.01) {
+    ticks.unshift(domainStart);
+  }
+  if (ticks[ticks.length - 1] < domainEnd - 0.01) {
+    ticks.push(domainEnd);
+  }
+  return ticks;
 }
 
-function isWithinChartWindow(fraction) {
-  return fraction != null && fraction >= WORK_START && fraction <= WORK_END;
+function clampTime(fraction, domainStart, domainEnd) {
+  return Math.min(domainEnd, Math.max(domainStart, fraction));
+}
+
+function timeToX(fraction, domainStart, domainEnd) {
+  const span = domainEnd - domainStart || 1;
+  const clamped = clampTime(fraction, domainStart, domainEnd);
+  return PAD.left + ((clamped - domainStart) / span) * CHART_W;
+}
+
+function isWithinChartWindow(fraction, domainStart, domainEnd) {
+  return fraction != null && fraction >= domainStart && fraction <= domainEnd;
 }
 
 function countToY(count, maxCount) {
@@ -205,35 +267,45 @@ const ClockEventTimelineChart = ({
   const [hoveredGroupKey, setHoveredGroupKey] = useState(null);
   const [hoveredWorkMarker, setHoveredWorkMarker] = useState(null);
 
+  const { domainStart, domainEnd } = useMemo(
+    () => resolveChartDomain(workStartTime, workEndTime, events),
+    [workStartTime, workEndTime, events]
+  );
+
+  const xTicks = useMemo(
+    () => buildXTicks(domainStart, domainEnd),
+    [domainStart, domainEnd]
+  );
+
   const workMarkers = useMemo(() => {
     const markers = [];
     const start = parseClockTime(workStartTime);
     const end = parseClockTime(workEndTime);
-    if (isWithinChartWindow(start)) {
+    if (isWithinChartWindow(start, domainStart, domainEnd)) {
       markers.push({
         key: 'work-start',
         label: 'Work start',
         shortLabel: 'Start',
         fraction: start,
-        x: timeToX(start),
+        x: timeToX(start, domainStart, domainEnd),
       });
     }
-    if (isWithinChartWindow(end)) {
+    if (isWithinChartWindow(end, domainStart, domainEnd)) {
       markers.push({
         key: 'work-end',
         label: 'Work end',
         shortLabel: 'End',
         fraction: end,
-        x: timeToX(end),
+        x: timeToX(end, domainStart, domainEnd),
       });
     }
     return markers;
-  }, [workStartTime, workEndTime]);
+  }, [workStartTime, workEndTime, domainStart, domainEnd]);
 
   const { linePoints, markerGroups, maxCount } = useMemo(() => {
     let present = 0;
     let peak = 0;
-    const linePts = [{ x: timeToX(WORK_START), y: 0, count: 0 }];
+    const linePts = [{ x: timeToX(domainStart, domainStart, domainEnd), y: 0, count: 0 }];
     const markers = [];
 
     events.forEach((event) => {
@@ -242,17 +314,17 @@ const ClockEventTimelineChart = ({
       peak = Math.max(peak, present);
 
       const fraction = timeFraction(event.timestamp);
-      const x = timeToX(fraction);
+      const x = timeToX(fraction, domainStart, domainEnd);
 
       linePts.push({ x, y: 0, count: present });
       markers.push({ ...event, x, present });
     });
 
     if (linePts.length === 1) {
-      linePts.push({ x: timeToX(WORK_END), y: 0, count: 0 });
+      linePts.push({ x: timeToX(domainEnd, domainStart, domainEnd), y: 0, count: 0 });
     } else {
       const last = linePts[linePts.length - 1];
-      linePts.push({ x: timeToX(WORK_END), y: 0, count: last.count });
+      linePts.push({ x: timeToX(domainEnd, domainStart, domainEnd), y: 0, count: last.count });
     }
 
     const resolvedMax = Math.max(peak, 1);
@@ -270,7 +342,7 @@ const ClockEventTimelineChart = ({
       markerGroups: buildMarkerGroups(normalizedMarkers),
       maxCount: resolvedMax,
     };
-  }, [events]);
+  }, [events, domainStart, domainEnd]);
 
   const linePath = useMemo(() => buildPath(linePoints), [linePoints]);
   const areaPath = useMemo(() => buildAreaPath(linePoints), [linePoints]);
@@ -378,10 +450,10 @@ const ClockEventTimelineChart = ({
           </g>
         ))}
 
-        {X_TICKS.map((hour) => (
+        {xTicks.map((hour) => (
           <text
             key={hour}
-            x={timeToX(hour)}
+            x={timeToX(hour, domainStart, domainEnd)}
             y={VIEW_H - 8}
             textAnchor="middle"
             className="fill-gray-400 text-[9px]"
