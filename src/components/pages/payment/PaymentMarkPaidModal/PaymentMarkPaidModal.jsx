@@ -1,16 +1,27 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { X } from 'lucide-react';
 import { DashboardDatePicker, ButtonSpinner } from '../../../common';
 import { formatMoney, PAYMENT_METHOD_LABELS } from '../paymentUtils';
 
+const todayIso = () => new Date().toISOString().slice(0, 10);
+
 const PaymentMarkPaidModal = ({ isOpen, payment, onClose, onSave, isLoading }) => {
-  const today = new Date().toISOString().slice(0, 10);
   const [formData, setFormData] = useState({
-    payment_date: today,
+    payment_date: todayIso(),
     payment_method: 'bank_transfer',
     payment_reference: '',
     notes: '',
   });
+
+  useEffect(() => {
+    if (!isOpen || !payment) return;
+    setFormData({
+      payment_date: payment.payment_date || todayIso(),
+      payment_method: payment.payment_method || 'bank_transfer',
+      payment_reference: payment.payment_reference || '',
+      notes: payment.notes || '',
+    });
+  }, [isOpen, payment]);
 
   if (!isOpen || !payment) return null;
 
@@ -57,6 +68,10 @@ const PaymentMarkPaidModal = ({ isOpen, payment, onClose, onSave, isLoading }) =
                 onChange={(v) => setFormData((p) => ({ ...p, payment_date: v }))}
                 disabled={isLoading}
               />
+              <p className="mt-1.5 text-xs text-gray-500">
+                Defaults to the recorded payment date so the row stays under the correct payroll
+                period. Change only if money actually moved on another day.
+              </p>
             </div>
             <div>
               <label className="mb-1.5 block text-sm font-medium text-gray-700">Payment method</label>

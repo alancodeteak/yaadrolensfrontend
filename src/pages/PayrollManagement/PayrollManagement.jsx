@@ -4,7 +4,7 @@ import { CalendarCheck, Gift, Plus, Scale, Wallet } from 'lucide-react';
 import {
   PaymentToolbar,
   MONTHS,
-  getMonthDateRange,
+  ALL_PERIODS,
   PaymentStatsRow,
   PaymentTable,
   AdvanceTable,
@@ -79,7 +79,11 @@ const HISTORY_PER_PAGE = 10;
 /** Backend payment/employee list endpoints cap limit at 200 (le=200). */
 const FETCH_LIMIT = 200;
 
-const getMonthNumber = (monthName) => MONTHS.indexOf(monthName) + 1;
+const getMonthNumber = (monthName) => {
+  if (!monthName || monthName === ALL_PERIODS) return null;
+  const n = MONTHS.indexOf(monthName) + 1;
+  return n > 0 ? n : null;
+};
 
 const getErrorMessage = (err, fallback) => {
   const detail = err?.data?.detail;
@@ -97,7 +101,7 @@ const PayrollManagement = () => {
 
   const currentDate = new Date();
   const [activeTab, setActiveTab] = useState('ledger');
-  const [selectedMonth, setSelectedMonth] = useState(MONTHS[currentDate.getMonth()]);
+  const [selectedMonth, setSelectedMonth] = useState(ALL_PERIODS);
   const [selectedYear, setSelectedYear] = useState(String(currentDate.getFullYear()));
   const [searchTerm, setSearchTerm] = useState('');
   const [ledgerEmployeeId, setLedgerEmployeeId] = useState(null);
@@ -128,15 +132,12 @@ const PayrollManagement = () => {
 
   const monthNumber = getMonthNumber(selectedMonth);
   const yearNumber = parseInt(selectedYear, 10);
+  const isAllPeriods = selectedMonth === ALL_PERIODS;
   const { data: orgSettings } = useGetSettingsQuery();
-  const payrollPeriodStillOpen = useMemo(
-    () => isPayrollPeriodOpen(yearNumber, monthNumber, orgSettings?.timezone ?? 'UTC'),
-    [yearNumber, monthNumber, orgSettings?.timezone]
-  );
-  const monthDateRange = useMemo(
-    () => getMonthDateRange(yearNumber, monthNumber),
-    [yearNumber, monthNumber]
-  );
+  const payrollPeriodStillOpen = useMemo(() => {
+    if (isAllPeriods || !monthNumber) return true;
+    return isPayrollPeriodOpen(yearNumber, monthNumber, orgSettings?.timezone ?? 'UTC');
+  }, [isAllPeriods, yearNumber, monthNumber, orgSettings?.timezone]);
 
   const years = useMemo(() => {
     const y = currentDate.getFullYear();
@@ -152,8 +153,10 @@ const PayrollManagement = () => {
     refetch: refetchPayments,
   } = useGetPaymentsQuery(
     {
-      start_date: monthDateRange.start_date,
-      end_date: monthDateRange.end_date,
+      // Filter by payroll period (salary/bonus month), not payment_date — so paid-in-July
+      // June salaries still appear under June. "All periods" lists every payment.
+      period_year: isAllPeriods ? undefined : yearNumber,
+      period_month: isAllPeriods ? undefined : monthNumber,
       payment_type: typeFilter || undefined,
       status: paymentStatusFilter || undefined,
       employee_id: ledgerEmployeeId || undefined,
@@ -171,7 +174,7 @@ const PayrollManagement = () => {
 
   const { data: monthlyGenerationStatus } = useGetMonthlyGenerationStatusQuery(
     { period_year: yearNumber, period_month: monthNumber },
-    { skip: activeTab !== 'ledger' }
+    { skip: activeTab !== 'ledger' || isAllPeriods || !monthNumber }
   );
 
   const monthlyGenerationDone =
@@ -228,8 +231,8 @@ const PayrollManagement = () => {
     refetch: refetchBonuses,
   } = useGetBonusesQuery(
     {
-      period_year: yearNumber,
-      period_month: monthNumber,
+      period_year: isAllPeriods ? undefined : yearNumber,
+      period_month: isAllPeriods ? undefined : monthNumber,
       status: bonusStatusFilter || undefined,
       skip: 0,
       limit: FETCH_LIMIT,
@@ -298,6 +301,8 @@ const PayrollManagement = () => {
   const defaultPeriodStats = {
     paidTotal: 0,
     paidCount: 0,
+    ledgerTotal: 0,
+    ledgerCount: 0,
     pendingSalaryCount: 0,
     pendingSalaryTotal: 0,
     approvedSalaryCount: 0,
@@ -325,7 +330,7 @@ const PayrollManagement = () => {
     };
   };
 
-  const periodLabel = `${selectedMonth} ${selectedYear}`;
+  const periodLabel = isAllPeriods ? 'All periods' : `${selectedMonth} ${selectedYear}`;
 
   const periodStats = useMemo(
     () => computePeriodPaymentStats(paymentsData?.items || []),
@@ -735,6 +740,13 @@ const PayrollManagement = () => {
   };
 
   const handleGenerateMonthlySalaries = async () => {
+    if (isAllPeriods || !monthNumber) {
+      dashboardToast.error(
+        'Select a specific payroll month before generating salaries.',
+        'Choose a month'
+      );
+      return;
+    }
     try {
       const result = await generateMonthlySalaries({
         period_year: yearNumber,
@@ -879,7 +891,9 @@ const PayrollManagement = () => {
         <div>
           <h1 className="text-3xl font-bold text-gray-900">Payment</h1>
           <p className="mt-1 text-sm text-gray-500">
-            Ledger, advances, bonuses, and employee balances.{' '}
+            Full payment ledger with amounts paid, plus advances, bonuses, and balances.{' '}
+            Use <span className="font-medium text-gray-700">All periods</span> to list every
+            payment, or pick a payroll month to focus one salary cycle.{' '}
             <Link to="/admin/salary" className="font-medium text-[#007AFF] hover:underline">
               Salary setup
             </Link>
@@ -958,15 +972,23 @@ const PayrollManagement = () => {
                 <button
                   type="button"
                   onClick={handleGenerateMonthlySalaries}
-                  disabled={isGenerating || monthlyGenerationDone || payrollPeriodStillOpen}
-                  title={
+                  disabled={
+                    isGenerating ||
+                    isAllPeriods ||
+                    !monthNumber ||
+                    monthlyGenerationDone ||
                     payrollPeriodStillOpen
-                      ? `Salary for ${selectedMonth} ${selectedYear} can be generated after the month ends`
-                      : monthlyGenerationDone
-                        ? monthlyGenerationStatus?.eligible_count === 0
-                          ? 'No active employees with salary set for this period'
-                          : `Monthly salaries already generated for ${selectedMonth} ${selectedYear}`
-                        : undefined
+                  }
+                  title={
+                    isAllPeriods || !monthNumber
+                      ? 'Select a specific payroll month to generate salaries'
+                      : payrollPeriodStillOpen
+                        ? `Salary for ${selectedMonth} ${selectedYear} can be generated after the month ends`
+                        : monthlyGenerationDone
+                          ? monthlyGenerationStatus?.eligible_count === 0
+                            ? 'No active employees with salary set for this period'
+                            : `Monthly salaries already generated for ${selectedMonth} ${selectedYear}`
+                          : undefined
                   }
                   className={`${DASHBOARD_BTN_SECONDARY} inline-flex items-center gap-2`}
                 >

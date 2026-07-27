@@ -138,7 +138,7 @@ export const gettingStartedContent = {
           [
             'पहले ',
             docStrong('Settings'),
-            ' कॉन्फ़िगर करें — टाइमज़ोन, कार्य समय, छुट्टी और सैलरी नियम। हर विकल्प की व्याख्या: ',
+            ' कॉन्फ़िगर करें — टाइमज़ोन, कार्य समय, ग्रेस, साप्ताहिक छुट्टी, लीव और सैलरी गणना। हर विकल्प का मतलब: ',
             docLink('/docs/settings', 'Settings गाइड'),
             '।',
           ],
@@ -155,15 +155,37 @@ export const gettingStartedContent = {
         span: 'full',
         paragraphs: [
           [
-            'ज़्यादातर late / leave / salary समस्याएँ Settings से जुड़ी होती हैं। पूरा विवरण ',
-            docLink('/docs/settings', 'Settings गाइड'),
-            ' में पढ़ें।',
+            'ज़्यादातर “late / leave / salary गलत लगना” समस्याएँ Settings से आती हैं। लाइव हाजिरी या पेरोल पर भरोसा करने से पहले ',
+            docLink('/admin/settings/attendance', 'Attendance rules'),
+            ', ',
+            docLink('/admin/settings/payment', 'Payment rules'),
+            ', और ',
+            docLink('/admin/settings/cameras', 'Kiosk'),
+            ' खोलकर सेट करें।',
           ],
         ],
         list: [
-          [docStrong('Kiosk → Timezone'), ' — भारत के लिए आमतौर पर Asia/Kolkata।'],
-          [docStrong('Attendance → Work start / end + grace'), ' — late और early leave तय करता है।'],
-          [docStrong('Payment → Weekly off, leave, calculation, pay day'), ' — मासिक सैलरी कैसे बनेगी।'],
+          [
+            docStrong('Kiosk → Timezone'),
+            ' — भारत के लिए आमतौर पर Asia/Kolkata। “आज” और लेट डिटेक्शन नियंत्रित करता है।',
+          ],
+          [
+            docStrong('Attendance → Work start / end + grace'),
+            ' — late और early leave तय करता है।',
+          ],
+          [
+            docStrong('Attendance → Minimum clock-out wait'),
+            ' — क्लॉक-इन के तुरंत बाद आकस्मिक क्लॉक-आउट रोकता है।',
+          ],
+          [
+            docStrong('Payment → Weekly off, leave quota, calculation mode, pay day'),
+            ' — मासिक सैलरी कैसे बनेगी नियंत्रित करता है।',
+          ],
+        ],
+        tip: [
+          'हर फ़ील्ड की व्याख्या चाहिए? पूरी ',
+          docLink('/docs/settings', 'Settings गाइड'),
+          ' पढ़ें।',
         ],
       },
       {
@@ -222,7 +244,7 @@ export const gettingStartedContent = {
           [
             'ആദ്യം ',
             docStrong('Settings'),
-            ' ക്രമീകരിക്കുക — ടൈംസോൺ, ജോലി സമയം, ലീവ്, ശമ്പള നിയമങ്ങൾ. ഓരോ ഓപ്ഷനും: ',
+            ' ക്രമീകരിക്കുക — ടൈംസോൺ, ജോലി സമയം, ഗ്രേസ്, ആഴ്ച അവധി, ലീവ്, ശമ്പള കണക്കുകൂട്ടൽ. ഓരോ ഓപ്ഷന്റെയും അർത്ഥം: ',
             docLink('/docs/settings', 'Settings ഗൈഡ്'),
             '.',
           ],
@@ -239,15 +261,37 @@ export const gettingStartedContent = {
         span: 'full',
         paragraphs: [
           [
-            'late / leave / salary പ്രശ്നങ്ങളിൽ പലതും Settings-ൽ നിന്നാണ്. പൂർണ്ണ വിവരണം ',
-            docLink('/docs/settings', 'Settings ഗൈഡിൽ'),
-            '.',
+            'മിക്ക “late / leave / salary തെറ്റായി തോന്നുന്നു” പ്രശ്നങ്ങളും Settings-ൽ നിന്നാണ്. ലൈവ് ഹാജറിലോ പേറോളിലോ ആശ്രയിക്കുന്നതിന് മുമ്പ് ',
+            docLink('/admin/settings/attendance', 'Attendance rules'),
+            ', ',
+            docLink('/admin/settings/payment', 'Payment rules'),
+            ', കൂടാതെ ',
+            docLink('/admin/settings/cameras', 'Kiosk'),
+            ' തുറന്ന് സെറ്റ് ചെയ്യുക.',
           ],
         ],
         list: [
-          [docStrong('Kiosk → Timezone'), ' — ഇന്ത്യയ്ക്ക് സാധാരണ Asia/Kolkata.'],
-          [docStrong('Attendance → Work start / end + grace'), ' — late / early leave നിർണയിക്കുന്നു.'],
-          [docStrong('Payment → Weekly off, leave, calculation, pay day'), ' — മാസ ശമ്പളം എങ്ങനെ ഉണ്ടാകും.'],
+          [
+            docStrong('Kiosk → Timezone'),
+            ' — ഇന്ത്യയ്ക്ക് സാധാരണ Asia/Kolkata. “ഇന്ന്”യും ലേറ്റ് ഡിറ്റക്ഷനും നിയന്ത്രിക്കുന്നു.',
+          ],
+          [
+            docStrong('Attendance → Work start / end + grace'),
+            ' — late / early leave നിർണയിക്കുന്നു.',
+          ],
+          [
+            docStrong('Attendance → Minimum clock-out wait'),
+            ' — ക്ലോക്ക്-ഇന് ശേഷമുള്ള ആകസ്മിക ഉടൻ ക്ലോക്ക്-ഔട്ട് തടയുന്നു.',
+          ],
+          [
+            docStrong('Payment → Weekly off, leave quota, calculation mode, pay day'),
+            ' — മാസ ശമ്പളം എങ്ങനെ ജനറേറ്റ് ചെയ്യപ്പെടുന്നു നിയന്ത്രിക്കുന്നു.',
+          ],
+        ],
+        tip: [
+          'ഓരോ ഫീൽഡും വിശദീകരിക്കണോ? പൂർണ്ണ ',
+          docLink('/docs/settings', 'Settings ഗൈഡ്'),
+          ' വായിക്കുക.',
         ],
       },
       {
@@ -306,7 +350,7 @@ export const gettingStartedContent = {
           [
             'ಮೊದಲು ',
             docStrong('Settings'),
-            ' ಹೊಂದಿಸಿ — ಟೈಮ್‌ಝೋನ್, ಕೆಲಸದ ಸಮಯ, ರಜೆ, ಸಂಬಳ ನಿಯಮಗಳು. ಪ್ರತಿ ಆಯ್ಕೆ: ',
+            ' ಹೊಂದಿಸಿ — ಟೈಮ್‌ಝೋನ್, ಕೆಲಸದ ಸಮಯ, ಗ್ರೇಸ್, ವಾರದ ರಜೆ, ಲೀವ್ ಮತ್ತು ಸಂಬಳ ಲೆಕ್ಕಾಚಾರ. ಪ್ರತಿ ಆಯ್ಕೆಯ ಅರ್ಥ: ',
             docLink('/docs/settings', 'Settings ಮಾರ್ಗದರ್ಶಿ'),
             '.',
           ],
@@ -323,15 +367,37 @@ export const gettingStartedContent = {
         span: 'full',
         paragraphs: [
           [
-            'late / leave / salary ಸಮಸ್ಯೆಗಳಲ್ಲಿ ಹಲವು Settings ನಿಂದ ಬರುತ್ತವೆ. ಪೂರ್ಣ ವಿವರ ',
-            docLink('/docs/settings', 'Settings ಮಾರ್ಗದರ್ಶಿ'),
-            'ಯಲ್ಲಿ.',
+            'ಹೆಚ್ಚಿನ “late / leave / salary ತಪ್ಪಾಗಿ ಕಾಣುವ” ಸಮಸ್ಯೆಗಳು Settings ನಿಂದ ಬರುತ್ತವೆ. ಲೈವ್ ಹಾಜರಾತಿ ಅಥವಾ ಪೇರೋಲ್ ಮೇಲೆ ಅವಲಂಬಿಸುವ ಮೊದಲು ',
+            docLink('/admin/settings/attendance', 'Attendance rules'),
+            ', ',
+            docLink('/admin/settings/payment', 'Payment rules'),
+            ', ಮತ್ತು ',
+            docLink('/admin/settings/cameras', 'Kiosk'),
+            ' ತೆರೆದು ಹೊಂದಿಸಿ.',
           ],
         ],
         list: [
-          [docStrong('Kiosk → Timezone'), ' — ಭಾರತಕ್ಕೆ ಸಾಮಾನ್ಯವಾಗಿ Asia/Kolkata.'],
-          [docStrong('Attendance → Work start / end + grace'), ' — late / early leave ನಿರ್ಧರಿಸುತ್ತದೆ.'],
-          [docStrong('Payment → Weekly off, leave, calculation, pay day'), ' — ಮಾಸಿಕ ಸಂಬಳ ಹೇಗೆ ರಚನೆಯಾಗುತ್ತದೆ.'],
+          [
+            docStrong('Kiosk → Timezone'),
+            ' — ಭಾರತಕ್ಕೆ ಸಾಮಾನ್ಯವಾಗಿ Asia/Kolkata. “ಇಂದು” ಮತ್ತು ಲೇಟ್ ಡಿಟೆಕ್ಷನ್ ನಿಯಂತ್ರಿಸುತ್ತದೆ.',
+          ],
+          [
+            docStrong('Attendance → Work start / end + grace'),
+            ' — late / early leave ನಿರ್ಧರಿಸುತ್ತದೆ.',
+          ],
+          [
+            docStrong('Attendance → Minimum clock-out wait'),
+            ' — ಕ್ಲಾಕ್-ಇನ್ ನಂತರ ಆಕಸ್ಮಿಕ ತಕ್ಷಣ ಕ್ಲಾಕ್-ಔಟ್ ತಡೆಯುತ್ತದೆ.',
+          ],
+          [
+            docStrong('Payment → Weekly off, leave quota, calculation mode, pay day'),
+            ' — ಮಾಸಿಕ ಸಂಬಳ ಹೇಗೆ ರಚನೆಯಾಗುತ್ತದೆ ನಿಯಂತ್ರಿಸುತ್ತದೆ.',
+          ],
+        ],
+        tip: [
+          'ಪ್ರತಿ ಫೀಲ್ಡ್ ವಿವರ ಬೇಕೇ? ಪೂರ್ಣ ',
+          docLink('/docs/settings', 'Settings ಮಾರ್ಗದರ್ಶಿ'),
+          ' ಓದಿ.',
         ],
       },
       {

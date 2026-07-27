@@ -14,7 +14,9 @@ const enSections = [
   {
     title: 'Payment ledger',
     list: [
-      'Choose a month and year to filter payments for that period.',
+      'Default view is All periods — every recorded payment for your organization.',
+      'Or pick a payroll month to see only that salary/bonus period (not the date money was marked paid).',
+      'The top cards show Amount paid (status = paid), All ledger amounts (every row in view), and counts.',
       'Click Record payment to log a monthly salary, bonus, or other payout.',
       'View an employee\'s full payment history from the History action on any row.',
       'Each monthly salary can only be recorded once per employee per period.',
@@ -34,10 +36,13 @@ const enSections = [
     list: [
       'Set employee salaries on the Salary page first.',
       'Employees must have a salary set before requesting an advance.',
+      'Configure pay day and salary calculation under Settings → Payment rules.',
     ],
     footer: [
       'See also: ',
       docLink('/docs/salary', 'Salary guide'),
+      ' · ',
+      docLink('/docs/settings', 'Settings guide'),
       ' · ',
       docLink('/docs/attendance', 'Live attendance'),
       '.',

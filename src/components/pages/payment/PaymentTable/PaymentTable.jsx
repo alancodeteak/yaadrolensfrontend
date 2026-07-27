@@ -75,7 +75,7 @@ const PaymentTable = ({
         <div>
           <h2 className="text-sm font-semibold text-gray-900">Payment ledger</h2>
           <p className="text-[11px] text-gray-500">
-            {totalCount} {totalCount === 1 ? 'payment' : 'payments'}
+            {totalCount} {totalCount === 1 ? 'payment' : 'payments'} in this view
             {approvableCount > 0 && ` · ${approvableCount} pending approval`}
             {isFetching ? ' · Updating…' : ''}
           </p>
@@ -107,8 +107,8 @@ const PaymentTable = ({
           <p className="text-sm font-medium text-gray-900">No payments found</p>
           <p className="mt-1 max-w-sm text-xs text-gray-500">
             {hasActiveFilters
-              ? 'Try adjusting your search, filters, or selected period.'
-              : 'No payments recorded for this period.'}
+              ? 'Try adjusting your search, filters, or selected payroll period.'
+              : 'No payments recorded yet. Generate monthly salaries or record a payment to get started.'}
           </p>
           {hasActiveFilters && onClearFilters && (
             <button type="button" onClick={onClearFilters} className={`${DASHBOARD_BTN_PRIMARY} mt-3`}>

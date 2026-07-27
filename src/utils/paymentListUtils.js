@@ -51,6 +51,8 @@ export function computePeriodPaymentStats(items = []) {
   return {
     paidTotal: paid.reduce((sum, p) => sum + Number(p.amount || 0), 0),
     paidCount: paid.length,
+    ledgerTotal: items.reduce((sum, p) => sum + Number(p.amount || 0), 0),
+    ledgerCount: items.length,
     pendingSalaryCount: pendingSalaries.length,
     pendingSalaryTotal: pendingSalaries.reduce((sum, p) => sum + Number(p.amount || 0), 0),
     approvedSalaryCount: approvedSalaries.length,

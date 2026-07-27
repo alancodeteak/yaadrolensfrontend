@@ -1,1 +1,1 @@
-export { default, MONTHS } from './PaymentPeriodBar';
+export { default, MONTHS, ALL_PERIODS } from './PaymentPeriodBar';

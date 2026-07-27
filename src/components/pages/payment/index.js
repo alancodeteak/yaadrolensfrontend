@@ -1,7 +1,7 @@
 export { getMonthDateRange } from './paymentUtils';
 export { default as PaymentTabBar } from './PaymentTabBar';
 export { default as PaymentToolbar } from './PaymentToolbar';
-export { default as PaymentPeriodBar, MONTHS } from './PaymentPeriodBar';
+export { default as PaymentPeriodBar, MONTHS, ALL_PERIODS } from './PaymentPeriodBar';
 export { default as PaymentStatsRow } from './PaymentStatsRow';
 export { default as PaymentFilterBar } from './PaymentFilterBar';
 export { default as PaymentTable } from './PaymentTable';
