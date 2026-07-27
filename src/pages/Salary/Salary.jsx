@@ -13,7 +13,8 @@ import {
   DASHBOARD_PANEL,
 } from '../../components/pages/dashboard';
 import {
-  SALARY_GUIDE_STEPS,
+  SALARY_GUIDE_STEPS_BY_LANG,
+  SALARY_PAGE_LABELS,
   LoadingScreen,
   PageInfoOverlay,
   PageTourButtons,
@@ -26,6 +27,7 @@ import {
   useUpdateSalaryMutation,
   useGetSalaryHistoryQuery,
 } from '../../store/api';
+import { useGetSettingsQuery } from '../../store/api/settingsApi';
 
 const HISTORY_PER_PAGE = 10;
 const ROWS_PER_PAGE = 10;
@@ -34,9 +36,10 @@ const Salary = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const highlightId = searchParams.get('employeeId');
 
-  const { infoOpen, startTutorial, startInfo, closeInfo } = usePageTour(
-    SALARY_GUIDE_STEPS,
-    'salary_tour_completed'
+  const { infoOpen, startTutorial, startInfo, closeInfo, steps, pageLabel, language } = usePageTour(
+    SALARY_GUIDE_STEPS_BY_LANG,
+    'salary_tour_completed',
+    SALARY_PAGE_LABELS
   );
 
   const [searchTerm, setSearchTerm] = useState('');
@@ -47,6 +50,9 @@ const Salary = () => {
   const [editEmployee, setEditEmployee] = useState(null);
   const [historyEmployee, setHistoryEmployee] = useState(null);
   const [historyPage, setHistoryPage] = useState(1);
+
+  const { data: orgSettings } = useGetSettingsQuery();
+  const isHourly = (orgSettings?.salary_calculation_mode ?? 'fixed') === 'hourly';
 
   const {
     data: salaries = [],
@@ -228,7 +234,7 @@ const Salary = () => {
         <PageTourButtons onTutorial={startTutorial} onInfo={startInfo} />
       </div>
 
-      <SalaryStatsRow stats={stats} loading={isFetching} />
+      <SalaryStatsRow stats={stats} loading={isFetching} isHourly={isHourly} />
 
       <div className={clsx(DASHBOARD_PANEL, 'p-4')}>
         <SalaryFilterBar
@@ -248,6 +254,7 @@ const Salary = () => {
         totalCount={totalFilteredCount}
         isFetching={isFetching}
         highlightId={rowHighlightId}
+        isHourly={isHourly}
         onEdit={(row) => setEditEmployee(row)}
         onHistory={(row) => {
           setHistoryEmployee(row);
@@ -270,6 +277,7 @@ const Salary = () => {
       <SalaryEditModal
         isOpen={Boolean(editEmployee)}
         employee={editEmployee}
+        isHourly={isHourly}
         onClose={() => setEditEmployee(null)}
         onSave={handleSaveSalary}
         isLoading={isUpdating}
@@ -289,7 +297,12 @@ const Salary = () => {
       />
 
       {infoOpen && (
-        <PageInfoOverlay steps={SALARY_GUIDE_STEPS} onClose={closeInfo} pageLabel="Salary" />
+        <PageInfoOverlay
+          steps={steps}
+          onClose={closeInfo}
+          pageLabel={pageLabel || 'Salary'}
+          language={language}
+        />
       )}
     </div>
   );

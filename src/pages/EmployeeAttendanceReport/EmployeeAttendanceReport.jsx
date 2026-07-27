@@ -92,7 +92,9 @@ const EmployeeAttendanceReport = () => {
       value:
         calendarData?.salary_calculation_mode === 'fixed'
           ? '—'
-          : (calendarData?.days_present ?? 0),
+          : calendarData?.salary_calculation_mode === 'hourly'
+            ? formatDurationHours(calendarData?.total_hours)
+            : (calendarData?.days_present ?? 0),
       accent: ACCENT.green,
     },
     {

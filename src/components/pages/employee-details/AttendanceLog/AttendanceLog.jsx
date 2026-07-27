@@ -63,7 +63,11 @@ const AttendanceLog = ({ employeeId }) => {
     if (!calendarData) return [];
     const primaryLabel = calendarData.stats_label || 'Days present';
     const primaryValue =
-      calendarData.salary_calculation_mode === 'fixed' ? '—' : calendarData.days_present;
+      calendarData.salary_calculation_mode === 'fixed'
+        ? '—'
+        : calendarData.salary_calculation_mode === 'hourly'
+          ? calendarData.total_hours ?? 0
+          : calendarData.days_present;
     const stats = [{ label: primaryLabel, value: primaryValue }];
     if (isLeaveAware) {
       stats.push(

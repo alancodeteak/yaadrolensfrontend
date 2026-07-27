@@ -185,11 +185,57 @@ export function resolveRowProfilePhoto(row) {
 }
 
 /**
+ * Stored total_hours, or live elapsed hours while still clocked in (when `now` is passed).
+ * With multi-session days, sums completed sessions plus the open session elapsed time.
+ */
+export function resolveLiveWorkHours(row, now = null) {
+  const sessions = Array.isArray(row?.sessions) ? row.sessions : null;
+  if (sessions && sessions.length > 0) {
+    let hours = 0;
+    for (const session of sessions) {
+      if (session.hours != null && !Number.isNaN(Number(session.hours))) {
+        hours += Number(session.hours);
+      } else if (session.clock_in && session.clock_out) {
+        const start = new Date(session.clock_in).getTime();
+        const end = new Date(session.clock_out).getTime();
+        if (!Number.isNaN(start) && end >= start) {
+          hours += (end - start) / (1000 * 60 * 60);
+        }
+      } else if (session.clock_in && !session.clock_out && now) {
+        const start = new Date(session.clock_in).getTime();
+        const end = now.getTime();
+        if (!Number.isNaN(start) && end >= start) {
+          hours += (end - start) / (1000 * 60 * 60);
+        }
+      }
+    }
+    return hours;
+  }
+
+  const completed =
+    row?.total_hours != null && !Number.isNaN(Number(row.total_hours))
+      ? Number(row.total_hours)
+      : null;
+
+  if (now && row?.clock_in && !row?.clock_out) {
+    const start = new Date(row.clock_in).getTime();
+    const end = now.getTime();
+    if (!Number.isNaN(start) && end >= start) {
+      const live = (end - start) / (1000 * 60 * 60);
+      // Legacy single-session: no completed total yet.
+      return completed != null && completed > 0 ? completed : live;
+    }
+  }
+
+  return completed;
+}
+
+/**
  * Live-attendance UI status from a daily row.
  * Clock state wins: still clocked in → Present / Present (Late);
  * clocked out → Clocked Out / Clocked Out (Late). Late is an overlay from attendance_status.
  */
-export function mapDailyRowToLiveEmployee(row) {
+export function mapDailyRowToLiveEmployee(row, now = null) {
   const status = resolveLiveAttendanceStatus(row);
 
   const clockIn = formatClockTime(row.clock_in);
@@ -209,6 +255,7 @@ export function mapDailyRowToLiveEmployee(row) {
     status,
     clockIn,
     lastSeen,
+    totalHours: resolveLiveWorkHours(row, now),
     confidence: null,
     profilePhotoUrl,
     photo,
@@ -222,6 +269,38 @@ export function transformDailyRowsToLogs(response) {
 
   rows.forEach((row) => {
     const { profilePhotoUrl, photo, avatar } = resolveRowProfilePhoto(row);
+    const sessions = Array.isArray(row.sessions) && row.sessions.length > 0 ? row.sessions : null;
+
+    if (sessions) {
+      sessions.forEach((session, index) => {
+        if (session.clock_in) {
+          logs.push({
+            id: `${row.employee_id}-in-${index}`,
+            employee_name: row.name,
+            employee_department: '',
+            type: 'IN',
+            timestamp: session.clock_in,
+            profilePhotoUrl,
+            photo,
+            avatar,
+          });
+        }
+        if (session.clock_out) {
+          logs.push({
+            id: `${row.employee_id}-out-${index}`,
+            employee_name: row.name,
+            employee_department: '',
+            type: 'OUT',
+            timestamp: session.clock_out,
+            profilePhotoUrl,
+            photo,
+            avatar,
+          });
+        }
+      });
+      return;
+    }
+
     if (row.clock_in) {
       logs.push({
         id: `${row.employee_id}-in`,

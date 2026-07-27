@@ -2,7 +2,7 @@ import DashboardWidgetCard from '../../dashboard/DashboardWidgetCard/DashboardWi
 import { DASHBOARD_ACCENTS } from '../../dashboard/dashboardTheme';
 import { formatCurrency } from '../../../../utils/helpers';
 
-const SalaryStatsRow = ({ stats, loading }) => (
+const SalaryStatsRow = ({ stats, loading, isHourly = false }) => (
     <div
       className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3 xl:items-stretch"
       data-tour="salary-stats"
@@ -21,22 +21,26 @@ const SalaryStatsRow = ({ stats, loading }) => (
         loading={loading}
         compact
         stats={[
-          { label: 'Salary set', value: stats.salarySet, accent: DASHBOARD_ACCENTS.green },
+          {
+            label: isHourly ? 'Rate set' : 'Salary set',
+            value: stats.salarySet,
+            accent: DASHBOARD_ACCENTS.green,
+          },
           { label: 'Not set', value: stats.unset, accent: DASHBOARD_ACCENTS.orange },
         ]}
       />
       <DashboardWidgetCard
-        title="Monthly payroll"
+        title={isHourly ? 'Hourly rates' : 'Monthly payroll'}
         loading={loading}
         compact
         stats={[
           {
-            label: 'Active total',
+            label: isHourly ? 'Active rates total' : 'Active total',
             value: formatCurrency(stats.totalMonthly, { maximumFractionDigits: 0 }),
             accent: DASHBOARD_ACCENTS.blue,
           },
           {
-            label: 'Avg salary',
+            label: isHourly ? 'Avg rate' : 'Avg salary',
             value: stats.avgActiveSalary
               ? formatCurrency(stats.avgActiveSalary, { maximumFractionDigits: 0 })
               : '—',

@@ -73,7 +73,8 @@ const Dashboard = () => {
           minute: '2-digit',
           hour12: true,
         }),
-        avatar: getDefaultAvatar(log.id || log.employee_name),
+        avatar:
+          log.photo || log.avatar || getDefaultAvatar(log.id || log.employee_name),
       })),
     [activityLogs]
   );

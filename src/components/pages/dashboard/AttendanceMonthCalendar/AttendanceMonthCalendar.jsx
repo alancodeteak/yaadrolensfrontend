@@ -10,6 +10,52 @@ const DAY_STYLES = {
   empty: 'bg-white border-gray-100 text-gray-400',
 };
 
+const GREEN = { r: 52, g: 199, b: 89 }; // #34C759
+const ORANGE = { r: 255, g: 149, b: 0 }; // #FF9500
+
+function lerp(a, b, t) {
+  return Math.round(a + (b - a) * t);
+}
+
+/**
+ * Continuum: all present → full green; none present → full orange;
+ * partial → mix green→orange by present/total rate.
+ */
+export function attendanceHeatStyle(present, absent, totalEmployees, dayType) {
+  if (dayType === 'future' || dayType === 'empty' || !dayType) {
+    return { className: DAY_STYLES[dayType] || DAY_STYLES.future, style: undefined };
+  }
+  if (dayType !== 'all_present' && dayType !== 'some_absent') {
+    return { className: DAY_STYLES[dayType] || DAY_STYLES.future, style: undefined };
+  }
+
+  const total = totalEmployees || present + absent || 0;
+  if (total <= 0) {
+    return { className: DAY_STYLES.some_absent, style: undefined };
+  }
+
+  const rate = Math.max(0, Math.min(1, present / total));
+  if (rate >= 1) {
+    return { className: DAY_STYLES.all_present, style: undefined };
+  }
+
+  // rate 0 → orange, rate 1 → green (handled above)
+  const r = lerp(ORANGE.r, GREEN.r, rate);
+  const g = lerp(ORANGE.g, GREEN.g, rate);
+  const b = lerp(ORANGE.b, GREEN.b, rate);
+  // Stronger fill when more people present; still readable when mostly absent
+  const bgAlpha = 0.12 + 0.18 * rate;
+  const borderAlpha = 0.28 + 0.2 * rate;
+
+  return {
+    className: 'hover:brightness-95',
+    style: {
+      backgroundColor: `rgba(${r}, ${g}, ${b}, ${bgAlpha})`,
+      borderColor: `rgba(${r}, ${g}, ${b}, ${borderAlpha})`,
+    },
+  };
+}
+
 function normalizeDateKey(value) {
   if (!value) return '';
   return String(value).slice(0, 10);
@@ -166,7 +212,6 @@ const AttendanceMonthCalendar = ({
       </div>
 
       <div className="relative px-4 py-3">
-        {/* Weekday headers */}
         <div className="mb-1 grid grid-cols-7 gap-0.5">
           {WEEKDAYS.map((wd, i) => (
             <div
@@ -178,7 +223,6 @@ const AttendanceMonthCalendar = ({
           ))}
         </div>
 
-        {/* Day grid — fixed small cells */}
         <div className="grid grid-cols-7 gap-0.5">
           {loading
             ? Array.from({ length: 28 }).map((_, i) => (
@@ -192,6 +236,8 @@ const AttendanceMonthCalendar = ({
                 const dayType = cell.data?.day_type || 'future';
                 const present = cell.data?.present ?? 0;
                 const absent = cell.data?.absent ?? 0;
+                const totalEmployees = cell.data?.total_employees ?? present + absent;
+                const heat = attendanceHeatStyle(present, absent, totalEmployees, dayType);
                 const hasTooltip = showDayTooltip(cell);
                 const isToday = cell.iso === todayKey;
                 const tipText = hasTooltip
@@ -203,9 +249,10 @@ const AttendanceMonthCalendar = ({
                     <button
                       type="button"
                       title={tipText}
+                      style={heat.style}
                       className={clsx(
                         'flex h-7 w-7 items-center justify-center rounded border text-[10px] font-medium leading-none transition-colors',
-                        DAY_STYLES[dayType] || DAY_STYLES.future,
+                        heat.className,
                         isToday && 'ring-1 ring-[#007AFF] ring-offset-1',
                         hasTooltip && 'cursor-pointer'
                       )}
@@ -246,8 +293,18 @@ const AttendanceMonthCalendar = ({
             All present
           </span>
           <span className="inline-flex items-center gap-1">
+            <span
+              className="h-2.5 w-2.5 rounded border"
+              style={{
+                backgroundColor: 'rgba(153, 174, 45, 0.22)',
+                borderColor: 'rgba(153, 174, 45, 0.4)',
+              }}
+            />
+            Partial
+          </span>
+          <span className="inline-flex items-center gap-1">
             <span className="h-2.5 w-2.5 rounded border border-[#FF9500]/35 bg-[#FF9500]/20" />
-            Some absent
+            Mostly absent
           </span>
           <span className="inline-flex items-center gap-1">
             <span className="h-2.5 w-2.5 rounded border border-gray-100 bg-gray-50" />

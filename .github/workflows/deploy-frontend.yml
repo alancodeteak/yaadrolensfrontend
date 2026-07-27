@@ -13,7 +13,7 @@ concurrency:
 env:
   PROJECT_ID: yaadro-lens
   GCS_BUCKET: yaadro-lens-lens-dev-org-web
-  FRONTEND_URL: http://34.110.234.3/
+  FRONTEND_URL: https://yaadrolens.com/
 
 permissions:
   contents: read

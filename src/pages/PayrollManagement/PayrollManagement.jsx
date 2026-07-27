@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { CalendarCheck, Gift, Plus, Scale, Wallet } from 'lucide-react';
 import {
@@ -25,7 +25,8 @@ import {
 import { formatMoney } from '../../components/pages/payment/paymentUtils';
 import { DASHBOARD_BTN_PRIMARY, DASHBOARD_BTN_SECONDARY } from '../../components/pages/dashboard';
 import {
-  PAYROLL_GUIDE_STEPS,
+  PAYROLL_GUIDE_STEPS_BY_LANG,
+  PAYROLL_PAGE_LABELS,
   Pagination,
   LoadingScreen,
   LottieLoader,
@@ -51,7 +52,6 @@ import {
   useRecoverAdvanceMutation,
   useCancelAdvanceMutation,
   useGenerateMonthlySalariesMutation,
-  useRunScheduledSalariesMutation,
   useGetEmployeesQuery,
   useGetOutstandingEmployeesQuery,
   useGetSettingsQuery,
@@ -89,9 +89,10 @@ const getErrorMessage = (err, fallback) => {
 };
 
 const PayrollManagement = () => {
-  const { infoOpen, startTutorial, startInfo, closeInfo } = usePageTour(
-    PAYROLL_GUIDE_STEPS,
-    'payroll_tour_completed'
+  const { infoOpen, startTutorial, startInfo, closeInfo, steps, pageLabel, language } = usePageTour(
+    PAYROLL_GUIDE_STEPS_BY_LANG,
+    'payroll_tour_completed',
+    PAYROLL_PAGE_LABELS
   );
 
   const currentDate = new Date();
@@ -208,8 +209,6 @@ const PayrollManagement = () => {
   const [recordPayment, { isLoading: isRecording }] = useRecordPaymentMutation();
   const [generateMonthlySalaries, { isLoading: isGenerating }] =
     useGenerateMonthlySalariesMutation();
-  const [runScheduledSalaries] = useRunScheduledSalariesMutation();
-  const scheduledRunRef = useRef(false);
   const [createAdvance, { isLoading: isCreatingAdvance }] = useCreateAdvanceMutation();
   const [approveAdvance, { isLoading: isApproving }] = useApproveAdvanceMutation();
   const [disburseAdvance] = useDisburseAdvanceMutation();
@@ -561,27 +560,6 @@ const PayrollManagement = () => {
     safeRefetch(refetchBalanceLedger);
     safeRefetch(refetchSummary);
   };
-
-  useEffect(() => {
-    if (scheduledRunRef.current) return;
-    scheduledRunRef.current = true;
-
-    runScheduledSalaries()
-      .unwrap()
-      .then((result) => {
-        if (result?.ran && result.created_count > 0) {
-          const monthLabel = MONTHS[(result.period_month || 1) - 1];
-          dashboardToast.success(
-            `Recorded ${result.created_count} monthly ${result.created_count === 1 ? 'salary' : 'salaries'} for ${monthLabel} ${result.period_year}.`,
-            'Salaries generated'
-          );
-          refreshAll();
-        }
-      })
-      .catch(() => {
-        // Silent on load — admin can use manual generate if needed
-      });
-  }, [runScheduledSalaries]);
 
   const handleTabChange = (tab) => {
     setActiveTab(tab);
@@ -1333,7 +1311,12 @@ const PayrollManagement = () => {
       />
 
       {infoOpen && (
-        <PageInfoOverlay steps={PAYROLL_GUIDE_STEPS} onClose={closeInfo} pageLabel="Payment" />
+        <PageInfoOverlay
+          steps={steps}
+          onClose={closeInfo}
+          pageLabel={pageLabel || 'Payment'}
+          language={language}
+        />
       )}
     </div>
   );

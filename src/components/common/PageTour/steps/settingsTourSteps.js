@@ -60,7 +60,7 @@ export const SETTINGS_PAYMENT_STEPS = [
     id: 'payment-salary-calculation',
     selector: '[data-tour="payment-salary-calculation"]',
     title: 'Salary calculation',
-    body: 'How monthly pay is computed: fixed, attendance-based, or leave-aware with deductions.',
+    body: 'How monthly pay is computed: fixed, attendance-based, leave-aware with deductions, or hourly-based (hours × rate).',
   },
   {
     id: 'save-actions',

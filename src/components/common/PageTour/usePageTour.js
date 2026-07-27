@@ -1,10 +1,32 @@
 import { useCallback, useRef, useState } from 'react';
 import { driver } from 'driver.js';
 import 'driver.js/dist/driver.css';
+import {
+  pickGuideSteps,
+  pickPageLabel,
+  readPageTourLanguage,
+} from './pageTourI18n';
 
-export function usePageTour(steps, storageKey) {
+function resolveSteps(stepsOrByLang) {
+  if (Array.isArray(stepsOrByLang)) return stepsOrByLang;
+  return pickGuideSteps(stepsOrByLang);
+}
+
+export function usePageTour(stepsOrByLang, storageKey, pageLabelsByLang) {
   const driverRef = useRef(null);
   const [infoOpen, setInfoOpen] = useState(false);
+  const [resolvedSteps, setResolvedSteps] = useState(() => resolveSteps(stepsOrByLang));
+  const [resolvedPageLabel, setResolvedPageLabel] = useState(() =>
+    pickPageLabel(pageLabelsByLang)
+  );
+  const [resolvedLanguage, setResolvedLanguage] = useState(() => readPageTourLanguage());
+
+  const refreshLocalizedContent = useCallback(() => {
+    const language = readPageTourLanguage();
+    setResolvedLanguage(language);
+    setResolvedSteps(resolveSteps(stepsOrByLang));
+    setResolvedPageLabel(pickPageLabel(pageLabelsByLang, language));
+  }, [pageLabelsByLang, stepsOrByLang]);
 
   const destroyTour = useCallback(() => {
     if (driverRef.current?.isActive()) {
@@ -19,12 +41,16 @@ export function usePageTour(steps, storageKey) {
 
   const startInfo = useCallback(() => {
     destroyTour();
+    refreshLocalizedContent();
     setInfoOpen(true);
-  }, [destroyTour]);
+  }, [destroyTour, refreshLocalizedContent]);
 
   const startTutorial = useCallback(() => {
     setInfoOpen(false);
     destroyTour();
+    refreshLocalizedContent();
+
+    const steps = resolveSteps(stepsOrByLang);
 
     const driverObj = driver({
       showProgress: true,
@@ -74,7 +100,7 @@ export function usePageTour(steps, storageKey) {
 
     driverRef.current = driverObj;
     driverObj.drive();
-  }, [destroyTour, steps, storageKey]);
+  }, [destroyTour, refreshLocalizedContent, stepsOrByLang, storageKey]);
 
   return {
     infoOpen,
@@ -82,5 +108,8 @@ export function usePageTour(steps, storageKey) {
     startInfo,
     closeInfo,
     destroyTour,
+    steps: resolvedSteps,
+    pageLabel: resolvedPageLabel,
+    language: resolvedLanguage,
   };
 }

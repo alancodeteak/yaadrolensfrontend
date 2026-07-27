@@ -22,6 +22,7 @@ import LiveAttendanceInsights from '../LiveAttendanceInsights';
 import { useGetDailySummaryQuery } from '../../../../store/api/attendanceApi';
 import { useGetSettingsQuery } from '../../../../store/api/settingsApi';
 import {
+  formatDurationHours,
   isLiveOnSiteStatus,
   mapDailyRowToLiveEmployee,
   matchesLiveAttendanceStatusFilter,
@@ -104,8 +105,11 @@ const LiveAttendanceMonitoring = () => {
   }, [isToday]);
 
   const employees = useMemo(
-    () => (dailyData?.rows || []).map(mapDailyRowToLiveEmployee),
-    [dailyData]
+    () =>
+      (dailyData?.rows || []).map((row) =>
+        mapDailyRowToLiveEmployee(row, isToday ? currentTime : null)
+      ),
+    [dailyData, isToday, currentTime]
   );
 
   const realSummaryData = useMemo(() => {
@@ -363,6 +367,7 @@ const LiveAttendanceMonitoring = () => {
                   <th className={TH}>Status</th>
                   <th className={clsx(TH, 'hidden sm:table-cell')}>Clock in</th>
                   <th className={clsx(TH, 'hidden lg:table-cell')}>Last seen</th>
+                  <th className={TH}>Hours</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
@@ -417,6 +422,9 @@ const LiveAttendanceMonitoring = () => {
                     </td>
                     <td className={clsx(TD, 'hidden lg:table-cell text-gray-700')}>
                       {employee.lastSeen || '—'}
+                    </td>
+                    <td className={clsx(TD, 'tabular-nums text-gray-700')}>
+                      {formatDurationHours(employee.totalHours)}
                     </td>
                   </tr>
                 ))}

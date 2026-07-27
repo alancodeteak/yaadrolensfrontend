@@ -12,7 +12,8 @@ import {
   LoadingScreen,
   PageInfoOverlay,
   PageTourButtons,
-  REPORTS_GUIDE_STEPS,
+  REPORTS_GUIDE_STEPS_BY_LANG,
+  REPORTS_PAGE_LABELS,
   dashboardToast,
   usePageTour,
 } from '../../components/common';
@@ -416,9 +417,10 @@ const ReportMobileCard = ({
 };
 
 const Reports = () => {
-  const { infoOpen, startTutorial, startInfo, closeInfo } = usePageTour(
-    REPORTS_GUIDE_STEPS,
-    'reports_tour_completed'
+  const { infoOpen, startTutorial, startInfo, closeInfo, steps, pageLabel, language } = usePageTour(
+    REPORTS_GUIDE_STEPS_BY_LANG,
+    'reports_tour_completed',
+    REPORTS_PAGE_LABELS
   );
   const { data: reportTypes = [], isLoading, error } = useGetReportTypesQuery();
   const { data: employeesData } = useGetEmployeesQuery({ page: 1, limit: 200 });
@@ -588,9 +590,10 @@ const Reports = () => {
 
       {infoOpen && (
         <PageInfoOverlay
-          steps={REPORTS_GUIDE_STEPS}
+          steps={steps}
           onClose={closeInfo}
-          pageLabel="Reports"
+          pageLabel={pageLabel || 'Reports'}
+          language={language}
         />
       )}
     </div>

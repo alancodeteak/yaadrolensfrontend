@@ -209,6 +209,11 @@ const PaymentRules = () => {
                 />
               </button>
             </label>
+            <p className="text-xs text-gray-500">
+              When enabled, the server records previous-month salaries on the pay day below, in the
+              morning (organization timezone). You can still generate manually from the Payment page
+              after the month ends.
+            </p>
 
             <div className="max-w-xs">
               <label className={settingsLabelClass}>Pay day (day of month)</label>
@@ -366,7 +371,13 @@ const PaymentRules = () => {
                 <option value="fixed">Fixed — full monthly pay amount</option>
                 <option value="attendance_based">Attendance-based — prorate by days present</option>
                 <option value="leave_aware">Leave-aware — weekly off, paid leave quota, deductions</option>
+                <option value="hourly">Hourly-based — hours worked × hourly rate</option>
               </select>
+              {salaryCalcMode === 'hourly' && (
+                <p className="mt-1.5 text-xs text-gray-500">
+                  Employee pay amount on the Salary page is treated as INR per hour.
+                </p>
+              )}
             </div>
 
             {salaryCalcMode === 'attendance_based' && (

@@ -19,7 +19,7 @@ const inputClass =
 
 const todayIso = () => new Date().toISOString().slice(0, 10);
 
-const SalaryEditModal = ({ isOpen, employee, onClose, onSave, isLoading }) => {
+const SalaryEditModal = ({ isOpen, employee, onClose, onSave, isLoading, isHourly = false }) => {
   const [formData, setFormData] = useState({
     new_amount: '',
     effective_date: todayIso(),
@@ -104,7 +104,7 @@ const SalaryEditModal = ({ isOpen, employee, onClose, onSave, isLoading }) => {
             />
             <div>
               <h2 id="salary-edit-title" className="text-lg font-semibold text-gray-900">
-                Update salary
+                {isHourly ? 'Update hourly rate' : 'Update salary'}
               </h2>
               <p className="text-sm text-gray-500">
                 {employee.name} · {employee.employee_code}
@@ -125,16 +125,19 @@ const SalaryEditModal = ({ isOpen, employee, onClose, onSave, isLoading }) => {
           <div className="space-y-4 overflow-y-auto px-5 py-4">
             {currentSalary != null && (
               <div className="rounded-xl border border-gray-100 bg-gray-50/80 px-3 py-2.5 text-sm">
-                <span className="text-gray-500">Current monthly salary: </span>
+                <span className="text-gray-500">
+                  {isHourly ? 'Current hourly rate: ' : 'Current monthly salary: '}
+                </span>
                 <span className="font-semibold tabular-nums text-gray-900">
                   {formatMonthlySalary(currentSalary)}
+                  {isHourly ? '/hr' : ''}
                 </span>
               </div>
             )}
 
             <div>
               <label htmlFor="salary-amount" className={labelClass}>
-                New monthly salary (INR)
+                {isHourly ? 'New hourly rate (INR)' : 'New monthly salary (INR)'}
               </label>
               <input
                 id="salary-amount"
@@ -144,7 +147,7 @@ const SalaryEditModal = ({ isOpen, employee, onClose, onSave, isLoading }) => {
                 value={formData.new_amount}
                 onChange={(e) => setFormData((p) => ({ ...p, new_amount: e.target.value }))}
                 className={inputClass}
-                placeholder="3500.00"
+                placeholder={isHourly ? '100.00' : '3500.00'}
                 disabled={isLoading}
               />
               {errors.new_amount && (
@@ -202,7 +205,7 @@ const SalaryEditModal = ({ isOpen, employee, onClose, onSave, isLoading }) => {
             </button>
             <button type="submit" disabled={isLoading} className={DASHBOARD_BTN_PRIMARY}>
               {isLoading && <LottieLoader size={18} />}
-              Save salary
+              Save {isHourly ? 'rate' : 'salary'}
             </button>
           </div>
         </form>

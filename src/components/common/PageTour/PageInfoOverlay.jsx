@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { X } from 'lucide-react';
+import { getPageInfoOverlayCopy } from './pageTourI18n';
 function measureSteps(steps) {
   return steps
     .map((step) => {
@@ -27,9 +28,15 @@ const InfoCard = ({ step, style }) => (
   </div>
 );
 
-const PageInfoOverlay = ({ steps, onClose, pageLabel = 'this page' }) => {
+const PageInfoOverlay = ({
+  steps,
+  onClose,
+  pageLabel = 'this page',
+  language = 'en',
+}) => {
   const [positions, setPositions] = useState([]);
   const [isMobile, setIsMobile] = useState(false);
+  const copy = getPageInfoOverlayCopy(language);
 
   const refresh = useCallback(() => {
     setIsMobile(window.innerWidth < 768);
@@ -69,7 +76,7 @@ const PageInfoOverlay = ({ steps, onClose, pageLabel = 'this page' }) => {
   };
 
   return (
-    <div className="fixed inset-0 z-[200]" role="dialog" aria-modal="true" aria-label="Page help">
+    <div className="fixed inset-0 z-[200]" role="dialog" aria-modal="true" aria-label={copy.dialogLabel}>
       <button
         type="button"
         className="absolute inset-0 bg-black/50"
@@ -81,7 +88,7 @@ const PageInfoOverlay = ({ steps, onClose, pageLabel = 'this page' }) => {
         type="button"
         onClick={onClose}
         className="pointer-events-auto absolute right-4 top-4 z-[210] flex h-9 w-9 items-center justify-center rounded-xl border border-gray-200/60 bg-white text-gray-700 shadow-lg hover:bg-gray-50"
-        aria-label="Close"
+        aria-label={copy.close}
       >
         <X className="h-4 w-4" strokeWidth={2} />
       </button>
@@ -102,8 +109,8 @@ const PageInfoOverlay = ({ steps, onClose, pageLabel = 'this page' }) => {
       {isMobile ? (
         <div className="pointer-events-auto absolute inset-x-4 bottom-4 top-16 z-[210] overflow-hidden rounded-2xl border border-gray-200/60 bg-white shadow-[0_2px_16px_rgba(0,0,0,0.12)]">
           <div className="border-b border-gray-100 px-4 py-3">
-            <h2 className="text-sm font-semibold text-gray-900">What&apos;s on {pageLabel}</h2>
-            <p className="text-[11px] text-gray-500">Brief guide to each section</p>
+            <h2 className="text-sm font-semibold text-gray-900">{copy.heading(pageLabel)}</h2>
+            <p className="text-[11px] text-gray-500">{copy.subheading}</p>
           </div>
           <ul className="max-h-full divide-y divide-gray-100 overflow-y-auto px-4 py-2">
             {steps.map((step) => (

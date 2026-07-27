@@ -38,6 +38,7 @@ const SalaryTable = ({
   totalCount = 0,
   isFetching = false,
   highlightId,
+  isHourly = false,
   onEdit,
   onHistory,
   onClearFilters,
@@ -87,7 +88,7 @@ const SalaryTable = ({
                 <th className={clsx(TH, 'min-w-40')}>Name</th>
                 <th className={clsx(TH, 'min-w-28 hidden sm:table-cell')}>Code</th>
                 <th className={clsx(TH, 'min-w-32 hidden md:table-cell')}>Department</th>
-                <th className={clsx(TH, 'min-w-28')}>Salary / mo</th>
+                <th className={clsx(TH, 'min-w-28')}>{isHourly ? 'Rate / hr' : 'Salary / mo'}</th>
                 <th className={clsx(TH, 'min-w-32 hidden lg:table-cell')}>Last changed</th>
                 <th className={clsx(TH, 'w-20')}>Status</th>
                 <th className={clsx(TH, 'w-28')} data-tour="salary-actions">
@@ -147,6 +148,7 @@ const SalaryTable = ({
                       ) : (
                         <span className="tabular-nums font-medium text-gray-900">
                           {formatMonthlySalary(row.current_salary)}
+                          {isHourly ? '/hr' : ''}
                         </span>
                       )}
                     </td>
