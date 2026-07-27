@@ -74,6 +74,7 @@ const LiveAttendanceMonitoring = () => {
   const { data: settings } = useGetSettingsQuery();
   const orgTimezone = settings?.timezone || 'Asia/Kolkata';
   const todayKey = orgToday(orgTimezone);
+  const manualAttendanceEnabled = Boolean(settings?.manual_attendance_enabled);
 
   const [currentTime, setCurrentTime] = useState(new Date());
   const [searchTerm, setSearchTerm] = useState('');
@@ -252,7 +253,7 @@ const LiveAttendanceMonitoring = () => {
 
   return (
     <div className="mx-auto max-w-7xl space-y-6 px-4 py-8 sm:px-6 lg:px-8">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+      <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
         <div>
           <h1 className="text-3xl font-bold text-gray-900">Live attendance</h1>
           <p className="mt-1 text-sm text-gray-500">
@@ -267,6 +268,30 @@ const LiveAttendanceMonitoring = () => {
               Live updates
             </div>
           )}
+          <div
+            className={clsx(DASHBOARD_PANEL, 'flex flex-wrap items-center gap-3 px-3 py-2')}
+            data-tour="date-refresh"
+          >
+            <div className="flex items-center gap-2">
+              <span className="text-[10px] font-medium uppercase tracking-wide text-gray-400">
+                Date
+              </span>
+              <DashboardDatePicker
+                id="attendance-date"
+                label="Attendance date"
+                value={selectedDay}
+                onChange={setSelectedDay}
+                maxDate={todayKey}
+              />
+            </div>
+            <button type="button" onClick={() => refetch()} className={DASHBOARD_BTN_SECONDARY}>
+              <RefreshCw
+                className={clsx('h-4 w-4', dailyFetching && 'animate-spin')}
+                strokeWidth={2}
+              />
+              Refresh
+            </button>
+          </div>
           <PageTourButtons onTutorial={startTutorial} onInfo={startInfo} />
         </div>
       </div>
@@ -299,58 +324,38 @@ const LiveAttendanceMonitoring = () => {
       </div>
 
       <div className={clsx(DASHBOARD_PANEL, 'p-4')} data-tour="filters">
-        <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-          <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
-            <div className="flex items-center gap-2">
-              <span className="text-[10px] font-medium uppercase tracking-wide text-gray-400">
-                Date
-              </span>
-              <DashboardDatePicker
-                id="attendance-date"
-                label="Attendance date"
-                value={selectedDay}
-                onChange={setSelectedDay}
-                maxDate={todayKey}
-              />
-            </div>
-
-            <div className="relative min-w-0 flex-1 sm:min-w-[200px] sm:max-w-xs">
-              <Search
-                className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400"
-                strokeWidth={2}
-                aria-hidden="true"
-              />
-              <input
-                type="text"
-                placeholder="Search name or code…"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className={clsx(inputClass, 'w-full pl-9')}
-              />
-            </div>
-
-            <label className="flex min-w-0 flex-col gap-1 sm:w-auto">
-              <span className="text-[10px] font-medium uppercase tracking-wide text-gray-400">
-                Status
-              </span>
-              <select
-                value={selectedStatus}
-                onChange={(e) => setSelectedStatus(e.target.value)}
-                className={clsx(inputClass, 'w-full sm:min-w-[160px]')}
-              >
-                {STATUS_OPTIONS.map((status) => (
-                  <option key={status} value={status}>
-                    {status}
-                  </option>
-                ))}
-              </select>
-            </label>
+        <div className="flex flex-col gap-4 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
+          <div className="relative min-w-0 flex-1 sm:min-w-[200px] sm:max-w-xs">
+            <Search
+              className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400"
+              strokeWidth={2}
+              aria-hidden="true"
+            />
+            <input
+              type="text"
+              placeholder="Search name or code…"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className={clsx(inputClass, 'w-full pl-9')}
+            />
           </div>
 
-          <button type="button" onClick={() => refetch()} className={DASHBOARD_BTN_SECONDARY}>
-            <RefreshCw className={clsx('h-4 w-4', dailyFetching && 'animate-spin')} strokeWidth={2} />
-            Refresh
-          </button>
+          <label className="flex min-w-0 flex-col gap-1 sm:w-auto">
+            <span className="text-[10px] font-medium uppercase tracking-wide text-gray-400">
+              Status
+            </span>
+            <select
+              value={selectedStatus}
+              onChange={(e) => setSelectedStatus(e.target.value)}
+              className={clsx(inputClass, 'w-full sm:min-w-[160px]')}
+            >
+              {STATUS_OPTIONS.map((status) => (
+                <option key={status} value={status}>
+                  {status}
+                </option>
+              ))}
+            </select>
+          </label>
         </div>
       </div>
 
@@ -396,7 +401,9 @@ const LiveAttendanceMonitoring = () => {
                   <th className={clsx(TH, 'hidden sm:table-cell')}>Clock in</th>
                   <th className={clsx(TH, 'hidden lg:table-cell')}>Last seen</th>
                   <th className={TH}>Hours</th>
-                  {isToday && <th className={clsx(TH, 'text-right')}>Manual</th>}
+                  {isToday && manualAttendanceEnabled && (
+                    <th className={clsx(TH, 'text-right')}>Manual</th>
+                  )}
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
@@ -457,7 +464,7 @@ const LiveAttendanceMonitoring = () => {
                     <td className={clsx(TD, 'tabular-nums text-gray-700')}>
                       {formatDurationHours(employee.totalHours)}
                     </td>
-                    {isToday && (
+                    {isToday && manualAttendanceEnabled && (
                       <td className={clsx(TD, 'text-right')}>
                         {onSite ? (
                           <button

@@ -84,6 +84,9 @@ export const settingsApi = baseApi.injectEndpoints({
           late_arrival_grace_minutes: rulesData.late_arrival_grace_minutes,
           early_departure_grace_minutes: rulesData.early_departure_grace_minutes,
           minimum_clock_out_minutes: rulesData.minimum_clock_out_minutes,
+          ...(rulesData.manual_attendance_enabled != null
+            ? { manual_attendance_enabled: rulesData.manual_attendance_enabled }
+            : {}),
         },
       }),
       transformResponse: transformSettingsResponse,

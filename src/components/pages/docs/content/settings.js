@@ -120,6 +120,18 @@ const enSections = [
       'If someone scans too soon, the kiosk shows a message and does not record clock-out. Their session stays open until a valid clock-out later.',
       'Staff can have multiple sessions in one day (break / return). The minimum wait applies to each open session.',
     ],
+  },
+  {
+    title: 'Attendance rules — Manual attendance',
+    span: 'full',
+    list: [
+      [
+        docStrong('Enable manual punch in / out'),
+        ' — Off by default. When on, Live attendance shows In / Out actions for today so an admin can record punches without the kiosk.',
+      ],
+      'Each manual punch requires typing “manual attendance approved” in the confirmation dialog before it is saved.',
+      'Use only when face scan is unavailable. Prefer the kiosk for normal day-to-day attendance.',
+    ],
     tip: [
       'Always click ',
       docStrong('Save changes'),
@@ -454,6 +466,18 @@ const hiSections = [
       ],
       'अगर कोई जल्दी स्कैन करे, कियोस्क संदेश दिखाता है और क्लॉक-आउट रिकॉर्ड नहीं करता। सत्र वैध क्लॉक-आउट तक खुला रहता है।',
       'स्टाफ एक दिन में कई सत्र रख सकते हैं (ब्रेक / वापसी)। न्यूनतम प्रतीक्षा हर खुले सत्र पर लागू होती है।',
+    ],
+  },
+  {
+    title: 'Attendance rules — मैनुअल अटेंडेंस',
+    span: 'full',
+    list: [
+      [
+        docStrong('Enable manual punch in / out'),
+        ' — डिफ़ॉल्ट रूप से बंद। चालू होने पर Live attendance में आज के लिए In / Out क्रियाएँ दिखती हैं, ताकि एडमिन कियोस्क के बिना पंच रिकॉर्ड कर सके।',
+      ],
+      'हर मैनुअल पंच से पहले कन्फर्मेशन में “manual attendance approved” टाइप करना आवश्यक है।',
+      'केवल तब उपयोग करें जब फेस स्कैन उपलब्ध न हो। सामान्य दिन-प्रतिदिन अटेंडेंस के लिए कियोस्क पसंद करें।',
     ],
     tip: [
       'Attendance rules एडिट करने के बाद नीचे हमेशा ',
@@ -790,6 +814,18 @@ const mlSections = [
       'ആരെങ്കിലും വളരെ പെട്ടെന്ന് സ്കാൻ ചെയ്താൽ കിയോസ്ക് സന്ദേശം കാണിക്കുകയും ക്ലോക്ക്-ഔട്ട് രേഖപ്പെടുത്താതിരിക്കുകയും ചെയ്യും. സാധുവായ ക്ലോക്ക്-ഔട്ട് വരെ സെഷൻ തുറന്നിരിക്കും.',
       'സ്റ്റാഫിന് ഒരു ദിവസം ഒന്നിലധികം സെഷനുകൾ ഉണ്ടാകാം (ബ്രേക്ക് / തിരിച്ചുവരവ്). മിനിമം വെയ്റ്റ് ഓരോ തുറന്ന സെഷനും ബാധകമാണ്.',
     ],
+  },
+  {
+    title: 'Attendance rules — മാനുവൽ അറ്റൻഡൻസ്',
+    span: 'full',
+    list: [
+      [
+        docStrong('Enable manual punch in / out'),
+        ' — ഡിഫോൾട്ടായി ഓഫ്. ഓണാക്കിയാൽ Live attendance-ൽ ഇന്നത്തെ In / Out ആക്ഷനുകൾ കാണാം, അഡ്മിന് കിയോസ്ക് ഇാടാതെ പഞ്ച് രേഖപ്പെടുത്താം.',
+      ],
+      'ഓരോ മാനുവൽ പഞ്ചിനും കൺഫർമേഷനിൽ “manual attendance approved” ടൈപ്പ് ചെയ്യണം.',
+      'ഫേസ് സ്കാൻ ലഭ്യമല്ലാത്തപ്പോൾ മാത്രം ഉപയോഗിക്കുക. സാധാരണ അറ്റൻഡൻസിന് കിയോസ്ക് തിരഞ്ഞെടുക്കുക.',
+    ],
     tip: [
       'Attendance rules എഡിറ്റ് ചെയ്ത ശേഷം താഴെ എപ്പോഴും ',
       docStrong('Save changes'),
@@ -1124,6 +1160,18 @@ const knSections = [
       ],
       'ಯಾರಾದರೂ ಬೇಗ ಸ್ಕ್ಯಾನ್ ಮಾಡಿದರೆ, ಕಿಯೋಸ್ಕ್ ಸಂದೇಶ ತೋರಿಸುತ್ತದೆ ಮತ್ತು ಕ್ಲಾಕ್-ಔಟ್ ದಾಖಲಿಸುವುದಿಲ್ಲ. ಮಾನ್ಯ ಕ್ಲಾಕ್-ಔಟ್ವರೆಗೆ ಅವರ ಸೆಷನ್ ತೆರೆದಿರುತ್ತದೆ.',
       'ಸಿಬ್ಬಂದಿಗೆ ಒಂದು ದಿನದಲ್ಲಿ ಅನೇಕ ಸೆಷನ್‌ಗಳಿರಬಹುದು (ಬ್ರೇಕ್ / ಹಿಂತಿರುಗುವಿಕೆ). ಕನಿಷ್ಠ ನಿರೀಕ್ಷೆ ಪ್ರತಿ ತೆರೆದ ಸೆಷನ್‌ಗೆ ಅನ್ವಯಿಸುತ್ತದೆ.',
+    ],
+  },
+  {
+    title: 'Attendance rules — ಮ್ಯಾನುಯಲ್ ಅಟೆಂಡೆನ್ಸ್',
+    span: 'full',
+    list: [
+      [
+        docStrong('Enable manual punch in / out'),
+        ' — ಡೀಫಾಲ್ಟ್‌ನಲ್ಲಿ ಆಫ್. ಆನ್ ಮಾಡಿದರೆ Live attendance ನಲ್ಲಿ ಇಂದಿನ In / Out ಕ್ರಿಯೆಗಳು ಕಾಣಿಸುತ್ತವೆ, ಆಡ್ಮಿನ್ ಕಿಯೋಸ್ಕ್ ಇಲ್ಲದೆ ಪಂಚ್ ದಾಖಲಿಸಬಹುದು.',
+      ],
+      'ಪ್ರತಿ ಮ್ಯಾನುಯಲ್ ಪಂಚ್‌ಗೂ ದೃಢೀಕರಣದಲ್ಲಿ “manual attendance approved” ಟೈಪ್ ಮಾಡಬೇಕು.',
+      'ಫೇಸ್ ಸ್ಕ್ಯಾನ್ ಲಭ್ಯವಿಲ್ಲದಾಗ ಮಾತ್ರ ಬಳಸಿ. ಸಾಮಾನ್ಯ ಅಟೆಂಡೆನ್ಸ್‌ಗೆ ಕಿಯೋಸ್ಕ್ ಆದ್ಯತೆ ನೀಡಿ.',
     ],
     tip: [
       'Attendance rules ಸಂಪಾದಿಸಿದ ನಂತರ ಕೆಳಗೆ ಯಾವಾಗಲೂ ',

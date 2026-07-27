@@ -18,24 +18,26 @@ const normalizeTime = (value, fallback) => {
   return str.length >= 5 ? str.slice(0, 5) : str;
 };
 
-const buildApiPayload = (workingHours, gracePeriods, kioskScan) => ({
+const buildApiPayload = (workingHours, gracePeriods, kioskScan, manualAttendance) => ({
   work_start_time: normalizeTime(workingHours.startTime, '09:00'),
   work_end_time: normalizeTime(workingHours.endTime, '17:00'),
   late_arrival_grace_minutes: Number(gracePeriods.lateArrival ?? 10),
   early_departure_grace_minutes: Number(gracePeriods.earlyDeparture ?? 5),
   minimum_clock_out_minutes: Number(kioskScan.minimumClockOutMinutes ?? 30),
+  manual_attendance_enabled: Boolean(manualAttendance.enabled),
 });
 
-const hasApiChanges = (saved, workingHours, gracePeriods, kioskScan) => {
+const hasApiChanges = (saved, workingHours, gracePeriods, kioskScan, manualAttendance) => {
   if (!saved) return false;
 
-  const current = buildApiPayload(workingHours, gracePeriods, kioskScan);
+  const current = buildApiPayload(workingHours, gracePeriods, kioskScan, manualAttendance);
   return (
     normalizeTime(saved.work_start_time, '09:00') !== current.work_start_time ||
     normalizeTime(saved.work_end_time, '17:00') !== current.work_end_time ||
     Number(saved.late_arrival_grace_minutes ?? 10) !== current.late_arrival_grace_minutes ||
     Number(saved.early_departure_grace_minutes ?? 5) !== current.early_departure_grace_minutes ||
-    Number(saved.minimum_clock_out_minutes ?? 30) !== current.minimum_clock_out_minutes
+    Number(saved.minimum_clock_out_minutes ?? 30) !== current.minimum_clock_out_minutes ||
+    Boolean(saved.manual_attendance_enabled) !== current.manual_attendance_enabled
   );
 };
 
@@ -49,6 +51,7 @@ const AttendanceRules = () => {
   });
   const [gracePeriods, setGracePeriods] = useState({ lateArrival: 10, earlyDeparture: 5 });
   const [kioskScan, setKioskScan] = useState({ minimumClockOutMinutes: 30 });
+  const [manualAttendance, setManualAttendance] = useState({ enabled: false });
 
   useEffect(() => {
     if (!attendanceRules) return;
@@ -63,11 +66,15 @@ const AttendanceRules = () => {
     setKioskScan({
       minimumClockOutMinutes: attendanceRules.minimum_clock_out_minutes ?? 30,
     });
+    setManualAttendance({
+      enabled: Boolean(attendanceRules.manual_attendance_enabled),
+    });
   }, [attendanceRules]);
 
   const isDirty = useMemo(
-    () => hasApiChanges(attendanceRules, workingHours, gracePeriods, kioskScan),
-    [attendanceRules, workingHours, gracePeriods, kioskScan]
+    () =>
+      hasApiChanges(attendanceRules, workingHours, gracePeriods, kioskScan, manualAttendance),
+    [attendanceRules, workingHours, gracePeriods, kioskScan, manualAttendance]
   );
 
   const validateForm = () => {
@@ -97,7 +104,9 @@ const AttendanceRules = () => {
     }
 
     try {
-      await updateAttendanceRules(buildApiPayload(workingHours, gracePeriods, kioskScan)).unwrap();
+      await updateAttendanceRules(
+        buildApiPayload(workingHours, gracePeriods, kioskScan, manualAttendance)
+      ).unwrap();
       dashboardToast.success('Your attendance rules were updated.', 'Changes saved');
       refetch();
     } catch (err) {
@@ -224,6 +233,36 @@ const AttendanceRules = () => {
               Set to 0 to allow immediate clock-out.
             </p>
           </div>
+        </SettingsSection>
+
+        <SettingsSection
+          title="Manual attendance"
+          subtitle="Allow admins to clock employees in or out from Live attendance"
+          tourId="manual-attendance"
+        >
+          <label className="flex items-center justify-between gap-3">
+            <span className="text-sm text-gray-700">Enable manual punch in / out</span>
+            <button
+              type="button"
+              role="switch"
+              aria-checked={manualAttendance.enabled}
+              onClick={() => setManualAttendance((p) => ({ enabled: !p.enabled }))}
+              className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors ${
+                manualAttendance.enabled ? 'bg-[#007AFF]' : 'bg-gray-200'
+              }`}
+            >
+              <span
+                className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                  manualAttendance.enabled ? 'translate-x-6' : 'translate-x-1'
+                }`}
+              />
+            </button>
+          </label>
+          <p className="mt-3 text-xs text-gray-500">
+            When enabled, Live attendance shows In / Out actions for today. Each punch requires
+            typing <span className="font-mono text-[11px]">manual attendance approved</span> to
+            confirm. Keep this off unless kiosk face scan is unavailable.
+          </p>
         </SettingsSection>
       </SettingsContentGrid>
 
