@@ -27,6 +27,6 @@ export const ATTENDANCE_GUIDE_STEPS = [
     id: 'hourly-chart',
     selector: '[data-tour="hourly-chart"]',
     title: 'Attendance timeline',
-    body: 'Animated line chart of on-site headcount through the day. Employee avatars mark each clock-in (green) and clock-out (red).',
+    body: 'Animated line chart of on-site headcount through the day. Employee avatars mark each clock-in (green) and clock-out (red). Amber dashed lines mark configured work start and end times.',
   },
 ];

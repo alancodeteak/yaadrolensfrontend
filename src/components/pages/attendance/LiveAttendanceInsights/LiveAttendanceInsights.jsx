@@ -6,12 +6,19 @@ import {
 } from '../liveAttendanceDummy';
 import ClockEventTimelineChart, { buildClockEventsFromRows } from './ClockEventTimelineChart';
 
-const LiveAttendanceInsights = ({ rows = [], selectedDay }) => {
+const LiveAttendanceInsights = ({
+  rows = [],
+  selectedDay,
+  workStartTime = null,
+  workEndTime = null,
+}) => {
   const realEvents = useMemo(() => buildClockEventsFromRows(rows), [rows]);
 
   const useDummy = USE_DUMMY_LIVE_ATTENDANCE && realEvents.length === 0;
   const events = useDummy ? DUMMY_CLOCK_EVENTS : realEvents;
-  const hasData = events.length > 0;
+  const hasEvents = events.length > 0;
+  const hasWorkHours = Boolean(workStartTime && workEndTime);
+  const showChart = hasEvents || hasWorkHours;
 
   return (
     <div className={DASHBOARD_PANEL}>
@@ -26,11 +33,16 @@ const LiveAttendanceInsights = ({ rows = [], selectedDay }) => {
         </div>
         <p className="text-[11px] text-gray-500">
           Clock in / out timeline · {selectedDay || 'today'}
+          {hasWorkHours ? ` · work ${workStartTime}–${workEndTime}` : ''}
         </p>
       </div>
       <div className="px-3 py-3 sm:px-4">
-        {hasData ? (
-          <ClockEventTimelineChart events={events} />
+        {showChart ? (
+          <ClockEventTimelineChart
+            events={events}
+            workStartTime={workStartTime}
+            workEndTime={workEndTime}
+          />
         ) : (
           <p className="py-8 text-center text-sm text-gray-500">
             No clock-in or clock-out events for this date.

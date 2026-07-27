@@ -435,7 +435,12 @@ const LiveAttendanceMonitoring = () => {
       </div>
 
       <div data-tour="hourly-chart">
-        <LiveAttendanceInsights rows={dailyData?.rows || []} selectedDay={selectedDay} />
+        <LiveAttendanceInsights
+          rows={dailyData?.rows || []}
+          selectedDay={selectedDay}
+          workStartTime={settings?.work_start_time}
+          workEndTime={settings?.work_end_time}
+        />
       </div>
 
       {infoOpen && (

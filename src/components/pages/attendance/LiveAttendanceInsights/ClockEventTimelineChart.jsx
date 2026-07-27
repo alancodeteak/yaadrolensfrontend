@@ -15,16 +15,38 @@ const RING_WIDTH = 1.25;
 const LINE_WIDTH = 1;
 
 const X_TICKS = [6, 9, 12, 15, 18, 20];
+const WORK_MARKER_COLOR = '#F59E0B';
 
 function timeFraction(iso) {
   const d = new Date(iso);
   return d.getHours() + d.getMinutes() / 60 + d.getSeconds() / 3600;
 }
 
+/** Parse "HH:MM" / "HH:MM:SS" into hour fraction, or null if invalid. */
+function parseClockTime(value) {
+  if (!value || typeof value !== 'string') return null;
+  const match = value.trim().match(/^(\d{1,2}):(\d{2})(?::\d{2})?/);
+  if (!match) return null;
+  const hours = Number(match[1]);
+  const minutes = Number(match[2]);
+  if (Number.isNaN(hours) || Number.isNaN(minutes) || hours > 23 || minutes > 59) {
+    return null;
+  }
+  return hours + minutes / 60;
+}
+
 function formatTick(hour) {
   const suffix = hour >= 12 ? 'PM' : 'AM';
   const h = hour % 12 || 12;
   return `${h}${suffix}`;
+}
+
+function formatHourFraction(fraction) {
+  const hours = Math.floor(fraction);
+  const minutes = Math.round((fraction - hours) * 60) % 60;
+  const suffix = hours >= 12 ? 'PM' : 'AM';
+  const h = hours % 12 || 12;
+  return `${h}:${String(minutes).padStart(2, '0')} ${suffix}`;
 }
 
 function formatEventTime(iso) {
@@ -42,6 +64,10 @@ function clampTime(fraction) {
 function timeToX(fraction) {
   const clamped = clampTime(fraction);
   return PAD.left + ((clamped - WORK_START) / (WORK_END - WORK_START)) * CHART_W;
+}
+
+function isWithinChartWindow(fraction) {
+  return fraction != null && fraction >= WORK_START && fraction <= WORK_END;
 }
 
 function countToY(count, maxCount) {
@@ -127,12 +153,42 @@ function buildMarkerGroups(markers) {
   });
 }
 
-const ClockEventTimelineChart = ({ events = [] }) => {
+const ClockEventTimelineChart = ({
+  events = [],
+  workStartTime = null,
+  workEndTime = null,
+}) => {
   const gradientId = useId();
   const lineRef = useRef(null);
   const [lineLength, setLineLength] = useState(0);
   const [lineReady, setLineReady] = useState(false);
   const [hoveredGroupKey, setHoveredGroupKey] = useState(null);
+  const [hoveredWorkMarker, setHoveredWorkMarker] = useState(null);
+
+  const workMarkers = useMemo(() => {
+    const markers = [];
+    const start = parseClockTime(workStartTime);
+    const end = parseClockTime(workEndTime);
+    if (isWithinChartWindow(start)) {
+      markers.push({
+        key: 'work-start',
+        label: 'Work start',
+        shortLabel: 'Start',
+        fraction: start,
+        x: timeToX(start),
+      });
+    }
+    if (isWithinChartWindow(end)) {
+      markers.push({
+        key: 'work-end',
+        label: 'Work end',
+        shortLabel: 'End',
+        fraction: end,
+        x: timeToX(end),
+      });
+    }
+    return markers;
+  }, [workStartTime, workEndTime]);
 
   const { linePoints, markerGroups, maxCount } = useMemo(() => {
     let present = 0;
@@ -207,7 +263,7 @@ const ClockEventTimelineChart = ({ events = [] }) => {
         viewBox={`0 0 ${VIEW_W} ${VIEW_H}`}
         className="mx-auto h-auto max-h-[168px] w-full"
         role="img"
-        aria-label="Attendance timeline with clock-in and clock-out events"
+        aria-label="Attendance timeline with clock-in, clock-out, and work-hour markers"
       >
         <defs>
           <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
@@ -239,6 +295,48 @@ const ClockEventTimelineChart = ({ events = [] }) => {
             </g>
           );
         })}
+
+        {workMarkers.map((marker) => (
+          <g
+            key={marker.key}
+            className="cursor-default"
+            onMouseEnter={() => setHoveredWorkMarker(marker.key)}
+            onMouseLeave={() => setHoveredWorkMarker(null)}
+          >
+            <line
+              x1={marker.x}
+              y1={PAD.top}
+              x2={marker.x}
+              y2={PAD.top + CHART_H}
+              stroke={WORK_MARKER_COLOR}
+              strokeWidth={1.25}
+              strokeDasharray="4 3"
+              strokeOpacity={0.85}
+            />
+            <circle
+              cx={marker.x}
+              cy={PAD.top}
+              r={2.5}
+              fill={WORK_MARKER_COLOR}
+            />
+            <text
+              x={marker.x}
+              y={PAD.top - 6}
+              textAnchor="middle"
+              className="fill-amber-600 text-[8px] font-semibold"
+            >
+              {marker.shortLabel}
+            </text>
+            {/* Wider hit area for hover */}
+            <rect
+              x={marker.x - 8}
+              y={PAD.top - 12}
+              width={16}
+              height={CHART_H + 12}
+              fill="transparent"
+            />
+          </g>
+        ))}
 
         {X_TICKS.map((hour) => (
           <text
@@ -415,6 +513,32 @@ const ClockEventTimelineChart = ({ events = [] }) => {
         </div>
       )}
 
+      {!hoveredGroup &&
+        hoveredWorkMarker &&
+        (() => {
+          const marker = workMarkers.find((m) => m.key === hoveredWorkMarker);
+          if (!marker) return null;
+          return (
+            <div
+              className="pointer-events-none absolute z-10"
+              style={{
+                left: `${(marker.x / VIEW_W) * 100}%`,
+                top: `${(PAD.top / VIEW_H) * 100}%`,
+                transform: 'translate(-50%, calc(-100% - 8px))',
+              }}
+            >
+              <div className="rounded-lg border border-amber-200/80 bg-white px-2.5 py-1.5 shadow-md">
+                <p className="text-center text-[10px] font-medium text-amber-700">
+                  {marker.label}
+                </p>
+                <p className="text-center text-[10px] text-gray-500">
+                  {formatHourFraction(marker.fraction)}
+                </p>
+              </div>
+            </div>
+          );
+        })()}
+
       <div className="mt-1.5 flex flex-wrap items-center justify-center gap-3 text-[10px] text-gray-500">
         <span className="inline-flex items-center gap-1">
           <span className="h-2 w-2 rounded-full ring-1 ring-emerald-500 ring-offset-1" />
@@ -424,6 +548,15 @@ const ClockEventTimelineChart = ({ events = [] }) => {
           <span className="h-2 w-2 rounded-full ring-1 ring-red-500 ring-offset-1" />
           Clock out
         </span>
+        {workMarkers.length > 0 && (
+          <span className="inline-flex items-center gap-1">
+            <span
+              className="inline-block h-3 w-0 border-l border-dashed"
+              style={{ borderColor: WORK_MARKER_COLOR }}
+            />
+            Work hours
+          </span>
+        )}
         <span className="inline-flex items-center gap-1">
           <span className="h-px w-3 rounded bg-[#007AFF]" />
           On-site count
