@@ -169,14 +169,24 @@ const Dashboard = () => {
     ];
   }, [summary]);
 
-  const welcomeName = user?.name || user?.login_id || user?.organization_code;
+  const organizationName = user?.organization_name || user?.organization_code;
+  const adminName = user?.admin_name || user?.name || user?.login_id;
 
   return (
     <div className="dashboard-page max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <h1 className="dashboard-title text-3xl font-bold text-gray-900">Dashboard</h1>
-          <div className="dashboard-subtitle-slot mt-1">
+          <div className="dashboard-subtitle-slot mt-1 space-y-0.5">
+            {organizationName ? (
+              <p className="text-sm text-gray-600">
+                Welcome, <span className="font-medium text-gray-900">{organizationName}</span>
+              </p>
+            ) : isLoading ? (
+              <p className="text-sm text-gray-400" aria-hidden="true">
+                &nbsp;
+              </p>
+            ) : null}
             {summary?.date ? (
               <p className="text-sm text-gray-500">Summary for {summary.date}</p>
             ) : isLoading ? (
@@ -184,18 +194,16 @@ const Dashboard = () => {
                 &nbsp;
               </p>
             ) : null}
-            {user ? (
-              <p className="text-sm text-gray-600">
-                Welcome back, <span className="font-medium">{welcomeName}</span>
-              </p>
-            ) : isLoading ? (
-              <p className="text-sm text-gray-400" aria-hidden="true">
-                &nbsp;
-              </p>
-            ) : null}
           </div>
         </div>
-        <PageTourButtons onTutorial={startTutorial} onInfo={startInfo} />
+        <div className="flex flex-col items-stretch gap-3 sm:items-end">
+          {adminName ? (
+            <p className="text-sm text-gray-500 sm:text-right">
+              Logged in as <span className="font-medium text-gray-800">{adminName}</span>
+            </p>
+          ) : null}
+          <PageTourButtons onTutorial={startTutorial} onInfo={startInfo} />
+        </div>
       </div>
 
       {isError && (

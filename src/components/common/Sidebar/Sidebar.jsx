@@ -188,7 +188,7 @@ const Sidebar = ({ className, forceExpanded = false, onNavigate, onExpandedChang
 
   const expanded = forceExpanded || hovered;
   const collapsed = !expanded;
-  const orgLabel = user?.organization_code || user?.organization_name;
+  const orgLabel = user?.organization_name || user?.organization_code;
 
   useEffect(() => {
     if (forceExpanded) return;

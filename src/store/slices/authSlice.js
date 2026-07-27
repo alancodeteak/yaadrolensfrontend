@@ -37,6 +37,7 @@ export const login = createAsyncThunk(
         login_id: credentials.login_id,
         organization_code: result.organization_code,
         organization_name: result.organization_name,
+        admin_name: result.admin_name,
       });
       localStorage.setItem('user', JSON.stringify(user));
 
