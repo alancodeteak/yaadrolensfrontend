@@ -36,6 +36,22 @@ function normalizeDateKey(value) {
   return String(value).slice(0, 10);
 }
 
+/**
+ * Prefer late for cell color/label when status is late but day_type is
+ * incomplete / on_site / present (backend keeps attendance_status=late).
+ */
+export function resolveCalendarDisplayType(data) {
+  if (!data) return 'future';
+  const dayType = data.day_type || 'future';
+  if (
+    data.attendance_status === 'late' &&
+    !['on_leave', 'scheduled_leave', 'weekly_off', 'future', 'absent'].includes(dayType)
+  ) {
+    return 'late';
+  }
+  return dayType;
+}
+
 const EmployeeMonthCalendar = ({
   year,
   month,
@@ -133,14 +149,16 @@ const EmployeeMonthCalendar = ({
                   return <div key={`pad-${idx}`} className="h-7 w-7" aria-hidden="true" />;
                 }
 
-                const dayType = cell.data?.day_type || 'future';
+                const dayType = resolveCalendarDisplayType(cell.data);
+                const rawDayType = cell.data?.day_type || 'future';
                 const hasTooltip = showDayTooltip(cell);
                 const clickable = isClickableDay(cell);
                 const isToday = cell.iso === todayKey;
                 const statusLabel = STATUS_LABELS[dayType] || dayType;
+                const incompleteLateHint =
+                  dayType === 'late' && rawDayType === 'incomplete' ? ' · incomplete clock-out' : '';
                 const leaveHint =
-                  (cell.data?.day_type === 'on_leave' ||
-                    cell.data?.day_type === 'scheduled_leave') &&
+                  (rawDayType === 'on_leave' || rawDayType === 'scheduled_leave') &&
                   cell.data?.leave_type
                     ? ` (${cell.data.leave_type}${
                         cell.data.is_within_quota ? ', paid' : ', over quota'
@@ -148,7 +166,7 @@ const EmployeeMonthCalendar = ({
                     : '';
                 const hoursLabel = formatDurationHours(cell.data?.total_hours);
                 const tipText = hasTooltip
-                  ? `${statusLabel}${leaveHint}${hoursLabel ? ` · ${hoursLabel}` : ''}`
+                  ? `${statusLabel}${incompleteLateHint}${leaveHint}${hoursLabel ? ` · ${hoursLabel}` : ''}`
                   : undefined;
 
                 return (
@@ -169,7 +187,7 @@ const EmployeeMonthCalendar = ({
                           iso: cell.iso,
                           dayNum: cell.dayNum,
                           dayType,
-                          statusLabel,
+                          statusLabel: `${statusLabel}${incompleteLateHint}`,
                           hoursLabel,
                           clockIn: cell.data?.clock_in,
                           clockOut: cell.data?.clock_out,

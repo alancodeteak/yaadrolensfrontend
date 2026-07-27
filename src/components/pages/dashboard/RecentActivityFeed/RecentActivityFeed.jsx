@@ -122,12 +122,14 @@ const RecentActivityFeed = ({
                 className={clsx(
                   'shrink-0 rounded-full font-semibold',
                   compact ? 'px-1.5 py-0.5 text-[9px]' : 'px-2 py-0.5 text-[10px]',
-                  item.type === 'IN'
-                    ? 'bg-emerald-100 text-emerald-700'
-                    : 'bg-orange-100 text-orange-700'
+                  item.type === 'IN' && item.late
+                    ? 'bg-amber-100 text-amber-800'
+                    : item.type === 'IN'
+                      ? 'bg-emerald-100 text-emerald-700'
+                      : 'bg-orange-100 text-orange-700'
                 )}
               >
-                {item.type === 'IN' ? 'In' : 'Out'}
+                {item.type === 'IN' ? (item.late ? 'Late' : 'In') : 'Out'}
               </span>
             </li>
           ))}

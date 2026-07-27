@@ -136,7 +136,13 @@ const LiveAttendanceMonitoring = () => {
       id: log.id,
       name: log.employee_name,
       type: log.type,
-      event: log.type === 'IN' ? 'Clocked in' : 'Clocked out',
+      late: Boolean(log.late),
+      event:
+        log.type === 'IN'
+          ? log.late
+            ? 'Clocked in (late)'
+            : 'Clocked in'
+          : 'Clocked out',
       time: new Date(log.timestamp).toLocaleTimeString('en-US', {
         hour: '2-digit',
         minute: '2-digit',

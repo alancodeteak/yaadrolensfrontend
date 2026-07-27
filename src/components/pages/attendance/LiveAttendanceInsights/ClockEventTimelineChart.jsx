@@ -100,6 +100,7 @@ export function buildClockEventsFromRows(rows = []) {
   const events = [];
   rows.forEach((row) => {
     const { profilePhotoUrl, photo, avatar } = resolveRowProfilePhoto(row);
+    const isLate = row.attendance_status === 'late';
     const base = {
       employeeId: row.employee_id,
       name: row.name,
@@ -108,11 +109,49 @@ export function buildClockEventsFromRows(rows = []) {
       photo,
       avatar,
     };
+    const sessions = Array.isArray(row.sessions) && row.sessions.length > 0 ? row.sessions : null;
+
+    if (sessions) {
+      sessions.forEach((session, index) => {
+        if (session.clock_in) {
+          events.push({
+            ...base,
+            id: `${row.employee_id}-in-${index}`,
+            type: 'IN',
+            timestamp: session.clock_in,
+            late: isLate && index === 0,
+          });
+        }
+        if (session.clock_out) {
+          events.push({
+            ...base,
+            id: `${row.employee_id}-out-${index}`,
+            type: 'OUT',
+            timestamp: session.clock_out,
+            late: false,
+          });
+        }
+      });
+      return;
+    }
+
     if (row.clock_in) {
-      events.push({ ...base, id: `${row.employee_id}-in`, type: 'IN', timestamp: row.clock_in });
+      events.push({
+        ...base,
+        id: `${row.employee_id}-in`,
+        type: 'IN',
+        timestamp: row.clock_in,
+        late: isLate,
+      });
     }
     if (row.clock_out) {
-      events.push({ ...base, id: `${row.employee_id}-out`, type: 'OUT', timestamp: row.clock_out });
+      events.push({
+        ...base,
+        id: `${row.employee_id}-out`,
+        type: 'OUT',
+        timestamp: row.clock_out,
+        late: false,
+      });
     }
   });
   return events.sort(
@@ -146,6 +185,7 @@ function buildMarkerGroups(markers) {
       y: last.y,
       type: sorted[0].type,
       timestamp: sorted[0].timestamp,
+      late: sorted.some((m) => m.late),
       primary: sorted[0],
       others: sorted.slice(1),
       all: sorted,
@@ -377,12 +417,18 @@ const ClockEventTimelineChart = ({
         )}
 
         {markerGroups.map((group, index) => {
-          const { primary, others, x, y, type } = group;
+          const { primary, others, x, y, type, late } = group;
           const isIn = type === 'IN';
-          const ringColor = isIn ? '#10B981' : '#EF4444';
-          const glowColor = isIn ? 'rgba(16,185,129,0.25)' : 'rgba(239,68,68,0.25)';
+          const isLateIn = isIn && late;
+          const ringColor = isLateIn ? '#F59E0B' : isIn ? '#10B981' : '#EF4444';
+          const glowColor = isLateIn
+            ? 'rgba(245,158,11,0.28)'
+            : isIn
+              ? 'rgba(16,185,129,0.25)'
+              : 'rgba(239,68,68,0.25)';
           const delay = `${0.3 + index * 0.05}s`;
           const hasOthers = others.length > 0;
+          const actionLabel = isLateIn ? 'clocked in late' : isIn ? 'clocked in' : 'clocked out';
 
           return (
             <g
@@ -401,7 +447,7 @@ const ClockEventTimelineChart = ({
               onBlur={() => setHoveredGroupKey(null)}
               tabIndex={0}
               role="button"
-              aria-label={`${primary.name}${hasOthers ? ` and ${others.length} more` : ''} ${isIn ? 'clocked in' : 'clocked out'} at ${formatEventTime(group.timestamp)}`}
+              aria-label={`${primary.name}${hasOthers ? ` and ${others.length} more` : ''} ${actionLabel} at ${formatEventTime(group.timestamp)}`}
             >
               <circle
                 cx={x}
@@ -458,6 +504,27 @@ const ClockEventTimelineChart = ({
                   </text>
                 </g>
               )}
+              {isLateIn && !hasOthers && (
+                <g>
+                  <circle
+                    cx={x + AVATAR_SIZE / 2 - 1}
+                    cy={y + AVATAR_SIZE / 2 - 1}
+                    r={5.5}
+                    fill="#F59E0B"
+                    stroke="white"
+                    strokeWidth="1"
+                  />
+                  <text
+                    x={x + AVATAR_SIZE / 2 - 1}
+                    y={y + AVATAR_SIZE / 2 - 1}
+                    textAnchor="middle"
+                    dominantBaseline="central"
+                    className="fill-white text-[6px] font-bold"
+                  >
+                    L
+                  </text>
+                </g>
+              )}
             </g>
           );
         })}
@@ -476,6 +543,7 @@ const ClockEventTimelineChart = ({
             <div className="flex items-end gap-1.5">
               {hoveredGroup.all.map((person, idx) => {
                 const isIn = person.type === 'IN';
+                const isLateIn = isIn && person.late;
                 return (
                   <div
                     key={person.id}
@@ -487,7 +555,11 @@ const ClockEventTimelineChart = ({
                     <div
                       className={clsx(
                         'rounded-full p-0.5',
-                        isIn ? 'ring-2 ring-emerald-500' : 'ring-2 ring-red-500'
+                        isLateIn
+                          ? 'ring-2 ring-amber-500'
+                          : isIn
+                            ? 'ring-2 ring-emerald-500'
+                            : 'ring-2 ring-red-500'
                       )}
                     >
                       <UserAvatar
@@ -499,14 +571,19 @@ const ClockEventTimelineChart = ({
                     </div>
                     <span className="max-w-[56px] truncate text-[9px] font-medium text-gray-700">
                       {person.name.split(' ')[0]}
+                      {isLateIn ? ' · late' : ''}
                     </span>
                   </div>
                 );
               })}
             </div>
             <p className="mt-1.5 text-center text-[10px] text-gray-500">
-              {hoveredGroup.type === 'IN' ? 'Clocked in' : 'Clocked out'} ·{' '}
-              {formatEventTime(hoveredGroup.timestamp)}
+              {hoveredGroup.late && hoveredGroup.type === 'IN'
+                ? 'Clocked in late'
+                : hoveredGroup.type === 'IN'
+                  ? 'Clocked in'
+                  : 'Clocked out'}{' '}
+              · {formatEventTime(hoveredGroup.timestamp)}
               {hoveredGroup.all.length > 1 && ` · ${hoveredGroup.all.length} people`}
             </p>
           </div>
@@ -543,6 +620,10 @@ const ClockEventTimelineChart = ({
         <span className="inline-flex items-center gap-1">
           <span className="h-2 w-2 rounded-full ring-1 ring-emerald-500 ring-offset-1" />
           Clock in
+        </span>
+        <span className="inline-flex items-center gap-1">
+          <span className="h-2 w-2 rounded-full ring-1 ring-amber-500 ring-offset-1" />
+          Late in
         </span>
         <span className="inline-flex items-center gap-1">
           <span className="h-2 w-2 rounded-full ring-1 ring-red-500 ring-offset-1" />

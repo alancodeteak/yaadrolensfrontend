@@ -269,6 +269,7 @@ export function transformDailyRowsToLogs(response) {
 
   rows.forEach((row) => {
     const { profilePhotoUrl, photo, avatar } = resolveRowProfilePhoto(row);
+    const isLate = row.attendance_status === 'late';
     const sessions = Array.isArray(row.sessions) && row.sessions.length > 0 ? row.sessions : null;
 
     if (sessions) {
@@ -280,6 +281,7 @@ export function transformDailyRowsToLogs(response) {
             employee_department: '',
             type: 'IN',
             timestamp: session.clock_in,
+            late: isLate && index === 0,
             profilePhotoUrl,
             photo,
             avatar,
@@ -292,6 +294,7 @@ export function transformDailyRowsToLogs(response) {
             employee_department: '',
             type: 'OUT',
             timestamp: session.clock_out,
+            late: false,
             profilePhotoUrl,
             photo,
             avatar,
@@ -308,6 +311,7 @@ export function transformDailyRowsToLogs(response) {
         employee_department: '',
         type: 'IN',
         timestamp: row.clock_in,
+        late: isLate,
         profilePhotoUrl,
         photo,
         avatar,
@@ -320,6 +324,7 @@ export function transformDailyRowsToLogs(response) {
         employee_department: '',
         type: 'OUT',
         timestamp: row.clock_out,
+        late: false,
         profilePhotoUrl,
         photo,
         avatar,
