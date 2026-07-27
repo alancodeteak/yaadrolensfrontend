@@ -4,6 +4,7 @@ const TabNavigation = ({ activeTab, onTabChange }) => {
   const tabs = [
     { id: 'personal', label: 'Personal info' },
     { id: 'attendance', label: 'Attendance' },
+    { id: 'pay', label: 'Pay & salary' },
     { id: 'training', label: 'Face enrollment' },
   ];
 

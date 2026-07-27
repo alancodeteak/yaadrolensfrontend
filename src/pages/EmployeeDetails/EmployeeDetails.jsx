@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { Clock, BarChart3, ScanFace, Pencil } from 'lucide-react';
+import { Clock, BarChart3, ScanFace, Pencil, Wallet } from 'lucide-react';
 import {
   useGetEmployeeByIdQuery,
   useGetEmployeePaymentSummaryQuery,
@@ -16,6 +16,7 @@ import {
   JobInformationCard,
   TrainingStatusCard,
   AttendanceLog,
+  PayAndSalarySection,
 } from '../../components/pages/employee-details';
 import { LoadingScreen, NotFoundState, notFoundActionClass } from '../../components/common';
 
@@ -95,6 +96,13 @@ const EmployeeDetails = () => {
         );
       case 'attendance':
         return <AttendanceLog employeeId={employee.id} />;
+      case 'pay':
+        return (
+          <PayAndSalarySection
+            employee={employee}
+            onAdjustBalance={() => setBalanceModalOpen(true)}
+          />
+        );
       case 'training':
         return <TrainingStatusCard employee={employee} />;
       default:
@@ -130,6 +138,14 @@ const EmployeeDetails = () => {
               <ScanFace className="h-4 w-4 text-[#5856D6]" strokeWidth={2} />
               Face enrollment
             </Link>
+            <button
+              type="button"
+              onClick={() => setActiveTab('pay')}
+              className={quickActionClass}
+            >
+              <Wallet className="h-4 w-4 text-[#FF9500]" strokeWidth={2} />
+              Pay &amp; salary
+            </button>
             <Link to="/admin/employees" className={quickActionClass}>
               <Pencil className="h-4 w-4 text-gray-500" strokeWidth={2} />
               Back to list

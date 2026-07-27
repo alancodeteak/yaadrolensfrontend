@@ -10,6 +10,7 @@ export { default as PasswordUpdate } from './PasswordUpdate';
 export { default as NotificationPreferences } from './NotificationPreferences';
 export { default as AttendanceLog } from './AttendanceLog';
 export { default as EmployeeMonthCalendar } from './EmployeeMonthCalendar';
+export { default as PayAndSalarySection } from './PayAndSalarySection';
 
 
 
