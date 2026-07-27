@@ -29,13 +29,57 @@ export const gettingStartedContent = {
         span: 'full',
         list: [
           'Your company account is created by your system provider.',
+          [
+            'Configure ',
+            docStrong('Settings'),
+            ' first — timezone, work hours, grace, weekly offs, leave, and salary calculation. See the ',
+            docLink('/docs/settings', 'Settings guide'),
+            ' for what each option means.',
+          ],
           'Add your employees in the Employees section.',
           'Set employee salaries in the Salary section.',
-          'Set work hours in Settings → Attendance.',
           'Connect the kiosk tablet (see Kiosk setup).',
           "Register each employee's face on the kiosk.",
           'Watch attendance on the Dashboard and Live Attendance pages.',
           'Download attendance and payroll reports from the Reports page.',
+        ],
+      },
+      {
+        title: 'Configure Settings (important)',
+        span: 'full',
+        paragraphs: [
+          [
+            'Most “late / leave / salary looks wrong” issues come from Settings. Open ',
+            docLink('/admin/settings/attendance', 'Attendance rules'),
+            ', ',
+            docLink('/admin/settings/payment', 'Payment rules'),
+            ', and ',
+            docLink('/admin/settings/cameras', 'Kiosk'),
+            ' and set them before relying on live attendance or payroll.',
+          ],
+        ],
+        list: [
+          [
+            docStrong('Kiosk → Timezone'),
+            ' — Usually Asia/Kolkata for India. Controls “today” and late detection.',
+          ],
+          [
+            docStrong('Attendance → Work start / end + grace'),
+            ' — Defines late and early leave.',
+          ],
+          [
+            docStrong('Attendance → Minimum clock-out wait'),
+            ' — Stops accidental immediate clock-out after clock-in.',
+          ],
+          [
+            docStrong('Payment → Weekly off, leave quota, calculation mode, pay day'),
+            ' — Controls how monthly salary is generated.',
+          ],
+        ],
+        tip: [
+          'Need every field explained? Read the full ',
+          docLink('/docs/settings', 'Settings guide'),
+          '.',
         ],
       },
       {
@@ -46,12 +90,14 @@ export const gettingStartedContent = {
           'On most pages you will see Tutorial and Info buttons for a quick walkthrough.',
         ],
         tip: [
-          'New here? Start with the Dashboard, then add employees, then set up the kiosk. You can always come back to this guide from the ',
+          'New here? Start with the Dashboard, then configure Settings, then add employees, then set up the kiosk. You can always come back to this guide from the ',
           docStrong('Get Started'),
           ' menu.',
         ],
         footer: [
           'Next: ',
+          docLink('/docs/settings', 'Settings guide'),
+          ' · ',
           docLink('/docs/dashboard', 'Your Dashboard'),
           ' · ',
           docLink('/docs/kiosk', 'Kiosk setup'),
@@ -89,13 +135,35 @@ export const gettingStartedContent = {
         span: 'full',
         list: [
           'आपकी कंपनी अकाउंट सिस्टम प्रदाता बनाता है।',
+          [
+            'पहले ',
+            docStrong('Settings'),
+            ' कॉन्फ़िगर करें — टाइमज़ोन, कार्य समय, छुट्टी और सैलरी नियम। हर विकल्प की व्याख्या: ',
+            docLink('/docs/settings', 'Settings गाइड'),
+            '।',
+          ],
           'Employees सेक्शन में कर्मचारी जोड़ें।',
           'Salary सेक्शन में कर्मचारी वेतन सेट करें।',
-          'Settings → Attendance में कार्य समय सेट करें।',
           'कियोस्क टैबलेट कनेक्ट करें (Kiosk setup देखें)।',
           'हर कर्मचारी का चेहरा कियोस्क पर रजिस्टर करें।',
           'डैशबोर्ड और Live Attendance पर हाजिरी देखें।',
           'Reports पेज से हाजिरी और पेरोल रिपोर्ट डाउनलोड करें।',
+        ],
+      },
+      {
+        title: 'सेटिंग्स कॉन्फ़िगर करें (ज़रूरी)',
+        span: 'full',
+        paragraphs: [
+          [
+            'ज़्यादातर late / leave / salary समस्याएँ Settings से जुड़ी होती हैं। पूरा विवरण ',
+            docLink('/docs/settings', 'Settings गाइड'),
+            ' में पढ़ें।',
+          ],
+        ],
+        list: [
+          [docStrong('Kiosk → Timezone'), ' — भारत के लिए आमतौर पर Asia/Kolkata।'],
+          [docStrong('Attendance → Work start / end + grace'), ' — late और early leave तय करता है।'],
+          [docStrong('Payment → Weekly off, leave, calculation, pay day'), ' — मासिक सैलरी कैसे बनेगी।'],
         ],
       },
       {
@@ -106,12 +174,14 @@ export const gettingStartedContent = {
           'ज़्यादातर पेजों पर Tutorial और Info बटन मिलेंगे।',
         ],
         tip: [
-          'नए हैं? पहले डैशबोर्ड देखें, फिर कर्मचारी जोड़ें, फिर कियोस्क सेट करें। आप इस गाइड पर वापस ',
+          'नए हैं? पहले डैशबोर्ड, फिर Settings, फिर कर्मचारी, फिर कियोस्क। इस गाइड पर वापस ',
           docStrong('Get Started'),
           ' मेनू से आ सकते हैं।',
         ],
         footer: [
           'आगे: ',
+          docLink('/docs/settings', 'Settings गाइड'),
+          ' · ',
           docLink('/docs/dashboard', 'आपका डैशबोर्ड'),
           ' · ',
           docLink('/docs/kiosk', 'कियोस्क सेटअप'),
@@ -149,13 +219,35 @@ export const gettingStartedContent = {
         span: 'full',
         list: [
           'നിങ്ങളുടെ കമ്പനി അക്കൗണ്ട് സിസ്റ്റം പ്രൊവൈഡർ സൃഷ്ടിക്കുന്നു.',
+          [
+            'ആദ്യം ',
+            docStrong('Settings'),
+            ' ക്രമീകരിക്കുക — ടൈംസോൺ, ജോലി സമയം, ലീവ്, ശമ്പള നിയമങ്ങൾ. ഓരോ ഓപ്ഷനും: ',
+            docLink('/docs/settings', 'Settings ഗൈഡ്'),
+            '.',
+          ],
           'Employees വിഭാഗത്തിൽ ജീവനക്കാരെ ചേർക്കുക.',
           'Salary വിഭാഗത്തിൽ ജീവനക്കാരുടെ ശമ്പളം സെറ്റ് ചെയ്യുക.',
-          'Settings → Attendance-ൽ ജോലി സമയം സെറ്റ് ചെയ്യുക.',
           'കിയോസ്ക് ടാബ്ലെറ്റ് കണക്റ്റ് ചെയ്യുക (Kiosk setup കാണുക).',
           'ഓരോ ജീവനക്കാരുടെയും മുഖം കിയോസ്കിൽ രജിസ്റ്റർ ചെയ്യുക.',
           'ഡാഷ്‌ബോർഡിലും Live Attendance-ലും ഹാജർ നിരീക്ഷിക്കുക.',
           'Reports പേജിൽ നിന്ന് ഹാജർ, പേറോൾ റിപ്പോർട്ടുകൾ ഡൗൺലോഡ് ചെയ്യുക.',
+        ],
+      },
+      {
+        title: 'Settings ക്രമീകരിക്കുക (പ്രധാനം)',
+        span: 'full',
+        paragraphs: [
+          [
+            'late / leave / salary പ്രശ്നങ്ങളിൽ പലതും Settings-ൽ നിന്നാണ്. പൂർണ്ണ വിവരണം ',
+            docLink('/docs/settings', 'Settings ഗൈഡിൽ'),
+            '.',
+          ],
+        ],
+        list: [
+          [docStrong('Kiosk → Timezone'), ' — ഇന്ത്യയ്ക്ക് സാധാരണ Asia/Kolkata.'],
+          [docStrong('Attendance → Work start / end + grace'), ' — late / early leave നിർണയിക്കുന്നു.'],
+          [docStrong('Payment → Weekly off, leave, calculation, pay day'), ' — മാസ ശമ്പളം എങ്ങനെ ഉണ്ടാകും.'],
         ],
       },
       {
@@ -166,12 +258,14 @@ export const gettingStartedContent = {
           'മിക്ക പേജുകളിലും Tutorial, Info ബട്ടണുകൾ കാണാം.',
         ],
         tip: [
-          'പുതിയവരാണോ? ആദ്യം ഡാഷ്‌ബോർഡ്, പിന്നെ ജീവനക്കാർ, പിന്നെ കിയോസ്ക് സെറ്റപ്പ്. ഈ ഗൈഡിലേക്ക് ',
+          'പുതിയവരാണോ? ആദ്യം ഡാഷ്‌ബോർഡ്, പിന്നെ Settings, പിന്നെ ജീവനക്കാർ, പിന്നെ കിയോസ്ക്. ഈ ഗൈഡിലേക്ക് ',
           docStrong('Get Started'),
           ' മെനുവിൽ നിന്ന് എപ്പോഴും തിരിച്ച് വരാം.',
         ],
         footer: [
           'അടുത്തത്: ',
+          docLink('/docs/settings', 'Settings ഗൈഡ്'),
+          ' · ',
           docLink('/docs/dashboard', 'നിങ്ങളുടെ ഡാഷ്‌ബോർഡ്'),
           ' · ',
           docLink('/docs/kiosk', 'കിയോസ്ക് സെറ്റപ്പ്'),
@@ -209,13 +303,35 @@ export const gettingStartedContent = {
         span: 'full',
         list: [
           'ನಿಮ್ಮ ಕಂಪನಿ ಖಾತೆಯನ್ನು ಸಿಸ್ಟಮ್ ಪ್ರೊವೈಡರ್ ರಚಿಸುತ್ತಾರೆ.',
+          [
+            'ಮೊದಲು ',
+            docStrong('Settings'),
+            ' ಹೊಂದಿಸಿ — ಟೈಮ್‌ಝೋನ್, ಕೆಲಸದ ಸಮಯ, ರಜೆ, ಸಂಬಳ ನಿಯಮಗಳು. ಪ್ರತಿ ಆಯ್ಕೆ: ',
+            docLink('/docs/settings', 'Settings ಮಾರ್ಗದರ್ಶಿ'),
+            '.',
+          ],
           'Employees ವಿಭಾಗದಲ್ಲಿ ಉದ್ಯೋಗಿಗಳನ್ನು ಸೇರಿಸಿ.',
           'Salary ವಿಭಾಗದಲ್ಲಿ ಉದ್ಯೋಗಿ ಸಂಬಳ ಹೊಂದಿಸಿ.',
-          'Settings → Attendance ನಲ್ಲಿ ಕೆಲಸದ ಸಮಯ ಹೊಂದಿಸಿ.',
           'ಕಿಯೋಸ್ಕ್ ಟ್ಯಾಬ್ಲೆಟ್ ಸಂಪರ್ಕಿಸಿ (Kiosk setup ನೋಡಿ).',
           'ಪ್ರತಿ ಉದ್ಯೋಗಿಯ ಮುಖವನ್ನು ಕಿಯೋಸ್ಕ್‌ನಲ್ಲಿ ನೋಂದಾಯಿಸಿ.',
           'ಡ್ಯಾಶ್‌ಬೋರ್ಡ್ ಮತ್ತು Live Attendance ನಲ್ಲಿ ಹಾಜರಾತಿ ನೋಡಿ.',
           'Reports ಪುಟದಿಂದ ಹಾಜರಾತಿ ಮತ್ತು ಪೇರೋಲ್ ವರದಿಗಳನ್ನು ಡೌನ್‌ಲೋಡ್ ಮಾಡಿ.',
+        ],
+      },
+      {
+        title: 'Settings ಹೊಂದಿಸಿ (ಮುಖ್ಯ)',
+        span: 'full',
+        paragraphs: [
+          [
+            'late / leave / salary ಸಮಸ್ಯೆಗಳಲ್ಲಿ ಹಲವು Settings ನಿಂದ ಬರುತ್ತವೆ. ಪೂರ್ಣ ವಿವರ ',
+            docLink('/docs/settings', 'Settings ಮಾರ್ಗದರ್ಶಿ'),
+            'ಯಲ್ಲಿ.',
+          ],
+        ],
+        list: [
+          [docStrong('Kiosk → Timezone'), ' — ಭಾರತಕ್ಕೆ ಸಾಮಾನ್ಯವಾಗಿ Asia/Kolkata.'],
+          [docStrong('Attendance → Work start / end + grace'), ' — late / early leave ನಿರ್ಧರಿಸುತ್ತದೆ.'],
+          [docStrong('Payment → Weekly off, leave, calculation, pay day'), ' — ಮಾಸಿಕ ಸಂಬಳ ಹೇಗೆ ರಚನೆಯಾಗುತ್ತದೆ.'],
         ],
       },
       {
@@ -226,12 +342,14 @@ export const gettingStartedContent = {
           'ಹೆಚ್ಚಿನ ಪುಟಗಳಲ್ಲಿ Tutorial ಮತ್ತು Info ಬಟನ್‌ಗಳು ಕಾಣಿಸುತ್ತವೆ.',
         ],
         tip: [
-          'ಹೊಸಬರೇ? ಮೊದಲು ಡ್ಯಾಶ್‌ಬೋರ್ಡ್, ನಂತರ ಉದ್ಯೋಗಿಗಳು, ನಂತರ ಕಿಯೋಸ್ಕ್ ಸೆಟಪ್. ಈ ಮಾರ್ಗದರ್ಶಿಗೆ ',
+          'ಹೊಸಬರೇ? ಮೊದಲು ಡ್ಯಾಶ್‌ಬೋರ್ಡ್, ನಂತರ Settings, ನಂತರ ಉದ್ಯೋಗಿಗಳು, ನಂತರ ಕಿಯೋಸ್ಕ್. ಈ ಮಾರ್ಗದರ್ಶಿಗೆ ',
           docStrong('Get Started'),
           ' ಮೆನುವಿನಿಂದ ಯಾವಾಗಲೂ ಹಿಂತಿರುಗಬಹುದು.',
         ],
         footer: [
           'ಮುಂದೆ: ',
+          docLink('/docs/settings', 'Settings ಮಾರ್ಗದರ್ಶಿ'),
+          ' · ',
           docLink('/docs/dashboard', 'ನಿಮ್ಮ ಡ್ಯಾಶ್‌ಬೋರ್ಡ್'),
           ' · ',
           docLink('/docs/kiosk', 'ಕಿಯೋಸ್ಕ್ ಸೆಟಪ್'),
