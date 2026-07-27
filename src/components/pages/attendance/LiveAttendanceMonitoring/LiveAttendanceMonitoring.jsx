@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import clsx from 'clsx';
 import { useNavigate } from 'react-router-dom';
-import { RefreshCw, Search, Users } from 'lucide-react';
+import { LogIn, LogOut, RefreshCw, Search, Users } from 'lucide-react';
 import {
   ATTENDANCE_GUIDE_STEPS,
   DashboardDatePicker,
@@ -9,6 +9,7 @@ import {
   PageInfoOverlay,
   PageTourButtons,
   UserAvatar,
+  dashboardToast,
   usePageTour,
 } from '../../../common';
 import {
@@ -19,7 +20,11 @@ import {
 } from '../../dashboard/dashboardTheme';
 import { DashboardWidgetCard, RecentActivityFeed } from '../../dashboard';
 import LiveAttendanceInsights from '../LiveAttendanceInsights';
-import { useGetDailySummaryQuery } from '../../../../store/api/attendanceApi';
+import ManualPunchConfirmModal from '../ManualPunchConfirmModal';
+import {
+  useGetDailySummaryQuery,
+  useManualPunchMutation,
+} from '../../../../store/api/attendanceApi';
 import { useGetSettingsQuery } from '../../../../store/api/settingsApi';
 import {
   formatDurationHours,
@@ -74,6 +79,8 @@ const LiveAttendanceMonitoring = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedStatus, setSelectedStatus] = useState('All Status');
   const [selectedDay, setSelectedDay] = useState(todayKey);
+  const [manualPunchTarget, setManualPunchTarget] = useState(null);
+  const [manualPunch, { isLoading: isManualPunching }] = useManualPunchMutation();
 
   // Align default date with org timezone once settings load (without overriding a manual pick).
   useEffect(() => {
@@ -209,6 +216,21 @@ const LiveAttendanceMonitoring = () => {
 
   const openAttendanceReport = (employeeId) => {
     navigate(`/admin/employees/${employeeId}/attendance-report`);
+  };
+
+  const openManualPunch = (employee, action, event) => {
+    event.stopPropagation();
+    setManualPunchTarget({ employee, action });
+  };
+
+  const handleManualPunchConfirm = async ({ employee_id, action, confirmation }) => {
+    const result = await manualPunch({ employee_id, action, confirmation }).unwrap();
+    dashboardToast.success(
+      result?.message || `Manual ${action === 'clock_in' ? 'clock in' : 'clock out'} recorded`,
+      'Manual attendance'
+    );
+    setManualPunchTarget(null);
+    refetch();
   };
 
   if (dailyLoading && !dailyData) {
@@ -374,10 +396,13 @@ const LiveAttendanceMonitoring = () => {
                   <th className={clsx(TH, 'hidden sm:table-cell')}>Clock in</th>
                   <th className={clsx(TH, 'hidden lg:table-cell')}>Last seen</th>
                   <th className={TH}>Hours</th>
+                  {isToday && <th className={clsx(TH, 'text-right')}>Manual</th>}
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
-                {filteredEmployees.map((employee) => (
+                {filteredEmployees.map((employee) => {
+                  const onSite = isLiveOnSiteStatus(employee.status);
+                  return (
                   <tr
                     key={employee.id}
                     className="cursor-pointer transition-colors hover:bg-gray-50/80"
@@ -432,8 +457,34 @@ const LiveAttendanceMonitoring = () => {
                     <td className={clsx(TD, 'tabular-nums text-gray-700')}>
                       {formatDurationHours(employee.totalHours)}
                     </td>
+                    {isToday && (
+                      <td className={clsx(TD, 'text-right')}>
+                        {onSite ? (
+                          <button
+                            type="button"
+                            className={clsx(DASHBOARD_BTN_SECONDARY, 'px-2.5 py-1.5 text-xs')}
+                            onClick={(event) => openManualPunch(employee, 'clock_out', event)}
+                            title="Manual clock out"
+                          >
+                            <LogOut className="h-3.5 w-3.5" strokeWidth={2} />
+                            Out
+                          </button>
+                        ) : (
+                          <button
+                            type="button"
+                            className={clsx(DASHBOARD_BTN_SECONDARY, 'px-2.5 py-1.5 text-xs')}
+                            onClick={(event) => openManualPunch(employee, 'clock_in', event)}
+                            title="Manual clock in"
+                          >
+                            <LogIn className="h-3.5 w-3.5" strokeWidth={2} />
+                            In
+                          </button>
+                        )}
+                      </td>
+                    )}
                   </tr>
-                ))}
+                  );
+                })}
               </tbody>
             </table>
           </div>
@@ -448,6 +499,15 @@ const LiveAttendanceMonitoring = () => {
           workEndTime={settings?.work_end_time}
         />
       </div>
+
+      <ManualPunchConfirmModal
+        isOpen={Boolean(manualPunchTarget)}
+        employee={manualPunchTarget?.employee}
+        action={manualPunchTarget?.action}
+        isLoading={isManualPunching}
+        onClose={() => setManualPunchTarget(null)}
+        onConfirm={handleManualPunchConfirm}
+      />
 
       {infoOpen && (
         <PageInfoOverlay

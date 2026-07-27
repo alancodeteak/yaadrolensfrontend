@@ -28,17 +28,22 @@ const ConfirmationDialog = ({
   onConfirm,
   title,
   message,
+  children,
   confirmText = 'Confirm',
   cancelText = 'Cancel',
   variant = 'primary',
   confirmButtonClass,
   isLoading = false,
+  confirmDisabled = false,
 }) => {
   if (!isOpen) return null;
 
   const config = VARIANTS[variant] || VARIANTS.primary;
   const Icon = config.icon;
   const confirmClass = confirmButtonClass || config.confirmClass;
+  const content = children || (message ? (
+    <p className="whitespace-pre-line text-sm leading-relaxed text-gray-500">{message}</p>
+  ) : null);
 
   return (
     <div
@@ -64,11 +69,7 @@ const ConfirmationDialog = ({
               <h3 id="confirmation-dialog-title" className="text-lg font-semibold text-gray-900">
                 {title}
               </h3>
-              {message ? (
-                <p className="mt-1.5 whitespace-pre-line text-sm leading-relaxed text-gray-500">
-                  {message}
-                </p>
-              ) : null}
+              {content ? <div className="mt-1.5 text-sm leading-relaxed text-gray-500">{content}</div> : null}
             </div>
           </div>
         </div>
@@ -82,15 +83,17 @@ const ConfirmationDialog = ({
           >
             {cancelText}
           </button>
-          <button
-            type="button"
-            onClick={onConfirm}
-            disabled={isLoading}
-            className={`inline-flex items-center gap-2 ${confirmClass}`}
-          >
-            {isLoading && <ButtonSpinner size="sm" className="text-white" />}
-            {isLoading ? 'Processing…' : confirmText}
-          </button>
+          {onConfirm && (
+            <button
+              type="button"
+              onClick={onConfirm}
+              disabled={isLoading || confirmDisabled}
+              className={`inline-flex items-center gap-2 ${confirmClass}`}
+            >
+              {isLoading && <ButtonSpinner size="sm" className="text-white" />}
+              {isLoading ? 'Processing…' : confirmText}
+            </button>
+          )}
         </div>
       </div>
     </div>
