@@ -264,10 +264,13 @@ function buildMarkerGroups(markers) {
 
 const ClockEventTimelineChart = ({
   events = [],
+  domainEvents = null,
   workStartTime = null,
   workEndTime = null,
   domainStartTime = null,
   domainEndTime = null,
+  playbackMode = false,
+  highlightEventId = null,
 }) => {
   const gradientId = useId();
   const lineRef = useRef(null);
@@ -275,17 +278,21 @@ const ClockEventTimelineChart = ({
   const [lineReady, setLineReady] = useState(false);
   const [hoveredGroupKey, setHoveredGroupKey] = useState(null);
   const [hoveredWorkMarker, setHoveredWorkMarker] = useState(null);
+  const [enteringGroupKey, setEnteringGroupKey] = useState(null);
+  const prevGroupCountRef = useRef(0);
+
+  const domainSource = domainEvents ?? events;
 
   const { domainStart, domainEnd } = useMemo(
     () =>
       resolveChartDomain(
         workStartTime,
         workEndTime,
-        events,
+        domainSource,
         domainStartTime,
         domainEndTime
       ),
-    [workStartTime, workEndTime, events, domainStartTime, domainEndTime]
+    [workStartTime, workEndTime, domainSource, domainStartTime, domainEndTime]
   );
 
   const xTicks = useMemo(
@@ -370,12 +377,42 @@ const ClockEventTimelineChart = ({
   }, [linePath]);
 
   useEffect(() => {
+    if (playbackMode) {
+      setLineReady(true);
+      return undefined;
+    }
+
     setLineReady(false);
     const frame = requestAnimationFrame(() => {
       requestAnimationFrame(() => setLineReady(true));
     });
     return () => cancelAnimationFrame(frame);
-  }, [linePath]);
+  }, [linePath, playbackMode]);
+
+  useEffect(() => {
+    if (!playbackMode) {
+      prevGroupCountRef.current = markerGroups.length;
+      setEnteringGroupKey(null);
+      return undefined;
+    }
+
+    if (markerGroups.length > prevGroupCountRef.current) {
+      const newest = markerGroups[markerGroups.length - 1];
+      if (newest?.key) {
+        setEnteringGroupKey(newest.key);
+        const timer = window.setTimeout(() => setEnteringGroupKey(null), 520);
+        prevGroupCountRef.current = markerGroups.length;
+        return () => window.clearTimeout(timer);
+      }
+    }
+
+    if (markerGroups.length === 0) {
+      prevGroupCountRef.current = 0;
+      setEnteringGroupKey(null);
+    }
+
+    return undefined;
+  }, [markerGroups, playbackMode]);
 
   const yTicks = useMemo(() => {
     if (maxCount <= 1) return [0, 1];
@@ -484,7 +521,7 @@ const ClockEventTimelineChart = ({
             fill={`url(#${gradientId})`}
             className={clsx(
               'transition-opacity duration-500 ease-out',
-              lineReady ? 'opacity-100' : 'opacity-0'
+              lineReady || playbackMode ? 'opacity-100' : 'opacity-0'
             )}
           />
         )}
@@ -498,9 +535,13 @@ const ClockEventTimelineChart = ({
             strokeWidth={LINE_WIDTH}
             strokeLinecap="round"
             strokeLinejoin="round"
-            strokeDasharray={lineLength || undefined}
-            strokeDashoffset={lineReady ? 0 : lineLength}
-            style={{ transition: 'stroke-dashoffset 1.2s cubic-bezier(0.4, 0, 0.2, 1)' }}
+            strokeDasharray={playbackMode ? undefined : lineLength || undefined}
+            strokeDashoffset={playbackMode || lineReady ? 0 : lineLength}
+            style={
+              playbackMode
+                ? undefined
+                : { transition: 'stroke-dashoffset 1.2s cubic-bezier(0.4, 0, 0.2, 1)' }
+            }
           />
         )}
 
@@ -517,18 +558,37 @@ const ClockEventTimelineChart = ({
           const delay = `${0.3 + index * 0.05}s`;
           const hasOthers = others.length > 0;
           const actionLabel = isLateIn ? 'clocked in late' : isIn ? 'clocked in' : 'clocked out';
+          const isEntering = playbackMode && group.key === enteringGroupKey;
+          const isVisible = playbackMode || lineReady;
+          const isHighlighted =
+            highlightEventId &&
+            group.all.some((person) => person.id === highlightEventId);
 
           return (
             <g
               key={group.key}
-              className="cursor-pointer"
-              style={{
-                opacity: lineReady ? 1 : 0,
-                transform: lineReady ? 'scale(1)' : 'scale(0.5)',
-                transformOrigin: `${x}px ${y}px`,
-                transformBox: 'fill-box',
-                transition: `opacity 0.4s ease ${delay}, transform 0.45s cubic-bezier(0.34, 1.56, 0.64, 1) ${delay}`,
-              }}
+              className={clsx(
+                'cursor-pointer',
+                isEntering && 'timeline-marker-enter',
+                isHighlighted && 'timeline-marker-highlight'
+              )}
+              style={
+                playbackMode
+                  ? {
+                      opacity: isVisible ? 1 : 0,
+                      transform: isHighlighted ? 'scale(1.12)' : 'scale(1)',
+                      transformOrigin: `${x}px ${y}px`,
+                      transformBox: 'fill-box',
+                      transition: 'transform 0.25s ease',
+                    }
+                  : {
+                      opacity: lineReady ? 1 : 0,
+                      transform: isHighlighted ? 'scale(1.12)' : lineReady ? 'scale(1)' : 'scale(0.5)',
+                      transformOrigin: `${x}px ${y}px`,
+                      transformBox: 'fill-box',
+                      transition: `opacity 0.4s ease ${delay}, transform 0.45s cubic-bezier(0.34, 1.56, 0.64, 1) ${delay}`,
+                    }
+              }
               onMouseEnter={() => setHoveredGroupKey(group.key)}
               onMouseLeave={() => setHoveredGroupKey(null)}
               onFocus={() => setHoveredGroupKey(group.key)}
@@ -542,16 +602,19 @@ const ClockEventTimelineChart = ({
                 cy={y}
                 r={AVATAR_SIZE / 2 + 2}
                 fill={glowColor}
-                className="animate-pulse"
-                style={{ animationDuration: '2.8s' }}
+                className={isHighlighted ? undefined : 'animate-pulse'}
+                style={{
+                  animationDuration: '2.8s',
+                  ...(isHighlighted ? { fill: glowColor.replace('0.25', '0.45').replace('0.28', '0.5') } : {}),
+                }}
               />
               <circle
                 cx={x}
                 cy={y}
-                r={AVATAR_SIZE / 2 + RING_WIDTH}
+                r={AVATAR_SIZE / 2 + RING_WIDTH + (isHighlighted ? 1.5 : 0)}
                 fill="white"
                 stroke={ringColor}
-                strokeWidth={RING_WIDTH}
+                strokeWidth={isHighlighted ? RING_WIDTH + 0.75 : RING_WIDTH}
               />
               <foreignObject
                 x={x - AVATAR_SIZE / 2}

@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Eye, EyeOff, Search, UserPlus } from 'lucide-react';
 import clsx from 'clsx';
 import { EmployeeTable, FilterSort, EmployeeModal, EmployeeEditModal } from '../../components/pages/employees';
@@ -18,7 +18,6 @@ import {
   dashboardToast,
 } from '../../components/common';
 import {
-  useGetEmployeesQuery,
   useCreateEmployeeMutation,
   useUpdateEmployeeMutation,
   useDeleteEmployeeMutation,
@@ -29,14 +28,8 @@ import {
 } from '../../store/api';
 import { applyEmployeeDocumentChanges } from '../../utils/applyEmployeeDocumentChanges';
 import { hasDocumentChanges } from '../../utils/employeeDocumentConstants';
-import {
-  filterEmployees,
-  paginateEmployees,
-  sortEmployees,
-} from '../../utils/employeeListUtils';
+import { usePaginatedEmployees } from '../../hooks/usePaginatedEmployees';
 import { useGetDepartmentsQuery } from '../../store/api/settingsApi';
-
-const LIST_FETCH_LIMIT = 200;
 
 const Employees = () => {
   const { infoOpen, startTutorial, startInfo, closeInfo } = usePageTour(
@@ -56,13 +49,22 @@ const Employees = () => {
   const [employeeToDeactivate, setEmployeeToDeactivate] = useState(null);
 
   const {
-    data: employeesData,
+    paginatedEmployees,
+    totalFilteredCount,
+    totalPages,
     isLoading,
     isFetching,
-    isError,
     error,
     refetch,
-  } = useGetEmployeesQuery({ page: 1, limit: LIST_FETCH_LIMIT });
+  } = usePaginatedEmployees({
+    searchTerm,
+    filterDepartment,
+    showActiveEmployees,
+    sortBy,
+    currentPage,
+    perPage: employeesPerPage,
+  });
+  const isError = Boolean(error);
 
   const { data: departmentOptions = [] } = useGetDepartmentsQuery({ active_only: true });
 
@@ -78,31 +80,9 @@ const Employees = () => {
     deleteEmployeeDocument,
   };
 
-  const allEmployees = employeesData?.items ?? [];
-
   useEffect(() => {
     setCurrentPage(1);
   }, [searchTerm, filterDepartment, sortBy, showActiveEmployees]);
-
-  const filteredEmployees = useMemo(
-    () =>
-      sortEmployees(
-        filterEmployees(allEmployees, {
-          search: searchTerm,
-          department: filterDepartment,
-          is_active: showActiveEmployees,
-        }),
-        sortBy
-      ),
-    [allEmployees, searchTerm, filterDepartment, sortBy, showActiveEmployees]
-  );
-
-  const totalFilteredCount = filteredEmployees.length;
-  const totalPages = Math.max(1, Math.ceil(totalFilteredCount / employeesPerPage));
-  const paginatedEmployees = useMemo(
-    () => paginateEmployees(filteredEmployees, currentPage, employeesPerPage),
-    [filteredEmployees, currentPage, employeesPerPage]
-  );
 
   useEffect(() => {
     if (currentPage > totalPages) {
@@ -234,7 +214,7 @@ const Employees = () => {
     setShowActiveEmployees(!showActiveEmployees);
   };
 
-  if (isLoading && !employeesData) {
+  if (isLoading) {
     return <LoadingScreen message="Loading employees..." />;
   }
 
@@ -242,7 +222,9 @@ const Employees = () => {
     return (
       <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
         <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-          <p>Could not load employees. {error?.data?.message || 'Please try again.'}</p>
+          <p>
+            Could not load employees. {error?.data?.message || error?.message || 'Please try again.'}
+          </p>
           <button type="button" onClick={() => refetch()} className={`${DASHBOARD_BTN_PRIMARY} mt-3`}>
             Retry
           </button>

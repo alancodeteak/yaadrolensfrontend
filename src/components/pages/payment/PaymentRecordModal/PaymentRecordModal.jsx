@@ -6,6 +6,7 @@ import {
   DashboardEmployeeSelect,
   dashboardToast,
 } from '../../../common';
+import useModalAccessibility from '../../../../hooks/useModalAccessibility';
 
 const labelClass = 'mb-1.5 block text-xs font-medium text-gray-500';
 const inputClass =
@@ -102,6 +103,8 @@ const PaymentRecordModal = ({
     }
   };
 
+  const { dialogRef, onKeyDown } = useModalAccessibility({ isOpen, onClose });
+
   if (!isOpen) return null;
 
   return (
@@ -111,11 +114,14 @@ const PaymentRecordModal = ({
       role="presentation"
     >
       <div
+        ref={dialogRef}
         className="flex max-h-[90vh] w-full max-w-lg flex-col overflow-hidden rounded-2xl border border-gray-200/60 bg-white shadow-[0_2px_16px_rgba(0,0,0,0.06)]"
         onClick={(e) => e.stopPropagation()}
+        onKeyDown={onKeyDown}
         role="dialog"
         aria-modal="true"
         aria-labelledby="payment-record-title"
+        tabIndex={-1}
       >
         <div className="flex items-center justify-between border-b border-gray-100 px-5 py-4">
           <div>

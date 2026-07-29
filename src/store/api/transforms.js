@@ -31,6 +31,102 @@ export function orgToday(timezone = 'UTC') {
   return formatDateInTimezone(new Date(), timezone);
 }
 
+/** Current wall-clock time (HH:MM) in the organization timezone. */
+export function orgNowTime(timezone = 'UTC') {
+  try {
+    const parts = new Intl.DateTimeFormat('en-GB', {
+      timeZone: timezone,
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false,
+    }).formatToParts(new Date());
+    const hour = parts.find((p) => p.type === 'hour')?.value ?? '00';
+    const minute = parts.find((p) => p.type === 'minute')?.value ?? '00';
+    const h = hour === '24' ? '00' : hour;
+    return `${h.padStart(2, '0')}:${minute.padStart(2, '0')}`;
+  } catch {
+    const d = new Date();
+    return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+  }
+}
+
+/** Wall-clock parts in org timezone (hour/minute/second, 24h). */
+export function orgNowParts(timezone = 'UTC') {
+  try {
+    const parts = new Intl.DateTimeFormat('en-GB', {
+      timeZone: timezone,
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      hour12: false,
+    }).formatToParts(new Date());
+    const hour = Number(parts.find((p) => p.type === 'hour')?.value ?? 0);
+    const minute = Number(parts.find((p) => p.type === 'minute')?.value ?? 0);
+    const second = Number(parts.find((p) => p.type === 'second')?.value ?? 0);
+    const h = hour === 24 ? 0 : hour;
+    return { hour: h, minute, second };
+  } catch {
+    const d = new Date();
+    return { hour: d.getHours(), minute: d.getMinutes(), second: d.getSeconds() };
+  }
+}
+
+export function parseTimeToMinutes(value) {
+  const [h, m] = String(value || '00:00').split(':').map(Number);
+  if (!Number.isFinite(h) || !Number.isFinite(m)) return 0;
+  return (Math.min(23, Math.max(0, h)) * 60) + Math.min(59, Math.max(0, m));
+}
+
+export function minutesToTimeValue(totalMinutes) {
+  const capped = Math.max(0, Math.min(totalMinutes, 23 * 60 + 59));
+  const hour = Math.floor(capped / 60);
+  const minute = capped % 60;
+  return `${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}`;
+}
+
+/** Latest HH:MM allowed for manual punch today (matches backend 2-minute grace). */
+export function orgMaxPunchTime(timezone = 'UTC', graceMinutes = 2) {
+  const { hour, minute, second } = orgNowParts(timezone);
+  const nowSeconds = hour * 3600 + minute * 60 + second;
+  const maxSeconds = nowSeconds + graceMinutes * 60;
+  const maxMinutes = Math.floor(maxSeconds / 60);
+  return minutesToTimeValue(maxMinutes);
+}
+
+export function isManualPunchTimeAllowed(value, timezone = 'UTC', graceMinutes = 2) {
+  if (!value) return false;
+  return parseTimeToMinutes(value) <= parseTimeToMinutes(orgMaxPunchTime(timezone, graceMinutes));
+}
+
+export function clampManualPunchTime(value, timezone = 'UTC', graceMinutes = 2) {
+  const max = orgMaxPunchTime(timezone, graceMinutes);
+  if (parseTimeToMinutes(value) <= parseTimeToMinutes(max)) {
+    return value;
+  }
+  return max;
+}
+
+/** Formatted org wall-clock for display (e.g. "12:46 PM"). */
+export function formatOrgNowTime(timezone = 'UTC') {
+  try {
+    return new Intl.DateTimeFormat('en-US', {
+      timeZone: timezone,
+      hour: 'numeric',
+      minute: '2-digit',
+      second: '2-digit',
+      hour12: true,
+    }).format(new Date());
+  } catch {
+    const d = new Date();
+    return d.toLocaleTimeString('en-US', {
+      hour: 'numeric',
+      minute: '2-digit',
+      second: '2-digit',
+      hour12: true,
+    });
+  }
+}
+
 /** True when the calendar month has not ended yet in org timezone. */
 export function isPayrollPeriodOpen(year, month, timezone = 'UTC') {
   const today = orgToday(timezone);

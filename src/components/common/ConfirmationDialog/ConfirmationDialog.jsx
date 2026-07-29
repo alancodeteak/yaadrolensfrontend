@@ -1,7 +1,8 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useId, useState } from 'react';
 import clsx from 'clsx';
 import { AlertTriangle, CheckCircle2, HelpCircle } from 'lucide-react';
 import ButtonSpinner from '../ButtonSpinner';
+import useModalAccessibility from '../../../hooks/useModalAccessibility';
 
 const VARIANTS = {
   primary: {
@@ -44,6 +45,8 @@ const ConfirmationDialog = ({
 }) => {
   const [mounted, setMounted] = useState(isOpen);
   const [visible, setVisible] = useState(false);
+  const generatedId = useId();
+  const titleId = `confirmation-dialog-title-${generatedId}`;
 
   useEffect(() => {
     if (isOpen) {
@@ -57,15 +60,15 @@ const ConfirmationDialog = ({
     return () => window.clearTimeout(timer);
   }, [isOpen]);
 
-  useEffect(() => {
-    if (!mounted) return undefined;
+  const handleRequestClose = () => {
+    if (isLoading) return;
+    onClose?.();
+  };
 
-    const previousOverflow = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
-    return () => {
-      document.body.style.overflow = previousOverflow;
-    };
-  }, [mounted]);
+  const { dialogRef, onKeyDown } = useModalAccessibility({
+    isOpen: mounted,
+    onClose: handleRequestClose,
+  });
 
   if (!mounted) return null;
 
@@ -79,8 +82,8 @@ const ConfirmationDialog = ({
     ) : null);
 
   const handleBackdropClick = () => {
-    if (isLoading || !closeOnBackdrop) return;
-    onClose?.();
+    if (!closeOnBackdrop) return;
+    handleRequestClose();
   };
 
   return (
@@ -93,14 +96,17 @@ const ConfirmationDialog = ({
       role="presentation"
     >
       <div
+        ref={dialogRef}
         className={clsx(
           'flex w-full max-w-md flex-col overflow-hidden rounded-2xl border border-gray-200/60 bg-white shadow-[0_12px_40px_rgba(0,0,0,0.12)]',
           visible ? 'ui-modal-panel' : 'ui-modal-panel--exit'
         )}
         onClick={(e) => e.stopPropagation()}
+        onKeyDown={onKeyDown}
         role="dialog"
         aria-modal="true"
-        aria-labelledby="confirmation-dialog-title"
+        aria-labelledby={titleId}
+        tabIndex={-1}
       >
         <div className="px-5 py-5">
           <div className="flex items-start gap-3">
@@ -114,7 +120,7 @@ const ConfirmationDialog = ({
               <Icon className="h-5 w-5" strokeWidth={2} aria-hidden="true" />
             </div>
             <div className="min-w-0 flex-1 pt-0.5">
-              <h3 id="confirmation-dialog-title" className="text-lg font-semibold text-gray-900">
+              <h3 id={titleId} className="text-lg font-semibold text-gray-900">
                 {title}
               </h3>
               {content ? (
@@ -127,7 +133,7 @@ const ConfirmationDialog = ({
         <div className="flex justify-end gap-3 border-t border-gray-100 px-5 py-4">
           <button
             type="button"
-            onClick={onClose}
+            onClick={handleRequestClose}
             disabled={isLoading}
             className="ui-btn-motion rounded-xl border border-gray-200/60 px-4 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
           >

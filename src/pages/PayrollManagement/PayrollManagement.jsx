@@ -3,7 +3,6 @@ import { Link } from 'react-router-dom';
 import { CalendarCheck, Gift, Plus, Scale, Wallet } from 'lucide-react';
 import {
   PaymentToolbar,
-  MONTHS,
   ALL_PERIODS,
   PaymentStatsRow,
   PaymentTable,
@@ -11,15 +10,6 @@ import {
   BonusTable,
   BalanceTable,
   BalanceLedgerTable,
-  PaymentRecordModal,
-  AdvanceCreateModal,
-  AdvanceRecoverModal,
-  PaymentHistoryPanel,
-  BalanceHistoryPanel,
-  AdvanceDetailPanel,
-  PaymentMarkPaidModal,
-  BalanceAdjustModal,
-  BonusCreateModal,
   OutstandingPanel,
 } from '../../components/pages/payment';
 import { formatMoney } from '../../components/pages/payment/paymentUtils';
@@ -35,62 +25,11 @@ import {
   usePageTour,
   dashboardToast,
   ButtonSpinner,
-  ConfirmationDialog,
 } from '../../components/common';
-import {
-  useGetPaymentsQuery,
-  useGetPaymentSummaryQuery,
-  useGetMonthlyGenerationStatusQuery,
-  useRecordPaymentMutation,
-  useGetEmployeePaymentSummaryQuery,
-  useGetEmployeePaymentHistoryQuery,
-  useGetAdvancesQuery,
-  useCreateAdvanceMutation,
-  useGetAdvanceQuery,
-  useApproveAdvanceMutation,
-  useDisburseAdvanceMutation,
-  useRecoverAdvanceMutation,
-  useCancelAdvanceMutation,
-  useGenerateMonthlySalariesMutation,
-  useGetEmployeesQuery,
-  useGetOutstandingEmployeesQuery,
-  useGetSettingsQuery,
-  useApprovePaymentMutation,
-  useMarkPaymentPaidMutation,
-  useAdjustEmployeeBalanceMutation,
-  useCreateBonusMutation,
-  useGetBonusesQuery,
-  useReleaseBonusMutation,
-  useGetEmployeeBalancesQuery,
-  useGetBalanceTransactionsQuery,
-  useGetBalanceLedgerQuery,
-} from '../../store/api';
-import { isPayrollPeriodOpen } from '../../store/api/transforms';
-import {
-  buildEmployeePhotoMap,
-  computePeriodPaymentStats,
-  enrichRowsWithPhotos,
-  filterPaymentRows,
-  paginateRows,
-} from '../../utils/paymentListUtils';
-
-const PER_PAGE = 10;
-const HISTORY_PER_PAGE = 10;
-/** Backend payment/employee list endpoints cap limit at 200 (le=200). */
-const FETCH_LIMIT = 200;
-
-const getMonthNumber = (monthName) => {
-  if (!monthName || monthName === ALL_PERIODS) return null;
-  const n = MONTHS.indexOf(monthName) + 1;
-  return n > 0 ? n : null;
-};
-
-const getErrorMessage = (err, fallback) => {
-  const detail = err?.data?.detail;
-  if (typeof detail === 'string') return detail;
-  if (Array.isArray(detail)) return detail.map((d) => d.msg || d).join(', ');
-  return fallback;
-};
+import { getApiErrorMessage } from '../../utils/apiError';
+import { getMonthNumber, PER_PAGE, HISTORY_PER_PAGE } from './payrollUtils';
+import { usePayrollQueries } from './usePayrollQueries';
+import PayrollModals from './PayrollModals';
 
 const PayrollManagement = () => {
   const { infoOpen, startTutorial, startInfo, closeInfo, steps, pageLabel, language } = usePageTour(
@@ -133,11 +72,6 @@ const PayrollManagement = () => {
   const monthNumber = getMonthNumber(selectedMonth);
   const yearNumber = parseInt(selectedYear, 10);
   const isAllPeriods = selectedMonth === ALL_PERIODS;
-  const { data: orgSettings } = useGetSettingsQuery();
-  const payrollPeriodStillOpen = useMemo(() => {
-    if (isAllPeriods || !monthNumber) return true;
-    return isPayrollPeriodOpen(yearNumber, monthNumber, orgSettings?.timezone ?? 'UTC');
-  }, [isAllPeriods, yearNumber, monthNumber, orgSettings?.timezone]);
 
   const years = useMemo(() => {
     const y = currentDate.getFullYear();
@@ -145,158 +79,89 @@ const PayrollManagement = () => {
   }, [currentDate]);
 
   const {
-    data: paymentsData,
-    isLoading: paymentsLoading,
-    isFetching: paymentsFetching,
-    isError: paymentsError,
-    error: paymentsErr,
-    refetch: refetchPayments,
-  } = useGetPaymentsQuery(
-    {
-      // Filter by payroll period (salary/bonus month), not payment_date — so paid-in-July
-      // June salaries still appear under June. "All periods" lists every payment.
-      period_year: isAllPeriods ? undefined : yearNumber,
-      period_month: isAllPeriods ? undefined : monthNumber,
-      payment_type: typeFilter || undefined,
-      status: paymentStatusFilter || undefined,
-      employee_id: ledgerEmployeeId || undefined,
-      skip: 0,
-      limit: FETCH_LIMIT,
-    },
-    { skip: activeTab !== 'ledger' }
-  );
-
-  const {
-    data: summary,
-    isLoading: summaryLoading,
-    refetch: refetchSummary,
-  } = useGetPaymentSummaryQuery();
-
-  const { data: monthlyGenerationStatus } = useGetMonthlyGenerationStatusQuery(
-    { period_year: yearNumber, period_month: monthNumber },
-    { skip: activeTab !== 'ledger' || isAllPeriods || !monthNumber }
-  );
-
-  const monthlyGenerationDone =
-    monthlyGenerationStatus != null && !monthlyGenerationStatus.can_generate;
-
-  const { data: outstandingData, isLoading: outstandingLoading } =
-    useGetOutstandingEmployeesQuery();
-
-  const {
-    data: advancesData,
-    isLoading: advancesLoading,
-    isFetching: advancesFetching,
-    isError: advancesError,
-    error: advancesErr,
-    refetch: refetchAdvances,
-  } = useGetAdvancesQuery(
-    {
-      status: statusFilter || undefined,
-      skip: 0,
-      limit: FETCH_LIMIT,
-    },
-    { skip: activeTab !== 'advances' }
-  );
-
-  const { data: employeesData } = useGetEmployeesQuery({ page: 1, limit: FETCH_LIMIT });
-  const employeePhotoMap = useMemo(
-    () => buildEmployeePhotoMap(employeesData?.items ?? []),
-    [employeesData]
-  );
-  const employees = useMemo(
-    () => (employeesData?.items ?? []).filter((employee) => employee.is_active),
-    [employeesData]
-  );
-
-  const [recordPayment, { isLoading: isRecording }] = useRecordPaymentMutation();
-  const [generateMonthlySalaries, { isLoading: isGenerating }] =
-    useGenerateMonthlySalariesMutation();
-  const [createAdvance, { isLoading: isCreatingAdvance }] = useCreateAdvanceMutation();
-  const [approveAdvance, { isLoading: isApproving }] = useApproveAdvanceMutation();
-  const [disburseAdvance] = useDisburseAdvanceMutation();
-  const [recoverAdvanceMutation, { isLoading: isRecovering }] = useRecoverAdvanceMutation();
-  const [cancelAdvance] = useCancelAdvanceMutation();
-  const [approvePayment] = useApprovePaymentMutation();
-  const [markPaymentPaid, { isLoading: isMarkingPaid }] = useMarkPaymentPaidMutation();
-  const [adjustBalance, { isLoading: isAdjustingBalance }] = useAdjustEmployeeBalanceMutation();
-  const [createBonus, { isLoading: isCreatingBonus }] = useCreateBonusMutation();
-  const [releaseBonus] = useReleaseBonusMutation();
-  const {
-    data: bonusesData,
-    isLoading: bonusesLoading,
-    isFetching: bonusesFetching,
-    isError: bonusesError,
-    error: bonusesErr,
-    refetch: refetchBonuses,
-  } = useGetBonusesQuery(
-    {
-      period_year: isAllPeriods ? undefined : yearNumber,
-      period_month: isAllPeriods ? undefined : monthNumber,
-      status: bonusStatusFilter || undefined,
-      skip: 0,
-      limit: FETCH_LIMIT,
-    },
-    { skip: activeTab !== 'bonuses' }
-  );
-
-  const {
-    data: balancesData,
-    isLoading: balancesLoading,
-    isFetching: balancesFetching,
-    isError: balancesError,
-    error: balancesErr,
-    refetch: refetchBalances,
-  } = useGetEmployeeBalancesQuery(
-    {
-      non_zero_only: balanceFilter === 'non_zero',
-      skip: 0,
-      limit: FETCH_LIMIT,
-    },
-    { skip: activeTab !== 'balance' }
-  );
-
-  const {
-    data: balanceLedgerData,
-    isLoading: balanceLedgerLoading,
-    isFetching: balanceLedgerFetching,
-    refetch: refetchBalanceLedger,
-  } = useGetBalanceLedgerQuery(
-    {
-      skip: 0,
-      limit: FETCH_LIMIT,
-    },
-    { skip: activeTab !== 'balance' }
-  );
-
-  const balanceHistoryEmployeeId =
-    balanceHistoryEmployee?.employee_id || balanceHistoryEmployee?.id;
-  const { data: balanceHistoryData, isLoading: balanceHistoryLoading } =
-    useGetBalanceTransactionsQuery(
-      {
-        employeeId: balanceHistoryEmployeeId,
-        skip: (balanceHistoryPage - 1) * HISTORY_PER_PAGE,
-        limit: HISTORY_PER_PAGE,
-      },
-      { skip: !balanceHistoryEmployeeId }
-    );
-
-  const historyEmployeeId = historyEmployee?.employee_id || historyEmployee?.id;
-  const { data: employeeSummary, isLoading: summaryDetailLoading } =
-    useGetEmployeePaymentSummaryQuery(historyEmployeeId, { skip: !historyEmployeeId });
-  const { data: historyData, isLoading: historyLoading } = useGetEmployeePaymentHistoryQuery(
-    {
-      employeeId: historyEmployeeId,
-      skip: (historyPage - 1) * HISTORY_PER_PAGE,
-      limit: HISTORY_PER_PAGE,
-    },
-    { skip: !historyEmployeeId }
-  );
-
-  const { data: advanceDetail, isLoading: advanceDetailLoading } = useGetAdvanceQuery(
+    payrollPeriodStillOpen,
+    paymentsLoading,
+    summary,
+    summaryLoading,
+    monthlyGenerationStatus,
+    monthlyGenerationDone,
+    outstandingData,
+    outstandingLoading,
+    employeePhotoMap,
+    employees,
+    balancesFetching,
+    balanceLedgerFetching,
+    balanceHistoryData,
+    balanceHistoryLoading,
+    employeeSummary,
+    summaryDetailLoading,
+    historyData,
+    historyLoading,
+    advanceDetail,
+    advanceDetailLoading,
+    recordPayment,
+    isRecording,
+    generateMonthlySalaries,
+    isGenerating,
+    createAdvance,
+    isCreatingAdvance,
+    approveAdvance,
+    isApproving,
+    disburseAdvance,
+    recoverAdvanceMutation,
+    isRecovering,
+    cancelAdvance,
+    approvePayment,
+    markPaymentPaid,
+    isMarkingPaid,
+    adjustBalance,
+    isAdjustingBalance,
+    createBonus,
+    isCreatingBonus,
+    releaseBonus,
+    refreshAll,
+    periodStats,
+    filteredPayments,
+    paymentRows,
+    advanceRows,
+    bonusRows,
+    balanceRows,
+    filteredLedger,
+    balanceLedgerRows,
+    filteredCounts,
+    balancesTotalPages,
+    balanceLedgerTotalPages,
+    totalPages,
+    historyTotal,
+    historyTotalPages,
+    balanceHistoryTotal,
+    balanceHistoryTotalPages,
+    isFetching,
+    error,
+    refetch,
+    isInitialLedgerLoad,
+    isTabContentLoading,
+    isTabContentError,
+  } = usePayrollQueries({
+    activeTab,
+    monthNumber,
+    yearNumber,
+    isAllPeriods,
+    ledgerEmployeeId,
+    typeFilter,
+    statusFilter,
+    paymentStatusFilter,
+    bonusStatusFilter,
+    balanceFilter,
+    historyEmployee,
+    historyPage,
+    balanceHistoryEmployee,
+    balanceHistoryPage,
     selectedAdvanceId,
-    { skip: !selectedAdvanceId }
-  );
+    searchTerm,
+    currentPage,
+    balanceLedgerPage,
+  });
 
   const defaultPeriodStats = {
     paidTotal: 0,
@@ -332,24 +197,6 @@ const PayrollManagement = () => {
 
   const periodLabel = isAllPeriods ? 'All periods' : `${selectedMonth} ${selectedYear}`;
 
-  const periodStats = useMemo(
-    () => computePeriodPaymentStats(paymentsData?.items || []),
-    [paymentsData]
-  );
-
-  const allPaymentItems = useMemo(
-    () => enrichRowsWithPhotos(paymentsData?.items || [], employeePhotoMap),
-    [paymentsData, employeePhotoMap]
-  );
-  const filteredPayments = useMemo(
-    () => filterPaymentRows(allPaymentItems, searchTerm),
-    [allPaymentItems, searchTerm]
-  );
-  const paymentRows = useMemo(
-    () => paginateRows(filteredPayments, currentPage, PER_PAGE),
-    [filteredPayments, currentPage]
-  );
-
   const approvablePaymentRows = useMemo(
     () =>
       filteredPayments.filter(
@@ -362,79 +209,6 @@ const PayrollManagement = () => {
     () => approvablePaymentRows.map((row) => row.id),
     [approvablePaymentRows]
   );
-
-  const allAdvanceItems = useMemo(
-    () => enrichRowsWithPhotos(advancesData?.items || [], employeePhotoMap),
-    [advancesData, employeePhotoMap]
-  );
-  const filteredAdvances = useMemo(
-    () => filterPaymentRows(allAdvanceItems, searchTerm),
-    [allAdvanceItems, searchTerm]
-  );
-  const advanceRows = useMemo(
-    () => paginateRows(filteredAdvances, currentPage, PER_PAGE),
-    [filteredAdvances, currentPage]
-  );
-
-  const allBonusItems = useMemo(
-    () => enrichRowsWithPhotos(bonusesData?.items || [], employeePhotoMap),
-    [bonusesData, employeePhotoMap]
-  );
-  const filteredBonuses = useMemo(
-    () => filterPaymentRows(allBonusItems, searchTerm),
-    [allBonusItems, searchTerm]
-  );
-  const bonusRows = useMemo(
-    () => paginateRows(filteredBonuses, currentPage, PER_PAGE),
-    [filteredBonuses, currentPage]
-  );
-
-  const allBalanceItems = useMemo(
-    () => enrichRowsWithPhotos(balancesData?.items || [], employeePhotoMap),
-    [balancesData, employeePhotoMap]
-  );
-  const filteredBalances = useMemo(
-    () => filterPaymentRows(allBalanceItems, searchTerm),
-    [allBalanceItems, searchTerm]
-  );
-  const balanceRows = useMemo(
-    () => paginateRows(filteredBalances, currentPage, PER_PAGE),
-    [filteredBalances, currentPage]
-  );
-
-  const allLedgerItems = useMemo(
-    () => enrichRowsWithPhotos(balanceLedgerData?.items || [], employeePhotoMap),
-    [balanceLedgerData, employeePhotoMap]
-  );
-  const filteredLedger = useMemo(
-    () => filterPaymentRows(allLedgerItems, searchTerm),
-    [allLedgerItems, searchTerm]
-  );
-  const balanceLedgerRows = useMemo(
-    () => paginateRows(filteredLedger, balanceLedgerPage, PER_PAGE),
-    [filteredLedger, balanceLedgerPage]
-  );
-
-  const filteredCounts = {
-    ledger: filteredPayments.length,
-    advances: filteredAdvances.length,
-    bonuses: filteredBonuses.length,
-    balance: filteredBalances.length,
-  };
-
-  const ledgerTotalPages = Math.max(1, Math.ceil(filteredCounts.ledger / PER_PAGE));
-  const advancesTotalPages = Math.max(1, Math.ceil(filteredCounts.advances / PER_PAGE));
-  const bonusesTotalPages = Math.max(1, Math.ceil(filteredCounts.bonuses / PER_PAGE));
-  const balancesTotalPages = Math.max(1, Math.ceil(filteredCounts.balance / PER_PAGE));
-  const balanceLedgerTotalPages = Math.max(1, Math.ceil(filteredLedger.length / PER_PAGE));
-
-  const tabTotalPages = {
-    ledger: ledgerTotalPages,
-    advances: advancesTotalPages,
-    bonuses: bonusesTotalPages,
-    balance: balancesTotalPages,
-  };
-  const totalPages = tabTotalPages[activeTab] || 1;
 
   const allApprovableSelected =
     approvablePaymentIds.length > 0 &&
@@ -451,45 +225,6 @@ const PayrollManagement = () => {
         .reduce((sum, row) => sum + Number(row.amount || 0), 0),
     [filteredPayments, selectedPaymentIds]
   );
-
-  const historyTotal = historyData?.total || 0;
-  const historyTotalPages = Math.max(1, Math.ceil(historyTotal / HISTORY_PER_PAGE));
-
-  const tabLoading = {
-    ledger: paymentsLoading,
-    advances: advancesLoading,
-    bonuses: bonusesLoading,
-    balance: balancesLoading || balanceLedgerLoading,
-  };
-  const tabFetching = {
-    ledger: paymentsFetching,
-    advances: advancesFetching,
-    bonuses: bonusesFetching,
-    balance: balancesFetching || balanceLedgerFetching,
-  };
-  const tabError = {
-    ledger: paymentsError,
-    advances: advancesError,
-    bonuses: bonusesError,
-    balance: balancesError,
-  };
-  const tabErrors = {
-    ledger: paymentsErr,
-    advances: advancesErr,
-    bonuses: bonusesErr,
-    balance: balancesErr,
-  };
-  const tabRefetch = {
-    ledger: refetchPayments,
-    advances: refetchAdvances,
-    bonuses: refetchBonuses,
-    balance: refetchBalances,
-  };
-  const isLoading = tabLoading[activeTab];
-  const isFetching = tabFetching[activeTab];
-  const isError = tabError[activeTab];
-  const error = tabErrors[activeTab];
-  const refetch = tabRefetch[activeTab];
 
   const hasActiveFilters = Boolean(
     searchTerm ||
@@ -542,30 +277,6 @@ const PayrollManagement = () => {
     }
   }, [balanceLedgerPage, balanceLedgerTotalPages]);
 
-  const balanceHistoryTotal = balanceHistoryData?.total || 0;
-  const balanceHistoryTotalPages = Math.max(
-    1,
-    Math.ceil(balanceHistoryTotal / HISTORY_PER_PAGE)
-  );
-
-  const safeRefetch = (refetchFn) => {
-    try {
-      const result = refetchFn();
-      if (result?.catch) result.catch(() => {});
-    } catch {
-      // Query was skipped (e.g. ledger query while on advances tab)
-    }
-  };
-
-  const refreshAll = () => {
-    safeRefetch(refetchPayments);
-    safeRefetch(refetchAdvances);
-    safeRefetch(refetchBonuses);
-    safeRefetch(refetchBalances);
-    safeRefetch(refetchBalanceLedger);
-    safeRefetch(refetchSummary);
-  };
-
   const handleTabChange = (tab) => {
     setActiveTab(tab);
     setCurrentPage(1);
@@ -614,7 +325,7 @@ const PayrollManagement = () => {
       refreshAll();
     } catch (err) {
       dashboardToast.error(
-        getErrorMessage(
+        getApiErrorMessage(
           err,
           approvedCount > 0
             ? `Approved ${approvedCount}, but some payments could not be approved.`
@@ -639,7 +350,7 @@ const PayrollManagement = () => {
       refreshAll();
     } catch (err) {
       dashboardToast.error(
-        getErrorMessage(err, 'Could not mark payment as paid.'),
+        getApiErrorMessage(err, 'Could not mark payment as paid.'),
         'Update failed'
       );
     }
@@ -650,13 +361,13 @@ const PayrollManagement = () => {
       await adjustBalance(payload).unwrap();
       setBalanceEmployee(null);
       dashboardToast.success('Balance adjustment recorded in the ledger.', 'Adjustment saved');
-      if (balanceHistoryEmployeeId) {
+      if (balanceHistoryEmployee?.employee_id || balanceHistoryEmployee?.id) {
         setBalanceHistoryEmployee(null);
       }
       refreshAll();
     } catch (err) {
       dashboardToast.error(
-        getErrorMessage(err, 'Could not update balance.'),
+        getApiErrorMessage(err, 'Could not update balance.'),
         'Balance failed'
       );
     }
@@ -670,7 +381,7 @@ const PayrollManagement = () => {
       refreshAll();
     } catch (err) {
       dashboardToast.error(
-        getErrorMessage(err, 'Could not schedule bonus.'),
+        getApiErrorMessage(err, 'Could not schedule bonus.'),
         'Bonus failed'
       );
     }
@@ -690,7 +401,7 @@ const PayrollManagement = () => {
       refreshAll();
     } catch (err) {
       dashboardToast.error(
-        getErrorMessage(err, 'Could not release bonus.'),
+        getApiErrorMessage(err, 'Could not release bonus.'),
         'Release failed'
       );
     }
@@ -727,7 +438,7 @@ const PayrollManagement = () => {
     } catch (err) {
       if (!saved) {
         const status = err?.status;
-        const message = getErrorMessage(
+        const message = getApiErrorMessage(
           err,
           status === 409
             ? 'Salary for this month is already recorded.'
@@ -766,7 +477,7 @@ const PayrollManagement = () => {
       refreshAll();
     } catch (err) {
       dashboardToast.error(
-        getErrorMessage(err, 'Could not generate monthly salaries. Please try again.'),
+        getApiErrorMessage(err, 'Could not generate monthly salaries. Please try again.'),
         'Generation failed'
       );
     }
@@ -785,7 +496,7 @@ const PayrollManagement = () => {
     } catch (err) {
       if (!saved) {
         dashboardToast.error(
-          getErrorMessage(err, 'Could not create advance. Please try again.'),
+          getApiErrorMessage(err, 'Could not create advance. Please try again.'),
           'Request failed'
         );
         throw err;
@@ -805,7 +516,7 @@ const PayrollManagement = () => {
     } catch (err) {
       if (!saved) {
         dashboardToast.error(
-          getErrorMessage(err, 'Could not record recovery. Please try again.'),
+          getApiErrorMessage(err, 'Could not record recovery. Please try again.'),
           'Recovery failed'
         );
         throw err;
@@ -825,7 +536,7 @@ const PayrollManagement = () => {
     } catch (err) {
       if (!saved) {
         dashboardToast.error(
-          getErrorMessage(err, 'This action is not allowed in the current status.'),
+          getApiErrorMessage(err, 'This action is not allowed in the current status.'),
           'Action failed'
         );
       }
@@ -868,18 +579,6 @@ const PayrollManagement = () => {
       `Cancelled advance request for ${advance.employee_name}.`,
       'Advance cancelled'
     );
-
-  const tabData = {
-    ledger: paymentsData,
-    advances: advancesData,
-    bonuses: bonusesData,
-    balance: balancesData,
-  };
-
-  const isInitialLedgerLoad =
-    activeTab === 'ledger' && paymentsLoading && !paymentsData;
-  const isTabContentLoading = isLoading && !tabData[activeTab];
-  const isTabContentError = isError && !tabData[activeTab];
 
   if (isInitialLedgerLoad) {
     return <LoadingScreen message="Loading payments..." />;
@@ -1055,7 +754,7 @@ const PayrollManagement = () => {
         ) : isTabContentError ? (
           <div className="rounded-2xl border border-red-200 bg-red-50 p-6 text-center">
             <p className="text-sm text-red-700">
-              {getErrorMessage(error, 'Failed to load payment data.')}
+              {getApiErrorMessage(error, 'Failed to load payment data.')}
             </p>
             <button
               type="button"
@@ -1191,145 +890,84 @@ const PayrollManagement = () => {
         )}
       </div>
 
-      <PaymentRecordModal
-        isOpen={recordModalOpen}
-        onClose={() => {
+      <PayrollModals
+        recordModalOpen={recordModalOpen}
+        onCloseRecordModal={() => {
           setRecordModalOpen(false);
           setPrefillEmployee(null);
         }}
-        onSave={handleRecordPayment}
-        isLoading={isRecording}
+        handleRecordPayment={handleRecordPayment}
+        isRecording={isRecording}
         employees={employees}
         prefillEmployee={prefillEmployee}
-        defaultPeriodYear={yearNumber}
-        defaultPeriodMonth={monthNumber}
-      />
-
-      <AdvanceCreateModal
-        isOpen={createAdvanceOpen}
-        onClose={() => setCreateAdvanceOpen(false)}
-        onSave={handleCreateAdvance}
-        isLoading={isCreatingAdvance}
-        employees={employees}
-      />
-
-      <AdvanceRecoverModal
-        isOpen={Boolean(recoverAdvance)}
-        advance={recoverAdvance}
-        onClose={() => setRecoverAdvance(null)}
-        onSave={handleRecoverAdvance}
-        isLoading={isRecovering}
-      />
-
-      <PaymentHistoryPanel
-        isOpen={Boolean(historyEmployee)}
-        employee={historyEmployee}
-        summary={employeeSummary}
-        history={historyData}
-        isLoading={historyLoading}
-        summaryLoading={summaryDetailLoading}
-        currentPage={historyPage}
-        totalPages={historyTotalPages}
-        totalItems={historyTotal}
-        itemsPerPage={HISTORY_PER_PAGE}
-        onPageChange={setHistoryPage}
-        onClose={() => setHistoryEmployee(null)}
-        onAdjustBalance={(emp) =>
+        yearNumber={yearNumber}
+        monthNumber={monthNumber}
+        createAdvanceOpen={createAdvanceOpen}
+        onCloseCreateAdvance={() => setCreateAdvanceOpen(false)}
+        handleCreateAdvance={handleCreateAdvance}
+        isCreatingAdvance={isCreatingAdvance}
+        recoverAdvance={recoverAdvance}
+        onCloseRecoverAdvance={() => setRecoverAdvance(null)}
+        handleRecoverAdvance={handleRecoverAdvance}
+        isRecovering={isRecovering}
+        historyEmployee={historyEmployee}
+        onCloseHistory={() => setHistoryEmployee(null)}
+        employeeSummary={employeeSummary}
+        historyData={historyData}
+        historyLoading={historyLoading}
+        summaryDetailLoading={summaryDetailLoading}
+        historyPage={historyPage}
+        setHistoryPage={setHistoryPage}
+        historyTotalPages={historyTotalPages}
+        historyTotal={historyTotal}
+        onAdjustBalanceFromHistory={(emp) =>
           setBalanceEmployee({
             id: emp.employee_id || emp.id,
             name: emp.employee_name || emp.name,
           })
         }
-      />
-
-      <AdvanceDetailPanel
-        isOpen={Boolean(selectedAdvanceId)}
-        advance={advanceDetail}
-        isLoading={advanceDetailLoading}
-        onClose={() => setSelectedAdvanceId(null)}
-        onApprove={handleApproveAdvance}
-        onDisburse={handleDisburseAdvance}
-        onCancel={handleCancelAdvance}
-        onRecover={(adv) => {
+        selectedAdvanceId={selectedAdvanceId}
+        advanceDetail={advanceDetail}
+        advanceDetailLoading={advanceDetailLoading}
+        onCloseAdvanceDetail={() => setSelectedAdvanceId(null)}
+        handleApproveAdvance={handleApproveAdvance}
+        handleDisburseAdvance={handleDisburseAdvance}
+        handleCancelAdvance={handleCancelAdvance}
+        onRecoverFromDetail={(adv) => {
           setSelectedAdvanceId(null);
           setRecoverAdvance(adv);
         }}
-      />
-
-      <PaymentMarkPaidModal
-        isOpen={Boolean(paymentToMarkPaid)}
-        payment={paymentToMarkPaid}
-        onClose={() => setPaymentToMarkPaid(null)}
-        onSave={handleMarkPaid}
-        isLoading={isMarkingPaid}
-      />
-
-      <BalanceAdjustModal
-        isOpen={Boolean(balanceEmployee)}
-        employee={balanceEmployee}
-        employees={employees}
-        onClose={() => setBalanceEmployee(null)}
-        onSave={handleAdjustBalance}
-        isLoading={isAdjustingBalance}
-      />
-
-      <BonusCreateModal
-        isOpen={bonusModalOpen}
-        onClose={() => setBonusModalOpen(false)}
-        onSave={handleCreateBonus}
-        isLoading={isCreatingBonus}
-        employees={employees}
-        defaultYear={yearNumber}
-        defaultMonth={monthNumber}
-      />
-
-      <BalanceHistoryPanel
-        isOpen={Boolean(balanceHistoryEmployee)}
-        employee={balanceHistoryEmployee}
-        transactions={balanceHistoryData}
-        runningBalance={balanceHistoryData?.running_balance}
-        isLoading={balanceHistoryLoading}
-        currentPage={balanceHistoryPage}
-        totalPages={balanceHistoryTotalPages}
-        totalItems={balanceHistoryTotal}
-        itemsPerPage={HISTORY_PER_PAGE}
-        onPageChange={setBalanceHistoryPage}
-        onClose={() => setBalanceHistoryEmployee(null)}
-        onAdjust={(emp) => {
+        paymentToMarkPaid={paymentToMarkPaid}
+        onCloseMarkPaid={() => setPaymentToMarkPaid(null)}
+        handleMarkPaid={handleMarkPaid}
+        isMarkingPaid={isMarkingPaid}
+        balanceEmployee={balanceEmployee}
+        onCloseBalanceAdjust={() => setBalanceEmployee(null)}
+        handleAdjustBalance={handleAdjustBalance}
+        isAdjustingBalance={isAdjustingBalance}
+        bonusModalOpen={bonusModalOpen}
+        onCloseBonusModal={() => setBonusModalOpen(false)}
+        handleCreateBonus={handleCreateBonus}
+        isCreatingBonus={isCreatingBonus}
+        balanceHistoryEmployee={balanceHistoryEmployee}
+        onCloseBalanceHistory={() => setBalanceHistoryEmployee(null)}
+        balanceHistoryData={balanceHistoryData}
+        balanceHistoryLoading={balanceHistoryLoading}
+        balanceHistoryPage={balanceHistoryPage}
+        setBalanceHistoryPage={setBalanceHistoryPage}
+        balanceHistoryTotalPages={balanceHistoryTotalPages}
+        balanceHistoryTotal={balanceHistoryTotal}
+        onAdjustFromBalanceHistory={(emp) => {
           setBalanceHistoryEmployee(null);
           openBalanceAdjust(emp);
         }}
-      />
-
-      <ConfirmationDialog
-        isOpen={Boolean(advanceToApprove)}
-        onClose={handleCloseApproveConfirm}
-        onConfirm={confirmApproveAdvance}
-        title="Approve advance"
-        message={
-          advanceToApprove
-            ? `Approve ${advanceToApprove.employee_name}'s salary advance of ${formatMoney(advanceToApprove.amount)}?\n\nThis marks the request as approved and allows disbursement.`
-            : ''
-        }
-        confirmText="Approve"
-        cancelText="Cancel"
-        variant="primary"
-        isLoading={isApproving}
-      />
-
-      <ConfirmationDialog
-        isOpen={Boolean(bonusToRelease)}
-        onClose={() => setBonusToRelease(null)}
-        onConfirm={confirmReleaseBonus}
-        title="Quick release bonus"
-        message={
-          bonusToRelease
-            ? `Release ${formatMoney(bonusToRelease.amount)} bonus for ${bonusToRelease.employee_name} as a separate payment?\n\nThis will not include it in their monthly salary.`
-            : ''
-        }
-        confirmText="Release"
-        cancelText="Cancel"
-        variant="primary"
+        advanceToApprove={advanceToApprove}
+        handleCloseApproveConfirm={handleCloseApproveConfirm}
+        confirmApproveAdvance={confirmApproveAdvance}
+        isApproving={isApproving}
+        bonusToRelease={bonusToRelease}
+        onCloseReleaseBonus={() => setBonusToRelease(null)}
+        confirmReleaseBonus={confirmReleaseBonus}
       />
 
       {infoOpen && (

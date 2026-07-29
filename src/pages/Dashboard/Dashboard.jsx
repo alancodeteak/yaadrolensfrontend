@@ -247,20 +247,7 @@ const Dashboard = () => {
         </div>
       </div>
 
-      <div className="dashboard-stats-slot mb-6" data-tour="payroll-stats">
-        <PaymentStatsRow
-          summary={paymentSummary || DEFAULT_PAYMENT_SUMMARY}
-          loading={isLoading}
-        />
-      </div>
-
-      <div className="dashboard-alerts-slot mb-6">
-        <div data-tour="payment-alerts" className="h-full min-h-[12rem]">
-          <PaymentAlertsFeed alerts={paymentAlerts} loading={isLoading} compact maxItems={5} />
-        </div>
-      </div>
-
-      <div className="dashboard-lower-grid grid grid-cols-1 gap-6 lg:grid-cols-2 xl:grid-cols-3 xl:items-stretch">
+      <div className="dashboard-activity-row mb-6 grid grid-cols-1 gap-6 lg:grid-cols-2 xl:grid-cols-3 xl:items-stretch">
         <div data-tour="calendar" className="dashboard-panel-slot h-full min-h-[24rem]">
           <AttendanceMonthCalendar
             month={summary?.month}
@@ -297,6 +284,19 @@ const Dashboard = () => {
             maxItems={5}
             useSampleData={false}
           />
+        </div>
+      </div>
+
+      <div className="dashboard-stats-slot mb-6" data-tour="payroll-stats">
+        <PaymentStatsRow
+          summary={paymentSummary || DEFAULT_PAYMENT_SUMMARY}
+          loading={isLoading}
+        />
+      </div>
+
+      <div className="dashboard-alerts-slot mb-6">
+        <div data-tour="payment-alerts" className="h-full min-h-[12rem]">
+          <PaymentAlertsFeed alerts={paymentAlerts} loading={isLoading} compact maxItems={5} />
         </div>
       </div>
 

@@ -8,6 +8,7 @@ export { default as SupportModal } from './SupportModal';
 export { default as ProtectedRoute } from './ProtectedRoute';
 export { default as AuthChecker } from './AuthChecker';
 export { default as ConfirmationDialog } from './ConfirmationDialog';
+export { default as ModalShell } from './ModalShell';
 export { default as ButtonSpinner } from './ButtonSpinner';
 export { LottieAnimation, LottieLoader, LoadingScreen } from './Lottie';
 export {

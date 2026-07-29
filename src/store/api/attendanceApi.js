@@ -111,10 +111,15 @@ export const attendanceApi = baseApi.injectEndpoints({
     }),
 
     manualPunch: builder.mutation({
-      query: ({ employee_id, action, confirmation }) => ({
+      query: ({ employee_id, action, confirmation, punch_time }) => ({
         url: '/org-admin/attendance/manual-punch',
         method: 'POST',
-        body: { employee_id, action, confirmation },
+        body: {
+          employee_id,
+          action,
+          confirmation,
+          ...(punch_time ? { punch_time } : {}),
+        },
       }),
       invalidatesTags: ['Attendance', 'Dashboard'],
     }),

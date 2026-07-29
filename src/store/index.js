@@ -8,36 +8,18 @@ import './api/paymentApi';
 import './api/reportsApi';
 import './api/dashboardApi';
 import './api/shiftApi';
-import { 
-  authReducer,
-  employeeReducer,
-  userReducer,
-  attendanceReducer,
-  reportReducer,
-  settingsReducer
-} from './slices';
+import { authReducer } from './slices';
 
 export const store = configureStore({
   reducer: {
     // Auth
     auth: authReducer,
-    
-    // Modules
-    employee: employeeReducer,
-    user: userReducer,
-    attendance: attendanceReducer,
-    report: reportReducer,
-    settings: settingsReducer,
-    
+
     // API
     api: baseApi.reducer,
   },
   middleware: (getDefaultMiddleware) =>
-    getDefaultMiddleware({
-      serializableCheck: {
-        ignoredActions: ['persist/PERSIST', 'persist/REHYDRATE'],
-      },
-    }).concat(baseApi.middleware),
+    getDefaultMiddleware().concat(baseApi.middleware),
   devTools: process.env.NODE_ENV !== 'production',
 });
 

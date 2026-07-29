@@ -1,7 +1,6 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { AlertCircle } from 'lucide-react';
 import {
-  ConfirmationDialog,
   DashboardTimePicker,
   LoadingScreen,
   LottieLoader,
@@ -55,7 +54,6 @@ const ShiftTemplates = () => {
   const [form, setForm] = useState(emptyForm);
   const [editingId, setEditingId] = useState(null);
   const [saveError, setSaveError] = useState(null);
-  const [deleteTarget, setDeleteTarget] = useState(null);
   const perEmployee = settings?.shift_schedule_mode === 'per_employee';
 
   useEffect(() => {
@@ -82,11 +80,153 @@ const ShiftTemplates = () => {
     [editingId]
   );
 
-  const resetForm = () => {
+  const resetForm = useCallback(() => {
     setEditingId(null);
     setForm(emptyForm());
     setSaveError(null);
-  };
+  }, []);
+
+  const finishDeleteSuccess = useCallback(
+    (template, message) => {
+      dashboardToast.dismissConfirm();
+      dashboardToast.success(message);
+      if (editingId === template.id) resetForm();
+      refetch();
+    },
+    [editingId, refetch, resetForm]
+  );
+
+  const runSafeDelete = useCallback(
+    async (template) => {
+      const count = template.assignment_count || 0;
+      if (count > 0) {
+        await unassignAndDelete(template.id).unwrap();
+        finishDeleteSuccess(
+          template,
+          `Removed from ${count} assignment(s) and deleted “${template.name}”`
+        );
+        return;
+      }
+
+      try {
+        await deleteTemplate(template.id).unwrap();
+        finishDeleteSuccess(template, 'Template deleted');
+      } catch (err) {
+        const message = getApiErrorMessage(err, 'Could not delete template');
+        if (err?.status === 409 || message.toLowerCase().includes('assigned')) {
+          await unassignAndDelete(template.id).unwrap();
+          finishDeleteSuccess(
+            template,
+            `Removed employee assignments and deleted “${template.name}”`
+          );
+          return;
+        }
+        dashboardToast.error(message, 'Delete failed');
+        throw err;
+      }
+    },
+    [deleteTemplate, finishDeleteSuccess, unassignAndDelete]
+  );
+
+  const runForceDelete = useCallback(
+    async (template) => {
+      await unassignAndDelete(template.id).unwrap();
+      finishDeleteSuccess(
+        template,
+        `Force deleted “${template.name}” (assignments cleared)`
+      );
+    },
+    [finishDeleteSuccess, unassignAndDelete]
+  );
+
+  const openForceDeleteConfirm = useCallback(
+    (template) => {
+      dashboardToast.confirm({
+        variant: 'error',
+        title: 'Force delete this shift?',
+        message:
+          `Emergency delete for “${template.name}”. This immediately clears every employee weekly assignment using this shift, then deletes the template. This cannot be undone.`,
+        actions: [
+          {
+            key: 'cancel',
+            label: 'Cancel',
+            variant: 'secondary',
+            onClick: () => {},
+          },
+          {
+            key: 'force',
+            label: 'Force delete',
+            variant: 'destructive',
+            loadingText: 'Force deleting…',
+            onClick: async () => {
+              try {
+                await runForceDelete(template);
+              } catch (err) {
+                dashboardToast.error(
+                  getApiErrorMessage(err, 'Could not force-delete template'),
+                  'Force delete failed'
+                );
+                throw err;
+              }
+            },
+          },
+        ],
+      });
+    },
+    [runForceDelete]
+  );
+
+  const openDeleteConfirm = useCallback(
+    (template) => {
+      const count = template.assignment_count || 0;
+      const hasAssignments = count > 0;
+
+      dashboardToast.confirm({
+        variant: 'warning',
+        title: hasAssignments
+          ? 'Remove from employees, then delete?'
+          : 'Delete shift template?',
+        message: hasAssignments
+          ? `“${template.name}” is used on ${count} employee weekly assignment${count === 1 ? '' : 's'}.\n\n1) Remove this shift from those employee days\n2) Delete the template\n\nThose days will show as Off until reassigned.`
+          : `Delete “${template.name}”? This template is not assigned to any employee week days. This cannot be undone.`,
+        actions: [
+          {
+            key: 'cancel',
+            label: 'Cancel',
+            variant: 'secondary',
+            onClick: () => {},
+          },
+          {
+            key: 'force',
+            label: 'Force delete',
+            variant: 'secondary',
+            closeOnClick: true,
+            onClick: () => {
+              window.setTimeout(() => openForceDeleteConfirm(template), 120);
+            },
+          },
+          {
+            key: 'delete',
+            label: hasAssignments ? 'Remove & delete' : 'Delete template',
+            variant: 'destructive',
+            loadingText: 'Deleting…',
+            onClick: async () => {
+              try {
+                await runSafeDelete(template);
+              } catch (err) {
+                dashboardToast.error(
+                  getApiErrorMessage(err, 'Could not delete template'),
+                  'Delete failed'
+                );
+                throw err;
+              }
+            },
+          },
+        ],
+      });
+    },
+    [openForceDeleteConfirm, runSafeDelete]
+  );
 
   const handleSave = async () => {
     setSaveError(null);
@@ -131,38 +271,6 @@ const ShiftTemplates = () => {
       const message = getApiErrorMessage(err, 'Could not save shift template');
       setSaveError(message);
       dashboardToast.error(message, 'Save failed');
-    }
-  };
-
-  const handleDelete = async (template) => {
-    try {
-      await deleteTemplate(template.id).unwrap();
-      dashboardToast.success('Template deleted');
-      if (editingId === template.id) resetForm();
-      setDeleteTarget(null);
-      refetch();
-    } catch (err) {
-      const message = getApiErrorMessage(err, 'Could not delete template');
-      if (err?.status === 409 || message.toLowerCase().includes('assigned')) {
-        setDeleteTarget({ template, force: true, error: null });
-        return;
-      }
-      dashboardToast.error(message, 'Delete failed');
-    }
-  };
-
-  const handleForceDelete = async () => {
-    if (!deleteTarget?.template) return;
-    try {
-      await unassignAndDelete(deleteTarget.template.id).unwrap();
-      dashboardToast.success('Template unassigned and deleted');
-      if (editingId === deleteTarget.template.id) resetForm();
-      setDeleteTarget(null);
-      refetch();
-    } catch (err) {
-      const message = getApiErrorMessage(err, 'Could not force-delete template');
-      setDeleteTarget((current) => (current ? { ...current, error: message } : current));
-      dashboardToast.error(message, 'Delete failed');
     }
   };
 
@@ -381,7 +489,7 @@ const ShiftTemplates = () => {
                       type="button"
                       className="text-xs font-medium text-red-600"
                       disabled={deleting || forceDeleting}
-                      onClick={() => setDeleteTarget({ template: t, force: false, error: null })}
+                      onClick={() => openDeleteConfirm(t)}
                     >
                       Delete
                     </button>
@@ -394,42 +502,9 @@ const ShiftTemplates = () => {
       </SettingsContentGrid>
 
       <div className={`${SETTINGS_PANEL} px-4 py-3 text-xs text-gray-500`}>
-        Deleting a template in use will ask to unassign it from all weekly schedules first.
+        Deleting a template removes it from every employee weekly schedule first, then deletes it.
+        Use force delete only in an emergency.
       </div>
-
-      <ConfirmationDialog
-        isOpen={Boolean(deleteTarget)}
-        onClose={() => setDeleteTarget(null)}
-        onConfirm={() =>
-          deleteTarget?.force ? handleForceDelete() : handleDelete(deleteTarget.template)
-        }
-        title={deleteTarget?.force ? 'Unassign and delete template?' : 'Delete shift template?'}
-        variant="destructive"
-        confirmText={deleteTarget?.force ? 'Unassign & delete' : 'Delete template'}
-        cancelText="Cancel"
-        isLoading={deleting || forceDeleting}
-      >
-        <div className="space-y-3 text-sm text-gray-600">
-          {deleteTarget?.force ? (
-            <>
-              <p>
-                <strong>{deleteTarget.template?.name}</strong> is assigned on one or more employee
-                weekly schedules. This will remove those assignments, then delete the template.
-              </p>
-              <p className="text-gray-500">Employees on that day will show as Off until reassigned.</p>
-            </>
-          ) : (
-            <p>
-              Delete <strong>{deleteTarget?.template?.name}</strong>? This cannot be undone.
-            </p>
-          )}
-          {deleteTarget?.error ? (
-            <div className="rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700 whitespace-pre-line">
-              {deleteTarget.error}
-            </div>
-          ) : null}
-        </div>
-      </ConfirmationDialog>
     </div>
   );
 };

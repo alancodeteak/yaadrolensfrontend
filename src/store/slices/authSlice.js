@@ -60,8 +60,18 @@ export const login = createAsyncThunk(
   }
 );
 
+function readStoredUser() {
+  try {
+    const raw = localStorage.getItem('user');
+    return raw ? JSON.parse(raw) : null;
+  } catch {
+    localStorage.removeItem('user');
+    return null;
+  }
+}
+
 const initialState = {
-  user: localStorage.getItem('user') ? JSON.parse(localStorage.getItem('user')) : null,
+  user: readStoredUser(),
   access_token: localStorage.getItem('access_token'),
   refresh_token: localStorage.getItem('refresh_token'),
   isAuthenticated: !!localStorage.getItem('access_token'),

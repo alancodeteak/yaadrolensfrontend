@@ -21,6 +21,11 @@ function toTimeValue(hour, minute) {
   return `${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}`;
 }
 
+function timeToMinutes(value) {
+  const { hour, minute } = parseTime(value);
+  return hour * 60 + minute;
+}
+
 function formatDisplay(value) {
   const { hour, minute } = parseTime(value);
   const date = new Date();
@@ -39,7 +44,7 @@ function shiftByMinutes(hour, minute, delta, step) {
 }
 
 const stepBtnClass =
-  'rounded-xl border border-gray-200/60 p-2 text-gray-600 shadow-[0_2px_16px_rgba(0,0,0,0.04)] transition-all duration-200 hover:bg-gray-50 active:scale-95';
+  'rounded-xl border border-gray-200/60 p-2 text-gray-600 shadow-[0_2px_16px_rgba(0,0,0,0.04)] transition-all duration-200 hover:bg-gray-50 active:scale-95 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-white';
 
 const AnimatedValue = ({ value, className, animate = true }) => (
   <span
@@ -54,10 +59,16 @@ const AnimatedValue = ({ value, className, animate = true }) => (
   </span>
 );
 
-const TimeStepper = ({ label, display, onUp, onDown, upLabel, downLabel }) => (
+const TimeStepper = ({ label, display, onUp, onDown, upLabel, downLabel, disableUp = false }) => (
   <div className="flex flex-1 flex-col items-center gap-2 rounded-xl border border-gray-100 bg-gray-50/60 p-3 transition-colors duration-200">
     <span className="text-[10px] font-semibold uppercase tracking-wide text-gray-400">{label}</span>
-    <button type="button" onClick={onUp} className={stepBtnClass} aria-label={upLabel}>
+    <button
+      type="button"
+      onClick={onUp}
+      disabled={disableUp}
+      className={stepBtnClass}
+      aria-label={upLabel}
+    >
       <ChevronUp className="h-4 w-4" strokeWidth={2} />
     </button>
     <div className="flex h-12 w-full items-center justify-center overflow-hidden rounded-xl border border-[#007AFF]/30 bg-[#007AFF]/10 text-xl font-semibold text-[#007AFF] transition-colors duration-200">
@@ -76,19 +87,36 @@ const DashboardTimePicker = ({
   className,
   id,
   minuteStep = 5,
+  maxTime,
 }) => {
   const rootRef = useRef(null);
   const [open, setOpen] = useState(false);
   const parsed = parseTime(value);
   const [draftHour, setDraftHour] = useState(parsed.hour);
   const [draftMinute, setDraftMinute] = useState(parsed.minute);
+  const maxMinutes = maxTime != null ? timeToMinutes(maxTime) : null;
+
+  const clampHourMinute = (hour, minute) => {
+    if (maxMinutes == null) return { hour, minute };
+    const total = hour * 60 + minute;
+    if (total <= maxMinutes) return { hour, minute };
+    return {
+      hour: Math.floor(maxMinutes / 60),
+      minute: maxMinutes % 60,
+    };
+  };
+
+  const canMoveForward = (hour, minute, deltaMinutes) => {
+    if (maxMinutes == null) return true;
+    return hour * 60 + minute + deltaMinutes <= maxMinutes;
+  };
 
   useEffect(() => {
-    if (!open) return;
     const next = parseTime(value);
-    setDraftHour(next.hour);
-    setDraftMinute(next.minute);
-  }, [open, value]);
+    const clamped = clampHourMinute(next.hour, next.minute);
+    setDraftHour(clamped.hour);
+    setDraftMinute(clamped.minute);
+  }, [value, maxTime]);
 
   useEffect(() => {
     if (!open) return undefined;
@@ -112,27 +140,34 @@ const DashboardTimePicker = ({
   }, [open]);
 
   const applyTime = (hour, minute) => {
-    setDraftHour(hour);
-    setDraftMinute(minute);
-    onChange?.(toTimeValue(hour, minute));
+    const clamped = clampHourMinute(hour, minute);
+    setDraftHour(clamped.hour);
+    setDraftMinute(clamped.minute);
+    onChange?.(toTimeValue(clamped.hour, clamped.minute));
   };
 
   const shiftTime = (delta) => {
     const next = shiftByMinutes(draftHour, draftMinute, delta, 15);
+    if (delta > 0 && !canMoveForward(draftHour, draftMinute, 15)) return;
     applyTime(next.hour, next.minute);
   };
 
   const adjustHour = (delta) => {
+    if (delta > 0 && !canMoveForward(draftHour, draftMinute, 60)) return;
     applyTime((draftHour + delta + 24) % 24, draftMinute);
   };
 
   const adjustMinute = (delta) => {
+    if (delta > 0 && !canMoveForward(draftHour, draftMinute, minuteStep)) return;
     const next = shiftByMinutes(draftHour, draftMinute, delta, minuteStep);
     applyTime(next.hour, next.minute);
   };
 
   const triggerId = id || 'dashboard-time-picker';
   const currentValue = toTimeValue(draftHour, draftMinute);
+  const canShiftLater = canMoveForward(draftHour, draftMinute, 15);
+  const canIncreaseHour = canMoveForward(draftHour, draftMinute, 60);
+  const canIncreaseMinute = canMoveForward(draftHour, draftMinute, minuteStep);
 
   return (
     <div ref={rootRef} className={clsx('relative', className)}>
@@ -189,7 +224,8 @@ const DashboardTimePicker = ({
           <button
             type="button"
             onClick={() => shiftTime(1)}
-            className="rounded-lg p-1.5 text-gray-500 transition-all duration-200 hover:bg-gray-50 hover:text-gray-900 active:scale-95"
+            disabled={!canShiftLater}
+            className="rounded-lg p-1.5 text-gray-500 transition-all duration-200 hover:bg-gray-50 hover:text-gray-900 active:scale-95 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent"
             aria-label="15 minutes later"
           >
             <ChevronRight className="h-4 w-4" strokeWidth={2} />
@@ -205,6 +241,7 @@ const DashboardTimePicker = ({
               onDown={() => adjustHour(-1)}
               upLabel="Increase hour"
               downLabel="Decrease hour"
+              disableUp={!canIncreaseHour}
             />
             <TimeStepper
               label="Minute"
@@ -213,6 +250,7 @@ const DashboardTimePicker = ({
               onDown={() => adjustMinute(-1)}
               upLabel="Increase minute"
               downLabel="Decrease minute"
+              disableUp={!canIncreaseMinute}
             />
           </div>
 
@@ -223,16 +261,19 @@ const DashboardTimePicker = ({
             <div className="flex flex-wrap gap-1.5">
               {PRESETS.map((preset) => {
                 const selected = preset.value === toTimeValue(draftHour, draftMinute);
+                const presetFuture =
+                  maxMinutes != null && timeToMinutes(preset.value) > maxMinutes;
                 return (
                   <button
                     key={preset.value}
                     type="button"
+                    disabled={presetFuture}
                     onClick={() => {
                       const p = parseTime(preset.value);
                       applyTime(p.hour, p.minute);
                     }}
                     className={clsx(
-                      'rounded-lg border px-2.5 py-1.5 text-[11px] font-medium transition-all duration-200 active:scale-95',
+                      'rounded-lg border px-2.5 py-1.5 text-[11px] font-medium transition-all duration-200 active:scale-95 disabled:cursor-not-allowed disabled:opacity-40',
                       selected
                         ? 'border-[#007AFF]/40 bg-[#007AFF]/10 text-[#007AFF]'
                         : 'border-gray-100 bg-white text-gray-600 hover:bg-gray-50'

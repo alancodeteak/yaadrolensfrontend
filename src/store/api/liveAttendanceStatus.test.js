@@ -1,9 +1,4 @@
-/**
- * Node built-in test runner:
- *   node --test src/store/api/liveAttendanceStatus.test.js
- */
-import { describe, it } from 'node:test';
-import assert from 'node:assert/strict';
+import { describe, it, expect } from 'vitest';
 import {
   isLiveOnSiteStatus,
   matchesLiveAttendanceStatusFilter,
@@ -12,104 +7,97 @@ import {
 
 describe('resolveLiveAttendanceStatus', () => {
   it('shows Present when clocked in without clock out', () => {
-    assert.equal(
+    expect(
       resolveLiveAttendanceStatus({
         attendance_status: 'present',
         clock_in: '2026-07-17T04:00:00Z',
         clock_out: null,
-      }),
-      'Present'
-    );
+      })
+    ).toBe('Present');
   });
 
   it('shows Present (Late) when late and still clocked in', () => {
-    assert.equal(
+    expect(
       resolveLiveAttendanceStatus({
         attendance_status: 'late',
         clock_in: '2026-07-17T05:00:00Z',
         clock_out: null,
-      }),
-      'Present (Late)'
-    );
+      })
+    ).toBe('Present (Late)');
   });
 
   it('keeps Present when clock_in exists even if status string is absent', () => {
-    assert.equal(
+    expect(
       resolveLiveAttendanceStatus({
         attendance_status: 'absent',
         clock_in: '2026-07-17T04:00:00Z',
         clock_out: null,
-      }),
-      'Present'
-    );
+      })
+    ).toBe('Present');
   });
 
   it('shows Clocked Out when clocked in and out on time', () => {
-    assert.equal(
+    expect(
       resolveLiveAttendanceStatus({
         attendance_status: 'present',
         clock_in: '2026-07-17T04:00:00Z',
         clock_out: '2026-07-17T12:00:00Z',
-      }),
-      'Clocked Out'
-    );
+      })
+    ).toBe('Clocked Out');
   });
 
   it('shows Clocked Out (Late) when late and clocked out', () => {
-    assert.equal(
+    expect(
       resolveLiveAttendanceStatus({
         attendance_status: 'late',
         clock_in: '2026-07-17T05:00:00Z',
         clock_out: '2026-07-17T12:00:00Z',
-      }),
-      'Clocked Out (Late)'
-    );
+      })
+    ).toBe('Clocked Out (Late)');
   });
 
   it('shows Absent with no punches', () => {
-    assert.equal(
+    expect(
       resolveLiveAttendanceStatus({
         attendance_status: 'absent',
         clock_in: null,
         clock_out: null,
-      }),
-      'Absent'
-    );
+      })
+    ).toBe('Absent');
   });
 
   it('shows Scheduled off when shift is off and no punch', () => {
-    assert.equal(
+    expect(
       resolveLiveAttendanceStatus({
         attendance_status: 'shift_off',
         is_shift_off: true,
         clock_in: null,
         clock_out: null,
-      }),
-      'Scheduled off'
-    );
+      })
+    ).toBe('Scheduled off');
   });
 });
 
 describe('isLiveOnSiteStatus', () => {
   it('treats Present and Present (Late) as on site', () => {
-    assert.equal(isLiveOnSiteStatus('Present'), true);
-    assert.equal(isLiveOnSiteStatus('Present (Late)'), true);
-    assert.equal(isLiveOnSiteStatus('Clocked Out'), false);
-    assert.equal(isLiveOnSiteStatus('Clocked Out (Late)'), false);
-    assert.equal(isLiveOnSiteStatus('Absent'), false);
+    expect(isLiveOnSiteStatus('Present')).toBe(true);
+    expect(isLiveOnSiteStatus('Present (Late)')).toBe(true);
+    expect(isLiveOnSiteStatus('Clocked Out')).toBe(false);
+    expect(isLiveOnSiteStatus('Clocked Out (Late)')).toBe(false);
+    expect(isLiveOnSiteStatus('Absent')).toBe(false);
   });
 });
 
 describe('matchesLiveAttendanceStatusFilter', () => {
   it('Present filter includes Present (Late)', () => {
-    assert.equal(matchesLiveAttendanceStatusFilter('Present', 'Present'), true);
-    assert.equal(matchesLiveAttendanceStatusFilter('Present (Late)', 'Present'), true);
-    assert.equal(matchesLiveAttendanceStatusFilter('Clocked Out', 'Present'), false);
+    expect(matchesLiveAttendanceStatusFilter('Present', 'Present')).toBe(true);
+    expect(matchesLiveAttendanceStatusFilter('Present (Late)', 'Present')).toBe(true);
+    expect(matchesLiveAttendanceStatusFilter('Clocked Out', 'Present')).toBe(false);
   });
 
   it('Clocked Out filter includes Clocked Out (Late)', () => {
-    assert.equal(matchesLiveAttendanceStatusFilter('Clocked Out', 'Clocked Out'), true);
-    assert.equal(matchesLiveAttendanceStatusFilter('Clocked Out (Late)', 'Clocked Out'), true);
-    assert.equal(matchesLiveAttendanceStatusFilter('Present', 'Clocked Out'), false);
+    expect(matchesLiveAttendanceStatusFilter('Clocked Out', 'Clocked Out')).toBe(true);
+    expect(matchesLiveAttendanceStatusFilter('Clocked Out (Late)', 'Clocked Out')).toBe(true);
+    expect(matchesLiveAttendanceStatusFilter('Present', 'Clocked Out')).toBe(false);
   });
 });

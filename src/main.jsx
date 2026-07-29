@@ -10,7 +10,7 @@ import './styles/dashboardToast.css';
 import './styles/uiTransitions.css';
 import AdminLogin from './pages/AdminLogin/AdminLogin';
 import AdminLayout from './layouts/AdminLayout';
-import { ProtectedRoute, AuthChecker } from './components/common';
+import { ProtectedRoute, AuthChecker, ErrorBoundary, NetworkErrorHandler } from './components/common';
 import LoadingScreen from './components/common/Lottie/LoadingScreen';
 import DeferredAppToasts from './components/common/DeferredAppToasts/DeferredAppToasts';
 import PageNotFound from './pages/PageNotFound';
@@ -43,81 +43,85 @@ const PageFallback = () => <LoadingScreen message="Loading page…" />;
 function App() {
   return (
     <Provider store={store}>
-      <AuthChecker>
-        <Router>
-          <Suspense fallback={<PageFallback />}>
-            <Routes>
-              {/* Public routes */}
-              <Route path="/login" element={<AdminLogin />} />
-              <Route path="/admin-login" element={<AdminLogin />} />
+      <ErrorBoundary>
+        <NetworkErrorHandler>
+          <AuthChecker>
+            <Router>
+            <Suspense fallback={<PageFallback />}>
+              <Routes>
+                {/* Public routes */}
+                <Route path="/login" element={<AdminLogin />} />
+                <Route path="/admin-login" element={<AdminLogin />} />
 
-              {/* Protected admin routes */}
-              <Route
-                path="/admin"
-                element={
-                  <ProtectedRoute>
-                    <AdminLayout />
-                  </ProtectedRoute>
-                }
-              >
-                <Route path="dashboard" element={<Dashboard />} />
-                <Route path="employees" element={<Employees />} />
-                <Route path="employees/:id" element={<EmployeeDetails />} />
-                <Route path="employees/:id/today" element={<EmployeeToday />} />
+                {/* Protected admin routes */}
                 <Route
-                  path="employees/:id/attendance-report"
-                  element={<EmployeeAttendanceReport />}
-                />
-                <Route path="employees/:id/training" element={<EmployeeTraining />} />
-                <Route path="salary" element={<Salary />} />
-                <Route path="payroll" element={<PayrollManagement />} />
-                <Route path="reports" element={<Reports />} />
-                <Route path="settings/*" element={<Settings />} />
-                <Route path="attendance" element={<LiveAttendanceMonitoring />} />
-                <Route path="attendance-dashboard" element={<AttendanceDashboard />} />
+                  path="/admin"
+                  element={
+                    <ProtectedRoute>
+                      <AdminLayout />
+                    </ProtectedRoute>
+                  }
+                >
+                  <Route path="dashboard" element={<Dashboard />} />
+                  <Route path="employees" element={<Employees />} />
+                  <Route path="employees/:id" element={<EmployeeDetails />} />
+                  <Route path="employees/:id/today" element={<EmployeeToday />} />
+                  <Route
+                    path="employees/:id/attendance-report"
+                    element={<EmployeeAttendanceReport />}
+                  />
+                  <Route path="employees/:id/training" element={<EmployeeTraining />} />
+                  <Route path="salary" element={<Salary />} />
+                  <Route path="payroll" element={<PayrollManagement />} />
+                  <Route path="reports" element={<Reports />} />
+                  <Route path="settings/*" element={<Settings />} />
+                  <Route path="attendance" element={<LiveAttendanceMonitoring />} />
+                  <Route path="attendance-dashboard" element={<AttendanceDashboard />} />
+                  <Route
+                    path="analytics"
+                    element={<Navigate to="/admin/attendance-dashboard" replace />}
+                  />
+                  <Route path="mobile" element={<MobileDashboard />} />
+                  <Route path="users" element={<Navigate to="/admin/employees" replace />} />
+                  <Route path="system" element={<Navigate to="/admin/settings/attendance" replace />} />
+                  <Route path="docs/*" element={<AdminDocsRedirect />} />
+                  <Route path="*" element={<PageNotFound />} />
+                </Route>
+
+                {/* Protected docs routes (top-level /docs) */}
                 <Route
-                  path="analytics"
-                  element={<Navigate to="/admin/attendance-dashboard" replace />}
+                  path="/docs/*"
+                  element={
+                    <ProtectedRoute>
+                      <AdminLayout />
+                    </ProtectedRoute>
+                  }
+                >
+                  <Route path="*" element={<Docs />} />
+                </Route>
+
+                {/* Protected legacy routes */}
+                <Route
+                  path="/dashboard"
+                  element={
+                    <ProtectedRoute>
+                      <Dashboard />
+                    </ProtectedRoute>
+                  }
                 />
-                <Route path="mobile" element={<MobileDashboard />} />
-                <Route path="users" element={<Navigate to="/admin/employees" replace />} />
-                <Route path="system" element={<Navigate to="/admin/settings/attendance" replace />} />
-                <Route path="docs/*" element={<AdminDocsRedirect />} />
+
+                {/* Root redirect */}
+                <Route path="/" element={<Navigate to="/admin/dashboard" replace />} />
+
+                {/* Catch all */}
                 <Route path="*" element={<PageNotFound />} />
-              </Route>
-
-              {/* Protected docs routes (top-level /docs) */}
-              <Route
-                path="/docs/*"
-                element={
-                  <ProtectedRoute>
-                    <AdminLayout />
-                  </ProtectedRoute>
-                }
-              >
-                <Route path="*" element={<Docs />} />
-              </Route>
-
-              {/* Protected legacy routes */}
-              <Route
-                path="/dashboard"
-                element={
-                  <ProtectedRoute>
-                    <Dashboard />
-                  </ProtectedRoute>
-                }
-              />
-
-              {/* Root redirect */}
-              <Route path="/" element={<Navigate to="/admin/dashboard" replace />} />
-
-              {/* Catch all */}
-              <Route path="*" element={<PageNotFound />} />
-            </Routes>
-          </Suspense>
-        </Router>
-        <DeferredAppToasts />
-      </AuthChecker>
+              </Routes>
+            </Suspense>
+            </Router>
+            <DeferredAppToasts />
+          </AuthChecker>
+        </NetworkErrorHandler>
+      </ErrorBoundary>
     </Provider>
   );
 }

@@ -289,12 +289,14 @@ export const paymentApi = baseApi.injectEndpoints({
 
 export const {
   useGetPaymentsQuery,
+  useLazyGetPaymentsQuery,
   useGetPaymentSummaryQuery,
   useGetMonthlyGenerationStatusQuery,
   useRecordPaymentMutation,
   useGetEmployeePaymentSummaryQuery,
   useGetEmployeePaymentHistoryQuery,
   useGetAdvancesQuery,
+  useLazyGetAdvancesQuery,
   useCreateAdvanceMutation,
   useGetAdvanceQuery,
   useApproveAdvanceMutation,
@@ -310,8 +312,11 @@ export const {
   useAdjustEmployeeBalanceMutation,
   useGetBalanceTransactionsQuery,
   useGetBalanceLedgerQuery,
+  useLazyGetBalanceLedgerQuery,
   useGetEmployeeBalancesQuery,
+  useLazyGetEmployeeBalancesQuery,
   useGetBonusesQuery,
+  useLazyGetBonusesQuery,
   useCreateBonusMutation,
   useReleaseBonusMutation,
 } = paymentApi;

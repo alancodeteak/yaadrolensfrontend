@@ -127,6 +127,7 @@ export const employeeApi = baseApi.injectEndpoints({
 
 export const {
   useGetEmployeesQuery,
+  useLazyGetEmployeesQuery,
   useGetEmployeeByIdQuery,
   useCreateEmployeeMutation,
   useUpdateEmployeeMutation,

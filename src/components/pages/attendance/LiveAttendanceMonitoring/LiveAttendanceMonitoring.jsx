@@ -83,7 +83,7 @@ const LiveAttendanceMonitoring = () => {
   const [selectedStatus, setSelectedStatus] = useState('All Status');
   const [selectedDay, setSelectedDay] = useState(todayKey);
   const [manualPunchTarget, setManualPunchTarget] = useState(null);
-  const [manualPunch, { isLoading: isManualPunching }] = useManualPunchMutation();
+  const [manualPunch] = useManualPunchMutation();
 
   // Align default date with org timezone once settings load (without overriding a manual pick).
   useEffect(() => {
@@ -223,11 +223,11 @@ const LiveAttendanceMonitoring = () => {
 
   const openManualPunch = (employee, action, event) => {
     event.stopPropagation();
-    setManualPunchTarget({ employee, action });
+    setManualPunchTarget({ employee, action, openedAt: Date.now() });
   };
 
-  const handleManualPunchConfirm = async ({ employee_id, action, confirmation }) => {
-    const result = await manualPunch({ employee_id, action, confirmation }).unwrap();
+  const handleManualPunchConfirm = async ({ employee_id, action, confirmation, punch_time }) => {
+    const result = await manualPunch({ employee_id, action, confirmation, punch_time }).unwrap();
     dashboardToast.success(
       result?.message || `Manual ${action === 'clock_in' ? 'clock in' : 'clock out'} recorded`,
       'Manual attendance'
@@ -516,10 +516,15 @@ const LiveAttendanceMonitoring = () => {
       </div>
 
       <ManualPunchConfirmModal
+        key={
+          manualPunchTarget
+            ? `${manualPunchTarget.employee.id}-${manualPunchTarget.action}-${manualPunchTarget.openedAt}`
+            : 'closed'
+        }
         isOpen={Boolean(manualPunchTarget)}
         employee={manualPunchTarget?.employee}
         action={manualPunchTarget?.action}
-        isLoading={isManualPunching}
+        timezone={orgTimezone}
         onClose={() => setManualPunchTarget(null)}
         onConfirm={handleManualPunchConfirm}
       />

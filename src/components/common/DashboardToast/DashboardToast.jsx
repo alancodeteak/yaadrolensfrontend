@@ -86,10 +86,11 @@ const DashboardToast = ({
   const handleAction = async (action, index) => {
     if (busyKey !== null) return;
     const key = action.key || String(index);
+    const shouldClose = action.closeOnClick !== false;
     setBusyKey(key);
     try {
       await action.onClick?.({ closeToast: dismiss });
-      if (action.closeOnClick !== false) {
+      if (shouldClose) {
         dismiss();
       }
     } catch {
