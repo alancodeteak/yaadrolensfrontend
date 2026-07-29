@@ -1,5 +1,13 @@
-import { useState, useEffect, useMemo } from 'react';
-import { DashboardTimePicker, LoadingScreen, LottieLoader, dashboardToast } from '../../../common';
+import { useState, useEffect, useMemo, useCallback } from 'react';
+import clsx from 'clsx';
+import { AlertTriangle } from 'lucide-react';
+import {
+  DashboardTimePicker,
+  LoadingScreen,
+  LottieLoader,
+  dashboardToast,
+} from '../../../common';
+import { getApiErrorMessage } from '../../../../utils/apiError';
 import SettingsSection, {
   settingsInputClass,
   settingsLabelClass,
@@ -11,6 +19,10 @@ import {
   useGetAttendanceRulesQuery,
   useUpdateAttendanceRulesMutation,
 } from '../../../../store/api/settingsApi';
+import { useClearWeeklyShiftAssignmentsMutation } from '../../../../store/api/shiftApi';
+
+const SWITCH_CONFIRM_MESSAGE =
+  'This clears every employee’s Mon–Sun shift assignment, then applies org working hours to everyone. Templates stay saved — you can reassign later.';
 
 const normalizeTime = (value, fallback) => {
   if (!value) return fallback;
@@ -18,32 +30,55 @@ const normalizeTime = (value, fallback) => {
   return str.length >= 5 ? str.slice(0, 5) : str;
 };
 
-const buildApiPayload = (workingHours, gracePeriods, kioskScan, manualAttendance) => ({
+const buildApiPayload = (
+  workingHours,
+  gracePeriods,
+  kioskScan,
+  manualAttendance,
+  shiftMode
+) => ({
   work_start_time: normalizeTime(workingHours.startTime, '09:00'),
   work_end_time: normalizeTime(workingHours.endTime, '17:00'),
   late_arrival_grace_minutes: Number(gracePeriods.lateArrival ?? 10),
   early_departure_grace_minutes: Number(gracePeriods.earlyDeparture ?? 5),
   minimum_clock_out_minutes: Number(kioskScan.minimumClockOutMinutes ?? 30),
   manual_attendance_enabled: Boolean(manualAttendance.enabled),
+  shift_schedule_mode: shiftMode,
 });
 
-const hasApiChanges = (saved, workingHours, gracePeriods, kioskScan, manualAttendance) => {
+const hasApiChanges = (
+  saved,
+  workingHours,
+  gracePeriods,
+  kioskScan,
+  manualAttendance,
+  shiftMode
+) => {
   if (!saved) return false;
 
-  const current = buildApiPayload(workingHours, gracePeriods, kioskScan, manualAttendance);
+  const current = buildApiPayload(
+    workingHours,
+    gracePeriods,
+    kioskScan,
+    manualAttendance,
+    shiftMode
+  );
   return (
     normalizeTime(saved.work_start_time, '09:00') !== current.work_start_time ||
     normalizeTime(saved.work_end_time, '17:00') !== current.work_end_time ||
     Number(saved.late_arrival_grace_minutes ?? 10) !== current.late_arrival_grace_minutes ||
     Number(saved.early_departure_grace_minutes ?? 5) !== current.early_departure_grace_minutes ||
     Number(saved.minimum_clock_out_minutes ?? 30) !== current.minimum_clock_out_minutes ||
-    Boolean(saved.manual_attendance_enabled) !== current.manual_attendance_enabled
+    Boolean(saved.manual_attendance_enabled) !== current.manual_attendance_enabled ||
+    (saved.shift_schedule_mode || 'same_for_all') !== current.shift_schedule_mode
   );
 };
 
 const AttendanceRules = () => {
   const { data: attendanceRules, isLoading, error, refetch } = useGetAttendanceRulesQuery();
   const [updateAttendanceRules, { isLoading: isUpdating }] = useUpdateAttendanceRulesMutation();
+  const [clearWeeklyAssignments, { isLoading: isClearing }] =
+    useClearWeeklyShiftAssignmentsMutation();
 
   const [workingHours, setWorkingHours] = useState({
     startTime: '09:00',
@@ -52,6 +87,7 @@ const AttendanceRules = () => {
   const [gracePeriods, setGracePeriods] = useState({ lateArrival: 10, earlyDeparture: 5 });
   const [kioskScan, setKioskScan] = useState({ minimumClockOutMinutes: 30 });
   const [manualAttendance, setManualAttendance] = useState({ enabled: false });
+  const [shiftMode, setShiftMode] = useState('same_for_all');
 
   useEffect(() => {
     if (!attendanceRules) return;
@@ -69,18 +105,29 @@ const AttendanceRules = () => {
     setManualAttendance({
       enabled: Boolean(attendanceRules.manual_attendance_enabled),
     });
+    setShiftMode(attendanceRules.shift_schedule_mode || 'same_for_all');
   }, [attendanceRules]);
 
   const isDirty = useMemo(
     () =>
-      hasApiChanges(attendanceRules, workingHours, gracePeriods, kioskScan, manualAttendance),
-    [attendanceRules, workingHours, gracePeriods, kioskScan, manualAttendance]
+      hasApiChanges(
+        attendanceRules,
+        workingHours,
+        gracePeriods,
+        kioskScan,
+        manualAttendance,
+        shiftMode
+      ),
+    [attendanceRules, workingHours, gracePeriods, kioskScan, manualAttendance, shiftMode]
   );
+
+  const savedShiftMode = attendanceRules?.shift_schedule_mode || 'same_for_all';
+  const needsClearToSwitch = savedShiftMode === 'per_employee' && shiftMode === 'same_for_all';
 
   const validateForm = () => {
     const errors = [];
-    if (workingHours.startTime >= workingHours.endTime) {
-      errors.push('End time must be after start time');
+    if (workingHours.startTime === workingHours.endTime) {
+      errors.push('Start and end times cannot be the same');
     }
     if (gracePeriods.lateArrival < 0 || gracePeriods.lateArrival > 120) {
       errors.push('Late arrival grace must be between 0 and 120 minutes');
@@ -94,6 +141,61 @@ const AttendanceRules = () => {
     return errors;
   };
 
+  const handleClearAndSwitchSameForAll = useCallback(async () => {
+    try {
+      await clearWeeklyAssignments().unwrap();
+      setShiftMode('same_for_all');
+      await updateAttendanceRules(
+        buildApiPayload(
+          workingHours,
+          gracePeriods,
+          kioskScan,
+          manualAttendance,
+          'same_for_all'
+        )
+      ).unwrap();
+      dashboardToast.success('Switched to same shift for all employees.', 'Mode updated');
+      refetch();
+    } catch (err) {
+      const message = getApiErrorMessage(err, 'Could not clear schedules. Please try again.');
+      dashboardToast.error(message, 'Switch failed');
+      throw err;
+    }
+  }, [
+    clearWeeklyAssignments,
+    updateAttendanceRules,
+    workingHours,
+    gracePeriods,
+    kioskScan,
+    manualAttendance,
+    refetch,
+  ]);
+
+  const openSwitchConfirm = useCallback(() => {
+    dashboardToast.confirm({
+      variant: 'warning',
+      title: 'Switch to same shift for all?',
+      message: SWITCH_CONFIRM_MESSAGE,
+      actions: [
+        {
+          key: 'keep',
+          label: 'Keep per-employee',
+          variant: 'secondary',
+          onClick: () => {
+            setShiftMode('per_employee');
+          },
+        },
+        {
+          key: 'switch',
+          label: 'Clear schedules & switch',
+          variant: 'destructive',
+          loadingText: 'Switching…',
+          onClick: handleClearAndSwitchSameForAll,
+        },
+      ],
+    });
+  }, [handleClearAndSwitchSameForAll]);
+
   const handleSave = async () => {
     if (!isDirty) return;
 
@@ -103,22 +205,37 @@ const AttendanceRules = () => {
       return;
     }
 
+    if (needsClearToSwitch) {
+      openSwitchConfirm();
+      return;
+    }
+
     try {
       await updateAttendanceRules(
-        buildApiPayload(workingHours, gracePeriods, kioskScan, manualAttendance)
+        buildApiPayload(workingHours, gracePeriods, kioskScan, manualAttendance, shiftMode)
       ).unwrap();
       dashboardToast.success('Your attendance rules were updated.', 'Changes saved');
       refetch();
     } catch (err) {
-      const detail = err?.data?.detail;
-      const message =
-        typeof detail === 'string'
-          ? detail
-          : Array.isArray(detail)
-            ? detail.map((e) => e.msg || e.message).join('; ')
-            : 'Could not save attendance rules. Please try again.';
-      dashboardToast.error(message, 'Save failed');
+      const message = getApiErrorMessage(err, 'Could not save attendance rules. Please try again.');
+      if (
+        (attendanceRules?.shift_schedule_mode || 'same_for_all') === 'per_employee' &&
+        shiftMode === 'same_for_all'
+      ) {
+        openSwitchConfirm();
+      } else {
+        dashboardToast.error(message, 'Save failed');
+      }
     }
+  };
+
+  const handleShiftModeChange = (nextMode) => {
+    if (nextMode === 'same_for_all' && savedShiftMode === 'per_employee') {
+      setShiftMode('same_for_all');
+      openSwitchConfirm();
+      return;
+    }
+    setShiftMode(nextMode);
   };
 
   if (isLoading) {
@@ -145,6 +262,78 @@ const AttendanceRules = () => {
       )}
 
       <SettingsContentGrid>
+        <SettingsSection
+          title="Shift schedule mode"
+          subtitle="Same hours for everyone, or templates per employee"
+          tourId="shift-schedule-mode"
+        >
+          <div className="space-y-3">
+            <label
+              className={clsx(
+                'flex cursor-pointer items-start gap-3 rounded-xl border p-3 transition-all duration-200',
+                shiftMode === 'same_for_all'
+                  ? 'border-[#007AFF]/35 bg-[#007AFF]/5 shadow-sm'
+                  : 'border-gray-100 hover:border-gray-200 hover:bg-gray-50/60'
+              )}
+            >
+              <input
+                type="radio"
+                name="shiftMode"
+                checked={shiftMode === 'same_for_all'}
+                onChange={() => handleShiftModeChange('same_for_all')}
+                className="mt-1 transition-transform duration-200"
+              />
+              <span>
+                <span className="block text-sm font-medium text-gray-900">Same for all</span>
+                <span className="text-xs text-gray-500">
+                  Everyone uses the org working hours below.
+                </span>
+              </span>
+            </label>
+            <label
+              className={clsx(
+                'flex cursor-pointer items-start gap-3 rounded-xl border p-3 transition-all duration-200',
+                shiftMode === 'per_employee'
+                  ? 'border-[#007AFF]/35 bg-[#007AFF]/5 shadow-sm'
+                  : 'border-gray-100 hover:border-gray-200 hover:bg-gray-50/60'
+              )}
+            >
+              <input
+                type="radio"
+                name="shiftMode"
+                checked={shiftMode === 'per_employee'}
+                onChange={() => handleShiftModeChange('per_employee')}
+                className="mt-1 transition-transform duration-200"
+              />
+              <span>
+                <span className="block text-sm font-medium text-gray-900">Per employee</span>
+                <span className="text-xs text-gray-500">
+                  Create templates under Settings → Shifts, then assign Mon–Sun on each employee.
+                </span>
+              </span>
+            </label>
+            {needsClearToSwitch && (
+              <div className="ui-fade-slide-in flex items-start gap-2 rounded-xl border border-amber-200/80 bg-amber-50/80 px-3 py-2.5 text-xs text-amber-950">
+                <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-600" aria-hidden="true" />
+                <div className="min-w-0 flex-1">
+                  <p className="font-medium">Weekly schedules must be cleared first</p>
+                  <p className="mt-0.5 text-amber-900/80">
+                    Confirm in the popup above to clear assignments and switch everyone to the same
+                    hours.
+                  </p>
+                  <button
+                    type="button"
+                    className="ui-btn-motion mt-2 text-xs font-semibold text-[#007AFF] hover:underline"
+                    onClick={openSwitchConfirm}
+                  >
+                    Show confirmation
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        </SettingsSection>
+
         <SettingsSection title="Working hours" tourId="working-hours">
           <div className="grid gap-4 sm:grid-cols-2">
             <div>
@@ -167,7 +356,8 @@ const AttendanceRules = () => {
             </div>
           </div>
           <p className="mt-3 text-xs text-gray-500">
-            Used for late and early-leave detection. Timezone is configured under Kiosk &amp; device.
+            Used when mode is same for all (and as fallback display). Overnight hours are allowed
+            (e.g. 22:00–06:00). Timezone is under Kiosk &amp; device.
           </p>
         </SettingsSection>
 
@@ -273,14 +463,16 @@ const AttendanceRules = () => {
         <button
           type="button"
           onClick={handleSave}
-          disabled={isUpdating || !isDirty}
+          disabled={isUpdating || isClearing || !isDirty}
           className={DASHBOARD_BTN_PRIMARY}
         >
-          {isUpdating ? (
+          {isUpdating || isClearing ? (
             <>
               <LottieLoader size="xs" />
               Saving…
             </>
+          ) : needsClearToSwitch ? (
+            'Review switch…'
           ) : (
             'Save changes'
           )}

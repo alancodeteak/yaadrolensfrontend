@@ -60,12 +60,19 @@ function formatEventTime(iso) {
 }
 
 /**
- * Chart X domain from org work hours, padded and expanded to fit punch events.
+ * Chart X domain from work hours, padded and expanded to fit punch events.
  * Overnight shifts (end <= start) span through midnight up to 24.
+ * Optional domainStartTime/domainEndTime expand the axis without drawing markers.
  */
-export function resolveChartDomain(workStartTime, workEndTime, events = []) {
-  const workStart = parseClockTime(workStartTime);
-  const workEnd = parseClockTime(workEndTime);
+export function resolveChartDomain(
+  workStartTime,
+  workEndTime,
+  events = [],
+  domainStartTime = null,
+  domainEndTime = null
+) {
+  const workStart = parseClockTime(workStartTime ?? domainStartTime);
+  const workEnd = parseClockTime(workEndTime ?? domainEndTime);
 
   let domainStart = workStart != null ? workStart : DEFAULT_DOMAIN_START;
   let domainEnd = workEnd != null ? workEnd : DEFAULT_DOMAIN_END;
@@ -259,6 +266,8 @@ const ClockEventTimelineChart = ({
   events = [],
   workStartTime = null,
   workEndTime = null,
+  domainStartTime = null,
+  domainEndTime = null,
 }) => {
   const gradientId = useId();
   const lineRef = useRef(null);
@@ -268,8 +277,15 @@ const ClockEventTimelineChart = ({
   const [hoveredWorkMarker, setHoveredWorkMarker] = useState(null);
 
   const { domainStart, domainEnd } = useMemo(
-    () => resolveChartDomain(workStartTime, workEndTime, events),
-    [workStartTime, workEndTime, events]
+    () =>
+      resolveChartDomain(
+        workStartTime,
+        workEndTime,
+        events,
+        domainStartTime,
+        domainEndTime
+      ),
+    [workStartTime, workEndTime, events, domainStartTime, domainEndTime]
   );
 
   const xTicks = useMemo(

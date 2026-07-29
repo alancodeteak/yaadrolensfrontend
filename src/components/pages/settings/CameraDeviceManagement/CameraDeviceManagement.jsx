@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { ButtonSpinner, LoadingScreen, dashboardToast } from '../../../common';
+import { KIOSK_PLAY_STORE_URL } from '../../../../config/kioskApp';
 import SettingsSection, {
   settingsInputClass,
   settingsLabelClass,
@@ -165,24 +166,36 @@ const CameraDeviceManagement = () => {
 
       <div
         data-tour="pairing-info"
-        className={`${SETTINGS_PANEL} px-4 py-4 text-sm leading-relaxed text-gray-600`}
+        className={`${SETTINGS_PANEL} px-4 py-4`}
       >
         <p className="text-sm font-semibold text-gray-900">How to pair a kiosk</p>
-        <p className="mt-2">
-          From the kiosk app, call{' '}
-          <code className="rounded-lg bg-gray-50 px-1.5 py-0.5 font-mono text-xs">
-            POST /api/v1/kiosk/auth/login
-          </code>{' '}
-          with your org admin user ID and password. Re-pairing replaces the existing device.
+        <p className="mt-2 text-sm leading-relaxed text-gray-600">
+          Install the YaadroLens kiosk app on your attendance tablet, then sign in with your org
+          admin username and password — the same ones you use for this website. After login, the
+          tablet is linked to your company. Re-pairing replaces the existing device.
         </p>
-        <p className="mt-3">
+        <div className="mt-4 flex flex-wrap items-center gap-4">
+          <a
+            href={KIOSK_PLAY_STORE_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-3 rounded-xl border border-gray-200/60 bg-white px-3.5 py-2.5 shadow-[0_2px_12px_rgba(0,0,0,0.06)] transition hover:border-gray-300 hover:bg-gray-50"
+          >
+            <img src="/playstore.png" alt="" className="h-9 w-9 shrink-0" aria-hidden="true" />
+            <span className="text-left leading-tight">
+              <span className="block text-[10px] font-medium uppercase tracking-wide text-gray-500">
+                Get it on
+              </span>
+              <span className="block text-sm font-semibold text-gray-900">Google Play</span>
+            </span>
+          </a>
           <Link
             to="/docs/kiosk"
-            className="font-medium text-blue-600 hover:text-blue-700"
+            className="text-sm font-medium text-[#007AFF] hover:text-[#0066DD] hover:underline"
           >
             Read the full Kiosk setup guide
           </Link>
-        </p>
+        </div>
       </div>
     </div>
   );

@@ -11,9 +11,7 @@ import { dashboardToast } from '../../components/common';
 import {
   ProfileHeader,
   TabNavigation,
-  PersonalDetailsCard,
-  IdentityDocumentsCard,
-  JobInformationCard,
+  PersonalInfoTimeline,
   TrainingStatusCard,
   AttendanceLog,
   PayAndSalarySection,
@@ -84,15 +82,11 @@ const EmployeeDetails = () => {
     switch (activeTab) {
       case 'personal':
         return (
-          <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-            <PersonalDetailsCard employee={employee} />
-            <IdentityDocumentsCard employee={employee} />
-            <JobInformationCard
-              employee={employee}
-              paymentSummary={paymentSummary}
-              onAdjustBalance={() => setBalanceModalOpen(true)}
-            />
-          </div>
+          <PersonalInfoTimeline
+            employee={employee}
+            paymentSummary={paymentSummary}
+            onAdjustBalance={() => setBalanceModalOpen(true)}
+          />
         );
       case 'attendance':
         return <AttendanceLog employeeId={employee.id} />;

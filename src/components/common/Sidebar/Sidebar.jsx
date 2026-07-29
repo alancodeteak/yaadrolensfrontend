@@ -33,7 +33,7 @@ const NAV_ITEMS = [
   { name: 'Payment', href: '/admin/payroll', icon: CreditCard, match: (path) => path.startsWith('/admin/payroll') },
   { name: 'Reports', href: '/admin/reports', icon: FileText, match: (path) => path.startsWith('/admin/reports') },
   { name: 'Get Started', href: '/docs/getting-started', icon: GraduationCap, match: (path) => path.startsWith('/docs') },
-  { name: 'Settings', href: '/admin/settings', icon: Settings, match: (path) => path.startsWith('/admin/settings') },
+  { name: 'Settings', href: '/admin/settings/attendance', icon: Settings, match: (path) => path.startsWith('/admin/settings') },
 ];
 
 const COMING_SOON_ITEMS = [

@@ -76,6 +76,18 @@ describe('resolveLiveAttendanceStatus', () => {
       'Absent'
     );
   });
+
+  it('shows Scheduled off when shift is off and no punch', () => {
+    assert.equal(
+      resolveLiveAttendanceStatus({
+        attendance_status: 'shift_off',
+        is_shift_off: true,
+        clock_in: null,
+        clock_out: null,
+      }),
+      'Scheduled off'
+    );
+  });
 });
 
 describe('isLiveOnSiteStatus', () => {

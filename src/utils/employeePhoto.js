@@ -1,4 +1,5 @@
 import { API_BASE_URL } from '../config/apiBaseUrl';
+import { refreshAccessToken } from './authRefresh';
 
 export function resolveEmployeePhotoUrl(profilePhotoUrl) {
   if (!profilePhotoUrl) return null;
@@ -11,34 +12,6 @@ export function resolveEmployeePhotoUrl(profilePhotoUrl) {
 
 export function isAuthenticatedPhotoPath(url) {
   return Boolean(url && url.includes('/profile-photo'));
-}
-
-async function refreshAccessToken() {
-  const refreshToken = localStorage.getItem('refresh_token');
-  if (!refreshToken) {
-    return null;
-  }
-  try {
-    const response = await fetch(`${API_BASE_URL}/auth/refresh`, {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ refresh_token: refreshToken }),
-    });
-    if (!response.ok) {
-      return null;
-    }
-    const data = await response.json();
-    if (!data?.access_token) {
-      return null;
-    }
-    localStorage.setItem('access_token', data.access_token);
-    if (data.refresh_token) {
-      localStorage.setItem('refresh_token', data.refresh_token);
-    }
-    return data.access_token;
-  } catch {
-    return null;
-  }
 }
 
 async function fetchPhotoWithToken(url, token) {

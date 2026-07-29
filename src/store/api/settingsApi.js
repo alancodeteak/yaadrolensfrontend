@@ -87,10 +87,13 @@ export const settingsApi = baseApi.injectEndpoints({
           ...(rulesData.manual_attendance_enabled != null
             ? { manual_attendance_enabled: rulesData.manual_attendance_enabled }
             : {}),
+          ...(rulesData.shift_schedule_mode != null
+            ? { shift_schedule_mode: rulesData.shift_schedule_mode }
+            : {}),
         },
       }),
       transformResponse: transformSettingsResponse,
-      invalidatesTags: ['Settings', 'Dashboard'],
+      invalidatesTags: ['Settings', 'Dashboard', 'Attendance'],
     }),
 
     updateKioskSettings: builder.mutation({

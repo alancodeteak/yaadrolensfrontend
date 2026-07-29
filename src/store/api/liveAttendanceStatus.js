@@ -3,7 +3,15 @@
  */
 
 export function resolveLiveAttendanceStatus(row) {
+  if (row?.is_shift_off && !row?.clock_in) {
+    return 'Scheduled off';
+  }
+
   const isLate = row?.attendance_status === 'late';
+
+  if (row?.attendance_status === 'shift_off' && !row?.clock_in) {
+    return 'Scheduled off';
+  }
 
   if (row?.clock_in && !row?.clock_out) {
     return isLate ? 'Present (Late)' : 'Present';

@@ -4,6 +4,7 @@ import {
   PageInfoOverlay,
   PageTourButtons,
   SETTINGS_ATTENDANCE_STEPS,
+  SETTINGS_SHIFTS_STEPS,
   SETTINGS_HELP_STEPS,
   SETTINGS_KIOSK_STEPS,
   SETTINGS_PAYMENT_STEPS,
@@ -12,9 +13,11 @@ import {
 import {
   SettingsSidebar,
   AttendanceRules,
+  ShiftTemplates,
   PaymentRules,
   CameraDeviceManagement,
   HelpContact,
+  SettingsPageTransition,
 } from '../../components/pages/settings';
 import { getSettingsNavItem } from '../../components/pages/settings/settingsNav';
 
@@ -22,6 +25,7 @@ function getSettingsTourSteps(pathname) {
   if (pathname.includes('/payment')) return SETTINGS_PAYMENT_STEPS;
   if (pathname.includes('/cameras')) return SETTINGS_KIOSK_STEPS;
   if (pathname.includes('/help')) return SETTINGS_HELP_STEPS;
+  if (pathname.includes('/shifts')) return SETTINGS_SHIFTS_STEPS;
   return SETTINGS_ATTENDANCE_STEPS;
 }
 
@@ -29,6 +33,7 @@ function getSettingsTourStorageKey(pathname) {
   if (pathname.includes('/payment')) return 'settings_tour_completed_payment';
   if (pathname.includes('/cameras')) return 'settings_tour_completed_kiosk';
   if (pathname.includes('/help')) return 'settings_tour_completed_help';
+  if (pathname.includes('/shifts')) return 'settings_tour_completed_shifts';
   return 'settings_tour_completed_attendance';
 }
 
@@ -62,12 +67,48 @@ const Settings = () => {
         <SettingsSidebar />
         <div className="min-w-0 flex-1">
           <Routes>
-            <Route path="/" element={<Navigate to="/admin/settings/attendance" replace />} />
-            <Route path="attendance" element={<AttendanceRules />} />
-            <Route path="payment" element={<PaymentRules />} />
-            <Route path="cameras" element={<CameraDeviceManagement />} />
-            <Route path="help" element={<HelpContact />} />
-            <Route path="*" element={<Navigate to="/admin/settings/attendance" replace />} />
+            <Route index element={<Navigate to="attendance" replace />} />
+            <Route
+              path="attendance"
+              element={
+                <SettingsPageTransition>
+                  <AttendanceRules />
+                </SettingsPageTransition>
+              }
+            />
+            <Route
+              path="shifts"
+              element={
+                <SettingsPageTransition>
+                  <ShiftTemplates />
+                </SettingsPageTransition>
+              }
+            />
+            <Route
+              path="payment"
+              element={
+                <SettingsPageTransition>
+                  <PaymentRules />
+                </SettingsPageTransition>
+              }
+            />
+            <Route
+              path="cameras"
+              element={
+                <SettingsPageTransition>
+                  <CameraDeviceManagement />
+                </SettingsPageTransition>
+              }
+            />
+            <Route
+              path="help"
+              element={
+                <SettingsPageTransition>
+                  <HelpContact />
+                </SettingsPageTransition>
+              }
+            />
+            <Route path="*" element={<Navigate to="attendance" replace />} />
           </Routes>
         </div>
       </div>

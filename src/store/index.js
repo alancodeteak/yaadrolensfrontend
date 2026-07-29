@@ -7,6 +7,7 @@ import './api/settingsApi';
 import './api/paymentApi';
 import './api/reportsApi';
 import './api/dashboardApi';
+import './api/shiftApi';
 import { 
   authReducer,
   employeeReducer,

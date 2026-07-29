@@ -1,6 +1,6 @@
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
 import { API_BASE_URL } from '../../config/apiBaseUrl';
-import { revokeRefreshToken } from '../../utils/authSession';
+import { refreshAccessToken } from '../../utils/authRefresh';
 
 const getRequestUrl = (args) => (typeof args === 'string' ? args : args?.url || '');
 
@@ -40,40 +40,15 @@ const baseQuery = fetchBaseQuery({
 const baseQueryWithReauth = async (args, api, extraOptions) => {
   let result = await baseQuery(args, api, extraOptions);
 
-  if (result.error?.status === 401 && !isAuthRequest(args)) {
-    const refreshToken = localStorage.getItem('refresh_token');
+  if (result.error?.status !== 401 || isAuthRequest(args)) {
+    return result;
+  }
 
-    if (refreshToken) {
-      const refreshResult = await baseQuery(
-        {
-          url: '/auth/refresh',
-          method: 'POST',
-          body: { refresh_token: refreshToken },
-        },
-        api,
-        extraOptions
-      );
-
-      if (refreshResult.data) {
-        const { access_token, refresh_token: newRefresh } = refreshResult.data;
-        localStorage.setItem('access_token', access_token);
-        if (newRefresh) {
-          localStorage.setItem('refresh_token', newRefresh);
-        }
-
-        api.dispatch({ type: 'auth/setToken', payload: access_token });
-
-        result = await baseQuery(args, api, extraOptions);
-      } else {
-        await revokeRefreshToken(refreshToken);
-        api.dispatch({ type: 'auth/logout' });
-      }
-    } else {
-      api.dispatch({ type: 'auth/logout' });
-    }
-  } else if (result.error?.status === 401 && getRequestUrl(args).includes('/auth/refresh')) {
-    const refreshToken = localStorage.getItem('refresh_token');
-    await revokeRefreshToken(refreshToken);
+  const accessToken = await refreshAccessToken();
+  if (accessToken) {
+    api.dispatch({ type: 'auth/setToken', payload: accessToken });
+    result = await baseQuery(args, api, extraOptions);
+  } else if (!localStorage.getItem('access_token')) {
     api.dispatch({ type: 'auth/logout' });
   }
 
@@ -84,10 +59,9 @@ const baseQueryWithReauth = async (args, api, extraOptions) => {
 export const baseApi = createApi({
   reducerPath: 'api',
   baseQuery: baseQueryWithReauth,
-  tagTypes: ['User', 'Employee', 'Salary', 'Payment', 'Attendance', 'Report', 'Settings', 'Department', 'Dashboard', 'Leave'],
+  tagTypes: ['User', 'Employee', 'Salary', 'Payment', 'Attendance', 'Report', 'Settings', 'Department', 'Dashboard', 'Leave', 'ShiftTemplate'],
   endpoints: () => ({}),
 });
 
 export { API_BASE_URL };
 export default baseApi;
-

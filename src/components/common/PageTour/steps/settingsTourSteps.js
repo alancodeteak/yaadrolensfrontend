@@ -3,13 +3,19 @@ export const SETTINGS_ATTENDANCE_STEPS = [
     id: 'settings-nav',
     selector: '[data-tour="settings-nav"]',
     title: 'Settings navigation',
-    body: 'Switch between Attendance rules, Payment rules, Kiosk, and Help.',
+    body: 'Switch between Attendance rules, Shifts, Payment rules, Kiosk, and Help.',
+  },
+  {
+    id: 'shift-schedule-mode',
+    selector: '[data-tour="shift-schedule-mode"]',
+    title: 'Shift schedule mode',
+    body: 'Use the same hours for everyone, or enable per-employee shifts with templates.',
   },
   {
     id: 'working-hours',
     selector: '[data-tour="working-hours"]',
     title: 'Working hours',
-    body: 'Set the standard work day start and end times for late and early-leave detection.',
+    body: 'Set the standard work day start and end times for late and early-leave detection. Overnight shifts are allowed.',
   },
   {
     id: 'grace-periods',
@@ -31,12 +37,27 @@ export const SETTINGS_ATTENDANCE_STEPS = [
   },
 ];
 
+export const SETTINGS_SHIFTS_STEPS = [
+  {
+    id: 'settings-nav',
+    selector: '[data-tour="settings-nav"]',
+    title: 'Settings navigation',
+    body: 'Open Shifts to manage reusable templates with hours and breaks.',
+  },
+  {
+    id: 'shift-templates',
+    selector: '[data-tour="shift-templates"]',
+    title: 'Shift templates',
+    body: 'Create Morning, Evening, or Night templates. Assign them on each employee’s Mon–Sun schedule when per-employee mode is on.',
+  },
+];
+
 export const SETTINGS_PAYMENT_STEPS = [
   {
     id: 'settings-nav',
     selector: '[data-tour="settings-nav"]',
     title: 'Settings navigation',
-    body: 'Switch between Attendance rules, Payment rules, Kiosk, and Help.',
+    body: 'Switch between Attendance rules, Shifts, Payment rules, Kiosk, and Help.',
   },
   {
     id: 'payment-monthly-salary',
@@ -87,7 +108,7 @@ export const SETTINGS_KIOSK_STEPS = [
     id: 'pairing-info',
     selector: '[data-tour="pairing-info"]',
     title: 'How to pair',
-    body: 'Instructions for pairing a new kiosk using org admin credentials from the kiosk app.',
+    body: 'Download the kiosk app from Google Play, then sign in with your org admin credentials to pair the tablet.',
   },
 ];
 

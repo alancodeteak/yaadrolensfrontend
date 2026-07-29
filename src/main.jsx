@@ -7,6 +7,7 @@ import './styles/fonts.css';
 import './styles/critical.css';
 import './styles/globals.css';
 import './styles/dashboardToast.css';
+import './styles/uiTransitions.css';
 import AdminLogin from './pages/AdminLogin/AdminLogin';
 import AdminLayout from './layouts/AdminLayout';
 import { ProtectedRoute, AuthChecker } from './components/common';
@@ -80,7 +81,7 @@ function App() {
                 />
                 <Route path="mobile" element={<MobileDashboard />} />
                 <Route path="users" element={<Navigate to="/admin/employees" replace />} />
-                <Route path="system" element={<Navigate to="/admin/settings" replace />} />
+                <Route path="system" element={<Navigate to="/admin/settings/attendance" replace />} />
                 <Route path="docs/*" element={<AdminDocsRedirect />} />
                 <Route path="*" element={<PageNotFound />} />
               </Route>

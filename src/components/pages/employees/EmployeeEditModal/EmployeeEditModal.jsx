@@ -3,6 +3,11 @@ import clsx from 'clsx';
 import { X } from 'lucide-react';
 import { dashboardToast } from '../../../common';
 import { useGetDepartmentsQuery, useGetSettingsQuery } from '../../../../store/api/settingsApi';
+import {
+  useGetEmployeeWeeklyShiftsQuery,
+  useGetShiftTemplatesQuery,
+  usePutEmployeeWeeklyShiftsMutation,
+} from '../../../../store/api/shiftApi';
 
 const WEEKDAY_OPTIONS = [
   { value: 0, label: 'Mon' },
@@ -21,6 +26,12 @@ const labelClass = 'mb-1 block text-[10px] font-medium uppercase tracking-wide t
 const inputClass =
   'w-full rounded-xl border border-gray-200/60 bg-white px-3.5 py-2.5 text-sm text-gray-900 shadow-[0_2px_16px_rgba(0,0,0,0.04)] placeholder:text-gray-400 transition-colors duration-200 focus:border-[#007AFF] focus:outline-none focus:ring-2 focus:ring-[#007AFF]/20 disabled:opacity-50';
 
+const emptyWeekMap = () =>
+  WEEKDAY_OPTIONS.reduce((acc, d) => {
+    acc[d.value] = '';
+    return acc;
+  }, {});
+
 const EmployeeEditModal = ({ isOpen, onClose, onSave, employee, isLoading }) => {
   const [formData, setFormData] = useState({
     name: '',
@@ -33,6 +44,7 @@ const EmployeeEditModal = ({ isOpen, onClose, onSave, employee, isLoading }) => 
     weekly_off_days: [],
     paid_leaves_per_month: '',
   });
+  const [weekShifts, setWeekShifts] = useState(emptyWeekMap);
 
   const [errors, setErrors] = useState({});
   const [photoFile, setPhotoFile] = useState(null);
@@ -45,6 +57,14 @@ const EmployeeEditModal = ({ isOpen, onClose, onSave, employee, isLoading }) => 
     isError: departmentsError,
   } = useGetDepartmentsQuery({ active_only: true });
   const { data: orgSettings } = useGetSettingsQuery();
+  const perEmployeeShifts = orgSettings?.shift_schedule_mode === 'per_employee';
+  const { data: shiftTemplates = [] } = useGetShiftTemplatesQuery(undefined, {
+    skip: !isOpen || !perEmployeeShifts,
+  });
+  const { data: weeklyShiftsData } = useGetEmployeeWeeklyShiftsQuery(employee?.id, {
+    skip: !isOpen || !employee?.id || !perEmployeeShifts,
+  });
+  const [putWeeklyShifts] = usePutEmployeeWeeklyShiftsMutation();
 
   useEffect(() => {
     if (employee) {
@@ -71,6 +91,18 @@ const EmployeeEditModal = ({ isOpen, onClose, onSave, employee, isLoading }) => 
       deletes: { front: false, back: false },
     });
   }, [employee]);
+
+  useEffect(() => {
+    if (!weeklyShiftsData?.days) {
+      setWeekShifts(emptyWeekMap());
+      return;
+    }
+    const next = emptyWeekMap();
+    weeklyShiftsData.days.forEach((d) => {
+      next[d.day_of_week] = d.shift_template_id || '';
+    });
+    setWeekShifts(next);
+  }, [weeklyShiftsData]);
 
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -144,22 +176,55 @@ const EmployeeEditModal = ({ isOpen, onClose, onSave, employee, isLoading }) => 
       const hasPhotoChange = Boolean(photoFile) || removePhoto;
       const hasDocChange = hasDocumentChanges(documentState);
 
-      if (Object.keys(updateData).length === 0 && !hasPhotoChange && !hasDocChange) {
+      let weeklyShiftChanged = false;
+      if (perEmployeeShifts) {
+        const originalMap = emptyWeekMap();
+        (weeklyShiftsData?.days || []).forEach((d) => {
+          originalMap[d.day_of_week] = d.shift_template_id || '';
+        });
+        weeklyShiftChanged = WEEKDAY_OPTIONS.some(
+          (d) => (weekShifts[d.value] || '') !== (originalMap[d.value] || '')
+        );
+      }
+
+      if (
+        Object.keys(updateData).length === 0 &&
+        !hasPhotoChange &&
+        !hasDocChange &&
+        !weeklyShiftChanged
+      ) {
         dashboardToast.info('No changes to save.', 'Nothing changed');
         onClose();
         return;
       }
 
-      await onSave(
-        { id: employee.id, ...updateData },
-        { photoFile, removePhoto, documentState }
-      );
+      if (Object.keys(updateData).length > 0 || hasPhotoChange || hasDocChange) {
+        await onSave(
+          { id: employee.id, ...updateData },
+          { photoFile, removePhoto, documentState }
+        );
+      }
+
+      if (perEmployeeShifts && weeklyShiftChanged) {
+        await putWeeklyShifts({
+          employeeId: employee.id,
+          days: WEEKDAY_OPTIONS.map((d) => ({
+            day_of_week: d.value,
+            shift_template_id: weekShifts[d.value] || null,
+          })),
+        }).unwrap();
+      }
+
       setPhotoFile(null);
       setRemovePhoto(false);
       setErrors({});
       onClose();
-    } catch {
-      // Parent handles errors
+    } catch (err) {
+      const detail = err?.data?.detail;
+      if (typeof detail === 'string') {
+        dashboardToast.error(detail, 'Save failed');
+      }
+      // Parent may also handle employee update errors
     }
   };
 
@@ -370,6 +435,42 @@ const EmployeeEditModal = ({ isOpen, onClose, onSave, employee, isLoading }) => 
                 </div>
               )}
             </div>
+
+            {perEmployeeShifts && (
+              <div className="md:col-span-2 rounded-xl border border-gray-200/60 bg-gray-50/40 p-4">
+                <p className="mb-1 text-xs font-semibold text-gray-700">Weekly shift schedule</p>
+                <p className="mb-3 text-[11px] text-gray-500">
+                  Assign a template for every day. Leave as Off when they do not work. Cannot
+                  assign a shift on a weekly-off day.
+                </p>
+                <div className="grid gap-2 sm:grid-cols-2">
+                  {WEEKDAY_OPTIONS.map((wd) => (
+                    <div key={wd.value}>
+                      <label className={labelClass}>{wd.label}</label>
+                      <select
+                        className={inputClass}
+                        value={weekShifts[wd.value] || ''}
+                        onChange={(e) =>
+                          setWeekShifts((prev) => ({
+                            ...prev,
+                            [wd.value]: e.target.value,
+                          }))
+                        }
+                      >
+                        <option value="">Off</option>
+                        {shiftTemplates
+                          .filter((t) => t.is_active !== false)
+                          .map((t) => (
+                            <option key={t.id} value={t.id}>
+                              {t.name}
+                            </option>
+                          ))}
+                      </select>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
 
             <div>
               <label htmlFor="edit-paid-leaves" className={labelClass}>

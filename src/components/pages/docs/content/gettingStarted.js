@@ -65,7 +65,11 @@ export const gettingStartedContent = {
           ],
           [
             docStrong('Attendance → Work start / end + grace'),
-            ' — Defines late and early leave.',
+            ' — Defines late and early leave. Choose same-for-all or per-employee shifts.',
+          ],
+          [
+            docStrong('Shifts'),
+            ' — Create templates (Morning/Night + breaks) under Settings → Shifts; assign Mon–Sun on each employee when per-employee mode is on.',
           ],
           [
             docStrong('Attendance → Minimum clock-out wait'),
@@ -171,7 +175,11 @@ export const gettingStartedContent = {
           ],
           [
             docStrong('Attendance → Work start / end + grace'),
-            ' — late और early leave तय करता है।',
+            ' — late और early leave तय करता है। same-for-all या per-employee शिफ्ट चुनें।',
+          ],
+          [
+            docStrong('Shifts'),
+            ' — Settings → Shifts में टेम्पलेट बनाएँ; per-employee मोड में कर्मचारी पर Mon–Sun असाइन करें।',
           ],
           [
             docStrong('Attendance → Minimum clock-out wait'),
@@ -277,7 +285,11 @@ export const gettingStartedContent = {
           ],
           [
             docStrong('Attendance → Work start / end + grace'),
-            ' — late / early leave നിർണയിക്കുന്നു.',
+            ' — late / early leave നിർണയിക്കുന്നു. same-for-all അല്ലെങ്കിൽ per-employee ഷിഫ്റ്റ് തിരഞ്ഞെടുക്കുക.',
+          ],
+          [
+            docStrong('Shifts'),
+            ' — Settings → Shifts-ൽ ടെംപ്ലേറ്റ് ഉണ്ടാക്കുക; per-employee മോഡിൽ Mon–Sun നൽകുക.',
           ],
           [
             docStrong('Attendance → Minimum clock-out wait'),
@@ -383,7 +395,11 @@ export const gettingStartedContent = {
           ],
           [
             docStrong('Attendance → Work start / end + grace'),
-            ' — late / early leave ನಿರ್ಧರಿಸುತ್ತದೆ.',
+            ' — late / early leave ನಿರ್ಧರಿಸುತ್ತದೆ. same-for-all ಅಥವಾ per-employee ಶಿಫ್ಟ್ ಆಯ್ಕೆಮಾಡಿ.',
+          ],
+          [
+            docStrong('Shifts'),
+            ' — Settings → Shifts ನಲ್ಲಿ ಟೆಂಪ್ಲೇಟ್ ರಚಿಸಿ; per-employee ಮೋಡ್‌ನಲ್ಲಿ Mon–Sun ನಿಗದಿಪಡಿಸಿ.',
           ],
           [
             docStrong('Attendance → Minimum clock-out wait'),

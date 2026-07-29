@@ -1,11 +1,17 @@
-import { Clock, Wallet, TabletSmartphone, CircleHelp } from 'lucide-react';
+import { Clock, Wallet, TabletSmartphone, CircleHelp, CalendarClock } from 'lucide-react';
 
 export const SETTINGS_NAV_ITEMS = [
   {
     name: 'Attendance rules',
     href: '/admin/settings/attendance',
     icon: Clock,
-    subtitle: 'Work hours, grace periods, overtime, and weekend settings',
+    subtitle: 'Work hours, shift mode, grace periods, and kiosk rules',
+  },
+  {
+    name: 'Shifts',
+    href: '/admin/settings/shifts',
+    icon: CalendarClock,
+    subtitle: 'Shift templates with work hours and breaks',
   },
   {
     name: 'Payment rules',

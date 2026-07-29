@@ -4,6 +4,7 @@ import { ChevronLeft, ChevronRight, Plus } from 'lucide-react';
 import { dashboardToast } from '../../../common';
 import { DASHBOARD_BTN_PRIMARY, DASHBOARD_PANEL } from '../../dashboard/dashboardTheme';
 import EmployeeMonthCalendar from '../EmployeeMonthCalendar/EmployeeMonthCalendar';
+import EmployeeAttendanceTimeline from '../EmployeeAttendanceTimeline/EmployeeAttendanceTimeline';
 import MarkLeaveModal from '../MarkLeaveModal/MarkLeaveModal';
 import {
   useGetEmployeeMonthCalendarQuery,
@@ -57,31 +58,6 @@ const AttendanceLog = ({ employeeId }) => {
   const [markLeave, { isLoading: isMarking }] = useMarkEmployeeLeaveMutation();
   const [cancelLeave, { isLoading: isCancelling }] = useCancelEmployeeLeaveMutation();
 
-  const isLeaveAware = calendarData?.salary_calculation_mode === 'leave_aware';
-
-  const summaryStats = useMemo(() => {
-    if (!calendarData) return [];
-    const primaryLabel = calendarData.stats_label || 'Days present';
-    const primaryValue =
-      calendarData.salary_calculation_mode === 'fixed'
-        ? '—'
-        : calendarData.salary_calculation_mode === 'hourly'
-          ? calendarData.total_hours ?? 0
-          : calendarData.days_present;
-    const stats = [{ label: primaryLabel, value: primaryValue }];
-    if (isLeaveAware) {
-      stats.push(
-        { label: 'Leave days', value: calendarData.leave_days ?? 0 },
-        {
-          label: 'Paid leaves used',
-          value: `${calendarData.paid_leaves_used ?? 0} / ${calendarData.paid_leave_quota ?? 0}`,
-        }
-      );
-    }
-    stats.push({ label: 'Late days', value: calendarData.late_count });
-    return stats;
-  }, [calendarData, isLeaveAware]);
-
   const monthLabel = useMemo(() => `${MONTHS[month - 1]} ${year}`, [month, year]);
 
   const shiftMonth = (delta) => {
@@ -128,6 +104,8 @@ const AttendanceLog = ({ employeeId }) => {
 
   return (
     <div className="space-y-4">
+      <EmployeeAttendanceTimeline employeeId={employeeId} days={7} endDate={today} />
+
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-2">
           <button
@@ -156,27 +134,6 @@ const AttendanceLog = ({ employeeId }) => {
           Schedule leave
         </button>
       </div>
-
-      {calendarData && (
-        <div
-          className={clsx(
-            'grid grid-cols-2 gap-3',
-            isLeaveAware ? 'sm:grid-cols-4' : 'sm:grid-cols-3'
-          )}
-        >
-          {summaryStats.map((stat) => (
-            <div
-              key={stat.label}
-              className={clsx(DASHBOARD_PANEL, 'px-3 py-2.5')}
-            >
-              <p className="text-[10px] font-medium uppercase tracking-wide text-gray-400">
-                {stat.label}
-              </p>
-              <p className="text-lg font-semibold tabular-nums text-gray-900">{stat.value}</p>
-            </div>
-          ))}
-        </div>
-      )}
 
       <EmployeeMonthCalendar
         year={year}

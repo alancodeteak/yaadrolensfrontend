@@ -52,6 +52,7 @@ const STATUS_BADGE = {
   Present: 'bg-emerald-100 text-emerald-700',
   'Present (Late)': 'bg-orange-100 text-orange-700',
   Absent: 'bg-gray-100 text-gray-600',
+  'Scheduled off': 'bg-violet-100 text-violet-700',
   'Clocked Out': 'bg-blue-100 text-blue-700',
   'Clocked Out (Late)': 'bg-orange-100 text-orange-800',
 };
@@ -61,6 +62,7 @@ const STATUS_OPTIONS = [
   'Present',
   'Present (Late)',
   'Absent',
+  'Scheduled off',
   'Clocked Out',
   'Clocked Out (Late)',
 ];
@@ -397,6 +399,7 @@ const LiveAttendanceMonitoring = () => {
                 <tr className="border-b border-gray-100">
                   <th className={clsx(TH, 'min-w-36')}>Name</th>
                   <th className={clsx(TH, 'hidden md:table-cell')}>Department</th>
+                  <th className={clsx(TH, 'hidden xl:table-cell')}>Shift</th>
                   <th className={TH}>Status</th>
                   <th className={clsx(TH, 'hidden sm:table-cell')}>Clock in</th>
                   <th className={clsx(TH, 'hidden lg:table-cell')}>Last seen</th>
@@ -444,6 +447,11 @@ const LiveAttendanceMonitoring = () => {
                     </td>
                     <td className={clsx(TD, 'hidden md:table-cell')}>
                       <span className="truncate text-gray-700">{employee.department || '—'}</span>
+                    </td>
+                    <td className={clsx(TD, 'hidden xl:table-cell')}>
+                      <span className="truncate text-xs text-gray-600">
+                        {employee.shiftLabel || '—'}
+                      </span>
                     </td>
                     <td className={TD}>
                       <span
@@ -502,8 +510,8 @@ const LiveAttendanceMonitoring = () => {
         <LiveAttendanceInsights
           rows={dailyData?.rows || []}
           selectedDay={selectedDay}
-          workStartTime={settings?.work_start_time}
-          workEndTime={settings?.work_end_time}
+          orgWorkStartTime={settings?.work_start_time}
+          orgWorkEndTime={settings?.work_end_time}
         />
       </div>
 

@@ -63,6 +63,21 @@ export const attendanceApi = baseApi.injectEndpoints({
       ],
     }),
 
+    getEmployeeTimeline: builder.query({
+      query: ({ employee_id, days = 7, end_date } = {}) => ({
+        url: '/org-admin/reports/employee-timeline',
+        params: {
+          employee_id,
+          days,
+          ...(end_date ? { end_date } : {}),
+        },
+      }),
+      providesTags: (result, error, arg) => [
+        { type: 'Attendance', id: `employee-timeline-${arg?.employee_id}` },
+        'Attendance',
+      ],
+    }),
+
     getEmployeeReport: builder.query({
       query: ({ employee_id, start_date, end_date } = {}) => {
         const end = end_date || today();
@@ -112,6 +127,7 @@ export const {
   useGetAttendanceLogsQuery,
   useGetLiveAttendanceQuery,
   useGetEmployeeMonthCalendarQuery,
+  useGetEmployeeTimelineQuery,
   useGetEmployeeReportQuery,
   useGetLateCountReportQuery,
   useManualPunchMutation,

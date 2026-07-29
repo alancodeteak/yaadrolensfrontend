@@ -113,8 +113,13 @@ export function formatTimeValue(value) {
 
 export function transformDailyReport(response) {
   const rows = response?.rows || [];
-  const present = rows.filter((row) => row.attendance_status !== 'absent').length;
-  const absent = rows.filter((row) => row.attendance_status === 'absent').length;
+  const isOff = (row) => Boolean(row.is_shift_off) || row.attendance_status === 'shift_off';
+  const present = rows.filter(
+    (row) => !isOff(row) && row.attendance_status !== 'absent' && row.clock_in
+  ).length;
+  const absent = rows.filter(
+    (row) => !isOff(row) && (row.attendance_status === 'absent' || !row.clock_in)
+  ).length;
   const late = rows.filter((row) => row.attendance_status === 'late').length;
   const total = rows.length;
 
@@ -260,6 +265,17 @@ export function mapDailyRowToLiveEmployee(row, now = null) {
     profilePhotoUrl,
     photo,
     avatar,
+    isShiftOff: Boolean(row.is_shift_off) || row.attendance_status === 'shift_off',
+    shiftLabel:
+      row.is_shift_off || row.attendance_status === 'shift_off'
+        ? 'Off'
+        : row.shift_template_name
+          ? `${row.shift_template_name} · ${String(row.work_start_time || '').slice(0, 5)}–${String(row.work_end_time || '').slice(0, 5)}`
+          : row.work_start_time && row.work_end_time
+            ? `${String(row.work_start_time).slice(0, 5)}–${String(row.work_end_time).slice(0, 5)}`
+            : null,
+    workStartTime: row.work_start_time || null,
+    workEndTime: row.work_end_time || null,
   };
 }
 

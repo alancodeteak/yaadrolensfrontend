@@ -10,12 +10,16 @@ const enSections = [
         docLink('/admin/settings/attendance', 'Settings'),
         ' from the left menu. Everything here applies to your whole organization — work hours, late rules, payroll, leave, and the attendance kiosk.',
       ],
-      'There are four sections:',
+      'There are five sections:',
     ],
     list: [
       [
         docStrong('Attendance rules'),
-        ' — when the work day starts and ends, late/early grace, and how soon staff can clock out after clock-in.',
+        ' — shift mode (same for all vs per employee), work hours, late/early grace, and how soon staff can clock out after clock-in.',
+      ],
+      [
+        docStrong('Shifts'),
+        ' — reusable shift templates (Morning, Night, …) with work hours and breaks (lunch, tea). Assign Mon–Sun schedules on each employee when per-employee mode is on.',
       ],
       [
         docStrong('Payment rules'),
@@ -48,7 +52,12 @@ const enSections = [
       [
         'Set ',
         docStrong('work start / end'),
-        ' and grace periods under Settings → Attendance rules.',
+        ' and grace periods under Settings → Attendance rules. Choose same-for-all or per-employee shifts.',
+      ],
+      [
+        'If using per-employee shifts, create ',
+        docStrong('shift templates'),
+        ' under Settings → Shifts, then assign Mon–Sun on each employee.',
       ],
       [
         'Set ',
@@ -83,8 +92,12 @@ const enSections = [
     ],
     list: [
       [
+        docStrong('Shift schedule mode'),
+        ' — Same for all uses the org start/end below for everyone. Per employee uses shift templates assigned Mon–Sun on each person.',
+      ],
+      [
         docStrong('Start'),
-        ' — Official start of the work day (for example 09:00 or 10:30). First clock-in after start + late grace is marked Late.',
+        ' — Official start of the work day (for example 09:00 or 10:30). First clock-in after start + late grace is marked Late. Overnight is allowed (e.g. 22:00–06:00).',
       ],
       [
         docStrong('End'),
@@ -92,6 +105,38 @@ const enSections = [
       ],
       'Both times are interpreted in your organization timezone (set under Kiosk). Wrong timezone is the most common reason late does not match what you expect.',
       'Example: start 10:30, late grace 10 minutes → arrivals after 10:40 are Late.',
+      'Switching from per-employee back to same-for-all requires clearing all employee weekly shift assignments first (use Clear all schedules & switch if needed).',
+    ],
+  },
+  {
+    title: 'Shifts — Templates',
+    span: 'full',
+    paragraphs: [
+      [
+        'Open ',
+        docLink('/admin/settings/shifts', 'Settings → Shifts'),
+        '. You can create templates even while mode is still same-for-all, then enable per-employee mode when ready.',
+      ],
+    ],
+    list: [
+      [
+        docStrong('Template name'),
+        ' — e.g. Morning, Evening, Night. Names must be unique in your organization.',
+      ],
+      [
+        docStrong('Work start / end'),
+        ' — Hours for that shift. Overnight OK (22:00–06:00).',
+      ],
+      [
+        docStrong('Breaks'),
+        ' — Optional lunch, tea, etc. Multiple breaks allowed. Shown on attendance for display; soft break rules come later.',
+      ],
+      'Delete is blocked while a template is assigned. Confirm Unassign all & delete to clear weekly slots and remove it.',
+      [
+        'When mode is per-employee, edit an employee and set ',
+        docStrong('Weekly shift schedule'),
+        ' (Mon–Sun). Off days leave the day empty. A working template cannot be set on a weekly-off day.',
+      ],
     ],
   },
   {
@@ -357,12 +402,16 @@ const hiSections = [
         docLink('/admin/settings/attendance', 'Settings'),
         ' खोलें। यहाँ सब कुछ आपकी पूरी संस्था पर लागू होता है — कार्य समय, लेट नियम, पेरोल, छुट्टी और हाजिरी कियोस्क।',
       ],
-      'चार सेक्शन हैं:',
+      'पाँच सेक्शन हैं:',
     ],
     list: [
       [
         docStrong('Attendance rules'),
-        ' — कार्य दिवस कब शुरू और खत्म होता है, लेट/अर्ली ग्रेस, और क्लॉक-इन के बाद कितनी जल्दी क्लॉक-आउट हो सकता है।',
+        ' — शिफ्ट मोड (सभी एक जैसे या प्रति कर्मचारी), कार्य समय, लेट/अर्ली ग्रेस, और क्लॉक-इन के बाद कितनी जल्दी क्लॉक-आउट हो सकता है।',
+      ],
+      [
+        docStrong('Shifts'),
+        ' — शिफ्ट टेम्पलेट (Morning, Night, …) कार्य समय और ब्रेक के साथ। प्रति-कर्मचारी मोड में Mon–Sun शेड्यूल असाइन करें।',
       ],
       [
         docStrong('Payment rules'),
@@ -395,7 +444,12 @@ const hiSections = [
       [
         'Settings → Attendance rules के तहत ',
         docStrong('work start / end'),
-        ' और ग्रेस पीरियड सेट करें।',
+        ' और ग्रेस पीरियड सेट करें। same-for-all या per-employee शिफ्ट चुनें।',
+      ],
+      [
+        'Per-employee मोड हो तो ',
+        docLink('/admin/settings/shifts', 'Settings → Shifts'),
+        ' में टेम्पलेट बनाएँ और कर्मचारी पर Mon–Sun असाइन करें।',
       ],
       [
         'Settings → Payment rules के तहत ',
@@ -704,12 +758,16 @@ const mlSections = [
         docLink('/admin/settings/attendance', 'Settings'),
         ' തുറക്കുക. ഇവിടെയുള്ളതെല്ലാം നിങ്ങളുടെ മുഴുവൻ ഓർഗനൈസേഷനും ബാധകമാണ് — ജോലി സമയം, ലേറ്റ് നിയമങ്ങൾ, പേറോൾ, ലീവ്, ഹാജർ കിയോസ്ക്.',
       ],
-      'നാല് വിഭാഗങ്ങളുണ്ട്:',
+      'അഞ്ച് വിഭാഗങ്ങളുണ്ട്:',
     ],
     list: [
       [
         docStrong('Attendance rules'),
-        ' — ജോലി ദിവസം എപ്പോൾ തുടങ്ങുകയും അവസാനിക്കുകയും ചെയ്യുന്നു, ലേറ്റ്/എർലി ഗ്രേസ്, ക്ലോക്ക്-ഇന് ശേഷം എത്ര പെട്ടെന്ന് ക്ലോക്ക്-ഔട്ട് ചെയ്യാം.',
+        ' — ഷിഫ്റ്റ് മോഡ് (എല്ലാവർക്കും ഒരേത് / ഓരോ ജീവനക്കാരനും), ജോലി സമയം, ലേറ്റ്/എർലി ഗ്രേസ്, ക്ലോക്ക്-ഇന് ശേഷം എത്ര പെട്ടെന്ന് ക്ലോക്ക്-ഔട്ട് ചെയ്യാം.',
+      ],
+      [
+        docStrong('Shifts'),
+        ' — ഷിഫ്റ്റ് ടെംപ്ലേറ്റുകൾ (Morning, Night, …) ജോലി സമയവും ബ്രേക്കുകളും. Per-employee മോഡിൽ Mon–Sun ഷെഡ്യൂൾ നൽകുക.',
       ],
       [
         docStrong('Payment rules'),
@@ -742,7 +800,12 @@ const mlSections = [
       [
         'Settings → Attendance rules-ൽ ',
         docStrong('work start / end'),
-        ' ഉം ഗ്രേസ് പീരിയഡുകളും സെറ്റ് ചെയ്യുക.',
+        ' ഉം ഗ്രേസ് പീരിയഡുകളും സെറ്റ് ചെയ്യുക. same-for-all അല്ലെങ്കിൽ per-employee ഷിഫ്റ്റ് തിരഞ്ഞെടുക്കുക.',
+      ],
+      [
+        'Per-employee ആണെങ്കിൽ ',
+        docLink('/admin/settings/shifts', 'Settings → Shifts'),
+        '-ൽ ടെംപ്ലേറ്റ് ഉണ്ടാക്കി ജീവനക്കാരന് Mon–Sun നൽകുക.',
       ],
       [
         'Settings → Payment rules-ൽ ',
@@ -1051,12 +1114,16 @@ const knSections = [
         docLink('/admin/settings/attendance', 'Settings'),
         ' ತೆರೆಯಿರಿ. ಇಲ್ಲಿರುವುದೆಲ್ಲ ನಿಮ್ಮ ಸಂಪೂರ್ಣ ಸಂಸ್ಥೆಗೆ ಅನ್ವಯಿಸುತ್ತದೆ — ಕೆಲಸದ ಸಮಯ, ಲೇಟ್ ನಿಯಮಗಳು, ಪೇರೋಲ್, ರಜೆ ಮತ್ತು ಹಾಜರಾತಿ ಕಿಯೋಸ್ಕ್.',
       ],
-      'ನಾಲ್ಕು ವಿಭಾಗಗಳಿವೆ:',
+      'ಐದು ವಿಭಾಗಗಳಿವೆ:',
     ],
     list: [
       [
         docStrong('Attendance rules'),
-        ' — ಕೆಲಸದ ದಿನ ಯಾವಾಗ ಪ್ರಾರಂಭ ಮತ್ತು ಅಂತ್ಯ, ಲೇಟ್/ಅರ್ಲಿ ಗ್ರೇಸ್, ಮತ್ತು ಕ್ಲಾಕ್-ಇನ್ ನಂತರ ಎಷ್ಟು ಬೇಗ ಕ್ಲಾಕ್-ಔಟ್ ಮಾಡಬಹುದು.',
+        ' — ಶಿಫ್ಟ್ ಮೋಡ್ (ಎಲ್ಲರಿಗೂ ಒಂದೇ / ಪ್ರತಿ ಉದ್ಯೋಗಿ), ಕೆಲಸದ ಸಮಯ, ಲೇಟ್/ಅರ್ಲಿ ಗ್ರೇಸ್, ಮತ್ತು ಕ್ಲಾಕ್-ಇನ್ ನಂತರ ಎಷ್ಟು ಬೇಗ ಕ್ಲಾಕ್-ಔಟ್.',
+      ],
+      [
+        docStrong('Shifts'),
+        ' — ಶಿಫ್ಟ್ ಟೆಂಪ್ಲೇಟ್‌ಗಳು (Morning, Night, …) ಕೆಲಸದ ಸಮಯ ಮತ್ತು ಬ್ರೇಕ್‌ಗಳೊಂದಿಗೆ. Per-employee ಮೋಡ್‌ನಲ್ಲಿ Mon–Sun ನಿಗದಿಪಡಿಸಿ.',
       ],
       [
         docStrong('Payment rules'),
@@ -1089,7 +1156,12 @@ const knSections = [
       [
         'Settings → Attendance rules ಅಡಿಯಲ್ಲಿ ',
         docStrong('work start / end'),
-        ' ಮತ್ತು ಗ್ರೇಸ್ ಪೀರಿಯಡ್‌ಗಳನ್ನು ಹೊಂದಿಸಿ.',
+        ' ಮತ್ತು ಗ್ರೇಸ್ ಪೀರಿಯಡ್‌ಗಳನ್ನು ಹೊಂದಿಸಿ. same-for-all ಅಥವಾ per-employee ಶಿಫ್ಟ್ ಆಯ್ಕೆಮಾಡಿ.',
+      ],
+      [
+        'Per-employee ಆದರೆ ',
+        docLink('/admin/settings/shifts', 'Settings → Shifts'),
+        ' ನಲ್ಲಿ ಟೆಂಪ್ಲೇಟ್ ರಚಿಸಿ ಮತ್ತು ಉದ್ಯೋಗಿಗೆ Mon–Sun ನಿಗದಿಪಡಿಸಿ.',
       ],
       [
         'Settings → Payment rules ಅಡಿಯಲ್ಲಿ ',
