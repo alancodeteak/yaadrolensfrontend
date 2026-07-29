@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import clsx from 'clsx';
+import { Link } from 'react-router-dom';
 import { AlertTriangle } from 'lucide-react';
 import {
   DashboardTimePicker,
@@ -126,7 +127,7 @@ const AttendanceRules = () => {
 
   const validateForm = () => {
     const errors = [];
-    if (workingHours.startTime === workingHours.endTime) {
+    if (shiftMode === 'same_for_all' && workingHours.startTime === workingHours.endTime) {
       errors.push('Start and end times cannot be the same');
     }
     if (gracePeriods.lateArrival < 0 || gracePeriods.lateArrival > 120) {
@@ -334,32 +335,47 @@ const AttendanceRules = () => {
           </div>
         </SettingsSection>
 
-        <SettingsSection title="Working hours" tourId="working-hours">
-          <div className="grid gap-4 sm:grid-cols-2">
-            <div>
-              <label className={settingsLabelClass}>Start</label>
-              <DashboardTimePicker
-                id="work-start-time"
-                label="Work start time"
-                value={workingHours.startTime}
-                onChange={(startTime) => setWorkingHours((p) => ({ ...p, startTime }))}
-              />
+        {shiftMode === 'same_for_all' && (
+          <SettingsSection title="Working hours" tourId="working-hours">
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div>
+                <label className={settingsLabelClass}>Start</label>
+                <DashboardTimePicker
+                  id="work-start-time"
+                  label="Work start time"
+                  value={workingHours.startTime}
+                  onChange={(startTime) => setWorkingHours((p) => ({ ...p, startTime }))}
+                />
+              </div>
+              <div>
+                <label className={settingsLabelClass}>End</label>
+                <DashboardTimePicker
+                  id="work-end-time"
+                  label="Work end time"
+                  value={workingHours.endTime}
+                  onChange={(endTime) => setWorkingHours((p) => ({ ...p, endTime }))}
+                />
+              </div>
             </div>
-            <div>
-              <label className={settingsLabelClass}>End</label>
-              <DashboardTimePicker
-                id="work-end-time"
-                label="Work end time"
-                value={workingHours.endTime}
-                onChange={(endTime) => setWorkingHours((p) => ({ ...p, endTime }))}
-              />
-            </div>
+            <p className="mt-3 text-xs text-gray-500">
+              Everyone uses these hours. Overnight is allowed (e.g. 22:00–06:00). Timezone is under
+              Kiosk &amp; device.
+            </p>
+          </SettingsSection>
+        )}
+
+        {shiftMode === 'per_employee' && (
+          <div
+            className="rounded-xl border border-[#007AFF]/20 bg-[#007AFF]/5 px-4 py-3 text-sm text-gray-700"
+            data-tour="working-hours"
+          >
+            Working hours come from{' '}
+            <Link to="/admin/settings/shifts" className="font-semibold text-[#007AFF] hover:underline">
+              Shifts
+            </Link>
+            . Create templates there, then assign Mon–Sun on each employee.
           </div>
-          <p className="mt-3 text-xs text-gray-500">
-            Used when mode is same for all (and as fallback display). Overnight hours are allowed
-            (e.g. 22:00–06:00). Timezone is under Kiosk &amp; device.
-          </p>
-        </SettingsSection>
+        )}
 
         <SettingsSection title="Grace periods" subtitle="Minutes before marking late or early" tourId="grace-periods">
           <div className="grid gap-3 sm:grid-cols-2">
