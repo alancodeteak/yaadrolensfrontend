@@ -1,7 +1,5 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import clsx from 'clsx';
-import { Link } from 'react-router-dom';
-import { AlertTriangle } from 'lucide-react';
 import {
   DashboardTimePicker,
   LoadingScreen,
@@ -237,7 +235,24 @@ const AttendanceRules = () => {
       return;
     }
     setShiftMode(nextMode);
+    if (nextMode === 'per_employee') {
+      dashboardToast.info(
+        'Create templates under Settings → Shifts, then assign Mon–Sun on each employee.',
+        'Per-employee shifts'
+      );
+    }
   };
+
+  useEffect(() => {
+    if (isLoading || shiftMode !== 'per_employee' || savedShiftMode !== 'per_employee') return;
+    const key = 'lens-toast-attendance-per-employee';
+    if (sessionStorage.getItem(key)) return;
+    sessionStorage.setItem(key, '1');
+    dashboardToast.info(
+      'Create templates under Settings → Shifts, then assign Mon–Sun on each employee.',
+      'Per-employee shifts'
+    );
+  }, [isLoading, shiftMode, savedShiftMode]);
 
   if (isLoading) {
     return <LoadingScreen message="Loading attendance rules..." fullScreen={false} size="md" />;
@@ -313,25 +328,6 @@ const AttendanceRules = () => {
                 </span>
               </span>
             </label>
-            {needsClearToSwitch && (
-              <div className="ui-fade-slide-in flex items-start gap-2 rounded-xl border border-amber-200/80 bg-amber-50/80 px-3 py-2.5 text-xs text-amber-950">
-                <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-600" aria-hidden="true" />
-                <div className="min-w-0 flex-1">
-                  <p className="font-medium">Weekly schedules must be cleared first</p>
-                  <p className="mt-0.5 text-amber-900/80">
-                    Confirm in the popup above to clear assignments and switch everyone to the same
-                    hours.
-                  </p>
-                  <button
-                    type="button"
-                    className="ui-btn-motion mt-2 text-xs font-semibold text-[#007AFF] hover:underline"
-                    onClick={openSwitchConfirm}
-                  >
-                    Show confirmation
-                  </button>
-                </div>
-              </div>
-            )}
           </div>
         </SettingsSection>
 
@@ -362,19 +358,6 @@ const AttendanceRules = () => {
               Kiosk &amp; device.
             </p>
           </SettingsSection>
-        )}
-
-        {shiftMode === 'per_employee' && (
-          <div
-            className="rounded-xl border border-[#007AFF]/20 bg-[#007AFF]/5 px-4 py-3 text-sm text-gray-700"
-            data-tour="working-hours"
-          >
-            Working hours come from{' '}
-            <Link to="/admin/settings/shifts" className="font-semibold text-[#007AFF] hover:underline">
-              Shifts
-            </Link>
-            . Create templates there, then assign Mon–Sun on each employee.
-          </div>
         )}
 
         <SettingsSection title="Grace periods" subtitle="Minutes before marking late or early" tourId="grace-periods">

@@ -57,6 +57,17 @@ const ShiftTemplates = () => {
   const perEmployee = settings?.shift_schedule_mode === 'per_employee';
 
   useEffect(() => {
+    if (isLoading || perEmployee) return;
+    const key = 'lens-toast-shifts-same-for-all';
+    if (sessionStorage.getItem(key)) return;
+    sessionStorage.setItem(key, '1');
+    dashboardToast.info(
+      'You can still create templates here. Enable Per employee under Attendance rules to assign Mon–Sun schedules.',
+      'Shift mode: same for all'
+    );
+  }, [isLoading, perEmployee]);
+
+  useEffect(() => {
     if (!editingId) return;
     const current = templates.find((t) => t.id === editingId);
     if (!current) return;
@@ -291,14 +302,6 @@ const ShiftTemplates = () => {
 
   return (
     <div className="space-y-6" data-tour="shift-templates">
-      {!perEmployee && (
-        <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
-          Shift schedule mode is <strong>same for all</strong>. You can still create templates
-          here, then enable <strong>Per employee</strong> under Attendance rules to assign Mon–Sun
-          schedules.
-        </div>
-      )}
-
       <SettingsContentGrid>
         <SettingsSection title={title} subtitle="Named hours with optional lunch/tea breaks">
           <div className="space-y-4">

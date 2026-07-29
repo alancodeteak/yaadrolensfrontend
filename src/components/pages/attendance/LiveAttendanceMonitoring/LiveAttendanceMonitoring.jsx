@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import clsx from 'clsx';
 import { useNavigate } from 'react-router-dom';
 import { LogIn, LogOut, RefreshCw, Search, Users } from 'lucide-react';
@@ -21,7 +21,6 @@ import {
 import { DashboardWidgetCard, RecentActivityFeed } from '../../dashboard';
 import LiveAttendanceInsights from '../LiveAttendanceInsights';
 import ManualPunchConfirmModal from '../ManualPunchConfirmModal';
-import ShiftWarningsBadge from '../ShiftWarningsBadge';
 import {
   useGetDailySummaryQuery,
   useManualPunchMutation,
@@ -122,6 +121,41 @@ const LiveAttendanceMonitoring = () => {
       ),
     [dailyData, isToday, currentTime]
   );
+
+  const shiftWarningsToastKeyRef = useRef('');
+
+  useEffect(() => {
+    if (dailyLoading || !dailyData?.rows?.length) return;
+
+    const flagged = dailyData.rows
+      .filter((row) => Array.isArray(row.shift_warnings) && row.shift_warnings.length > 0)
+      .map((row) => ({
+        id: row.employee_id,
+        name: row.employee_name || row.name || 'Employee',
+        warnings: row.shift_warnings,
+      }));
+
+    if (!flagged.length) {
+      shiftWarningsToastKeyRef.current = '';
+      return;
+    }
+
+    const toastKey = `${selectedDay}:${flagged.map((item) => item.id).sort().join(',')}`;
+    if (shiftWarningsToastKeyRef.current === toastKey) return;
+    shiftWarningsToastKeyRef.current = toastKey;
+
+    const preview = flagged.slice(0, 4).map((item) => {
+      const detail = item.warnings.map((warning) => warning.message).join('; ');
+      return `• ${item.name} — ${detail}`;
+    });
+    const overflow =
+      flagged.length > 4 ? `\n…and ${flagged.length - 4} more employee${flagged.length - 4 === 1 ? '' : 's'}` : '';
+
+    dashboardToast.warning(
+      `${preview.join('\n')}${overflow}`,
+      `Shift schedule alerts (${flagged.length})`
+    );
+  }, [dailyData, dailyLoading, selectedDay]);
 
   const realSummaryData = useMemo(() => {
     if (!employees.length) {
@@ -486,7 +520,6 @@ const LiveAttendanceMonitoring = () => {
                         >
                           {employee.status}
                         </span>
-                        <ShiftWarningsBadge warnings={employee.shiftWarnings} />
                       </div>
                     </td>
                     <td className={clsx(TD, 'hidden sm:table-cell tabular-nums text-gray-700')}>
