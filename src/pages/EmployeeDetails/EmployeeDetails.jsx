@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { useParams, Link, useLocation, useNavigate } from 'react-router-dom';
 import { Clock, BarChart3, ScanFace, Pencil, Wallet } from 'lucide-react';
 import {
   useGetEmployeeByIdQuery,
@@ -23,8 +23,17 @@ const quickActionClass =
 
 const EmployeeDetails = () => {
   const { id } = useParams();
-  const [activeTab, setActiveTab] = useState('personal');
+  const location = useLocation();
+  const navigate = useNavigate();
+  const [activeTab, setActiveTab] = useState(location.state?.tab || 'personal');
   const [balanceModalOpen, setBalanceModalOpen] = useState(false);
+
+  useEffect(() => {
+    if (location.state?.tab) {
+      setActiveTab(location.state.tab);
+      navigate(location.pathname, { replace: true, state: {} });
+    }
+  }, [location.state, location.pathname, navigate]);
 
   const { data: employee, isLoading, isError, error, refetch } = useGetEmployeeByIdQuery(id);
   const { data: paymentSummary, refetch: refetchPaymentSummary } =
@@ -86,6 +95,7 @@ const EmployeeDetails = () => {
             employee={employee}
             paymentSummary={paymentSummary}
             onAdjustBalance={() => setBalanceModalOpen(true)}
+            onOpenFaceEnrollment={() => setActiveTab('training')}
           />
         );
       case 'attendance':
@@ -128,10 +138,14 @@ const EmployeeDetails = () => {
               <BarChart3 className="h-4 w-4 text-[#34C759]" strokeWidth={2} />
               Attendance report
             </Link>
-            <Link to={`/admin/employees/${id}/training`} className={quickActionClass}>
+            <button
+              type="button"
+              onClick={() => setActiveTab('training')}
+              className={quickActionClass}
+            >
               <ScanFace className="h-4 w-4 text-[#5856D6]" strokeWidth={2} />
               Face enrollment
-            </Link>
+            </button>
             <button
               type="button"
               onClick={() => setActiveTab('pay')}

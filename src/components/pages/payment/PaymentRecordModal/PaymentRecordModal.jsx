@@ -41,18 +41,28 @@ const PaymentRecordModal = ({
   const [errors, setErrors] = useState({});
 
   useEffect(() => {
-    if (isOpen) {
-      setFormData({
-        employee_id: prefillEmployee?.employee_id || prefillEmployee?.id || '',
-        payment_type: 'monthly_salary',
-        amount: '',
-        payment_date: todayIso(),
-        period_year: defaultPeriodYear ? String(defaultPeriodYear) : '',
-        period_month: defaultPeriodMonth ? String(defaultPeriodMonth) : '',
-        notes: '',
-      });
-      setErrors({});
-    }
+    if (!isOpen) return;
+
+    const rowAmount = prefillEmployee?.amount;
+    const amountPrefill =
+      rowAmount != null && rowAmount !== '' && !Number.isNaN(Number(rowAmount))
+        ? String(rowAmount)
+        : '';
+
+    setFormData({
+      employee_id: prefillEmployee?.employee_id || prefillEmployee?.id || '',
+      payment_type: prefillEmployee?.payment_type || 'monthly_salary',
+      amount: amountPrefill,
+      payment_date: todayIso(),
+      period_year: String(
+        prefillEmployee?.period_year || defaultPeriodYear || ''
+      ),
+      period_month: String(
+        prefillEmployee?.period_month || defaultPeriodMonth || ''
+      ),
+      notes: '',
+    });
+    setErrors({});
   }, [isOpen, prefillEmployee, defaultPeriodYear, defaultPeriodMonth]);
 
   const validate = () => {
@@ -112,7 +122,11 @@ const PaymentRecordModal = ({
             <h2 id="payment-record-title" className="text-lg font-semibold text-gray-900">
               Record payment
             </h2>
-            <p className="text-sm text-gray-500">Add a payout to the payment ledger.</p>
+            <p className="text-sm text-gray-500">
+              {prefillEmployee?.amount != null
+                ? 'Amount prefilled from the selected ledger row — edit if needed.'
+                : 'Add a payout to the payment ledger.'}
+            </p>
           </div>
           <button
             type="button"

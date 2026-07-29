@@ -116,7 +116,12 @@ const DetailGrid = ({ items }) => (
   </dl>
 );
 
-const PersonalInfoTimeline = ({ employee, paymentSummary, onAdjustBalance }) => {
+const PersonalInfoTimeline = ({
+  employee,
+  paymentSummary,
+  onAdjustBalance,
+  onOpenFaceEnrollment,
+}) => {
   const [fetchViewUrl] = useLazyGetEmployeeDocumentViewUrlQuery();
   const [loadingSide, setLoadingSide] = useState(null);
   const doc = employee?.identity_document || {};
@@ -345,15 +350,18 @@ const PersonalInfoTimeline = ({ employee, paymentSummary, onAdjustBalance }) => 
               <p className="text-[11px] text-gray-600">
                 {employee.has_face_enrolled
                   ? 'Ready for kiosk clock-in.'
-                  : 'Not enrolled yet — open Face enrollment to train.'}
+                  : 'Not enrolled yet — enroll from the attendance kiosk.'}
               </p>
-              <Link
-                to={`/admin/employees/${employee.id}/training`}
-                className="inline-flex items-center gap-1 rounded-lg border border-gray-200/60 bg-white px-2.5 py-1 text-[11px] font-semibold text-[#007AFF] transition-colors hover:bg-[#007AFF]/10"
-              >
-                <ScanFace className="h-3 w-3" strokeWidth={2} />
-                {employee.has_face_enrolled ? 'Manage' : 'Start'}
-              </Link>
+              {onOpenFaceEnrollment && (
+                <button
+                  type="button"
+                  onClick={onOpenFaceEnrollment}
+                  className="inline-flex items-center gap-1 rounded-lg border border-gray-200/60 bg-white px-2.5 py-1 text-[11px] font-semibold text-[#007AFF] transition-colors hover:bg-[#007AFF]/10"
+                >
+                  <ScanFace className="h-3 w-3" strokeWidth={2} />
+                  View status
+                </button>
+              )}
             </div>
           </TimelineStep>
         </ol>
