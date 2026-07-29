@@ -21,6 +21,7 @@ import {
 import { DashboardWidgetCard, RecentActivityFeed } from '../../dashboard';
 import LiveAttendanceInsights from '../LiveAttendanceInsights';
 import ManualPunchConfirmModal from '../ManualPunchConfirmModal';
+import ShiftWarningsBadge from '../ShiftWarningsBadge';
 import {
   useGetDailySummaryQuery,
   useManualPunchMutation,
@@ -124,25 +125,42 @@ const LiveAttendanceMonitoring = () => {
 
   const realSummaryData = useMemo(() => {
     if (!employees.length) {
-      return { currentlyPresent: 0, currentlyAbsent: 0, lateArrivalsToday: 0, totalEmployees: 0 };
+      return {
+        currentlyPresent: 0,
+        currentlyAbsent: 0,
+        lateArrivalsToday: 0,
+        totalEmployees: 0,
+        presentRate: '0.0%',
+      };
     }
+    const currentlyPresent = employees.filter((emp) => isLiveOnSiteStatus(emp.status)).length;
+    const totalEmployees = employees.length;
     return {
       // On-site only: clocked in, not yet clocked out (includes late arrivals still present).
-      currentlyPresent: employees.filter((emp) => isLiveOnSiteStatus(emp.status)).length,
+      currentlyPresent,
       currentlyAbsent: employees.filter((emp) => emp.status === 'Absent').length,
       lateArrivalsToday:
         dailyData?.late_count ??
         (dailyData?.rows || []).filter((row) => row.attendance_status === 'late').length,
-      totalEmployees: employees.length,
+      totalEmployees,
+      presentRate: `${((currentlyPresent / totalEmployees) * 100).toFixed(1)}%`,
     };
   }, [employees, dailyData]);
 
   const useDummyTop = USE_DUMMY_LIVE_ATTENDANCE && realSummaryData.totalEmployees === 0;
-  const summaryData = useDummyTop ? DUMMY_SUMMARY : realSummaryData;
+  const summaryData = useDummyTop
+    ? {
+        ...DUMMY_SUMMARY,
+        presentRate: `${(
+          (DUMMY_SUMMARY.currentlyPresent / Math.max(DUMMY_SUMMARY.totalEmployees, 1)) *
+          100
+        ).toFixed(1)}%`,
+      }
+    : realSummaryData;
 
   const realRecentActivities = useMemo(() => {
     const logs = transformDailyRowsToLogs({ rows: dailyData?.rows || [] });
-    return logs.slice(0, 10).map((log) => ({
+    return logs.map((log) => ({
       id: log.id,
       name: log.employee_name,
       type: log.type,
@@ -299,7 +317,8 @@ const LiveAttendanceMonitoring = () => {
       </div>
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-3 lg:items-stretch">
-        <div data-tour="live-activity">
+        {/* min-h-0 + overflow-hidden: match Today card height; scroll inside Live activity */}
+        <div data-tour="live-activity" className="min-h-0 overflow-hidden">
           <RecentActivityFeed
             activities={recentActivities}
             loading={dailyFetching && !useDummyTop}
@@ -307,11 +326,11 @@ const LiveAttendanceMonitoring = () => {
             showViewAll={false}
             title={activityTitle}
             subtitle={activitySubtitle}
-            className="min-h-[200px] lg:col-span-2"
+            className="h-full min-h-[9.5rem]"
           />
         </div>
 
-        <div data-tour="today-kpis">
+        <div data-tour="today-kpis" className="h-full">
           <DashboardWidgetCard
             title={kpiTitle}
             compact
@@ -319,7 +338,11 @@ const LiveAttendanceMonitoring = () => {
               { label: 'Present', value: summaryData.currentlyPresent, accent: DASHBOARD_ACCENTS.green },
               { label: 'Absent', value: summaryData.currentlyAbsent, accent: DASHBOARD_ACCENTS.red },
               { label: 'Late', value: summaryData.lateArrivalsToday, accent: DASHBOARD_ACCENTS.orange },
-              { label: 'Total', value: summaryData.totalEmployees, accent: DASHBOARD_ACCENTS.blue },
+              {
+                label: 'Present rate',
+                value: summaryData.presentRate,
+                accent: DASHBOARD_ACCENTS.purple,
+              },
             ]}
           />
         </div>
@@ -454,14 +477,17 @@ const LiveAttendanceMonitoring = () => {
                       </span>
                     </td>
                     <td className={TD}>
-                      <span
-                        className={clsx(
-                          'inline-flex rounded-full px-2 py-0.5 text-[10px] font-semibold',
-                          STATUS_BADGE[employee.status] || 'bg-gray-100 text-gray-600'
-                        )}
-                      >
-                        {employee.status}
-                      </span>
+                      <div className="flex flex-wrap items-center gap-1.5">
+                        <span
+                          className={clsx(
+                            'inline-flex rounded-full px-2 py-0.5 text-[10px] font-semibold',
+                            STATUS_BADGE[employee.status] || 'bg-gray-100 text-gray-600'
+                          )}
+                        >
+                          {employee.status}
+                        </span>
+                        <ShiftWarningsBadge warnings={employee.shiftWarnings} />
+                      </div>
                     </td>
                     <td className={clsx(TD, 'hidden sm:table-cell tabular-nums text-gray-700')}>
                       {employee.clockIn || '—'}

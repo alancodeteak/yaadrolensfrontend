@@ -372,6 +372,7 @@ export function mapDailyRowToLiveEmployee(row, now = null) {
             : null,
     workStartTime: row.work_start_time || null,
     workEndTime: row.work_end_time || null,
+    shiftWarnings: Array.isArray(row.shift_warnings) ? row.shift_warnings : [],
   };
 }
 

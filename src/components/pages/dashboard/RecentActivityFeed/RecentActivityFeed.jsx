@@ -32,7 +32,7 @@ const RecentActivityFeed = ({
   return (
   <div
     className={clsx(
-      'flex h-full flex-col rounded-2xl border border-gray-200/60 bg-white shadow-[0_2px_16px_rgba(0,0,0,0.06)]',
+      'flex h-full min-h-0 flex-col rounded-2xl border border-gray-200/60 bg-white shadow-[0_2px_16px_rgba(0,0,0,0.06)]',
       className
     )}
   >
@@ -58,7 +58,12 @@ const RecentActivityFeed = ({
       )}
     </div>
 
-    <div className={clsx('min-h-0 flex-1 overflow-y-auto', compact ? 'p-2' : 'p-3')}>
+    <div
+      className={clsx(
+        'min-h-0 flex-1 overflow-y-auto overscroll-contain',
+        compact ? 'p-2' : 'p-3'
+      )}
+    >
       {loading ? (
         <div className={clsx(compact ? 'space-y-1.5' : 'space-y-2')}>
           {Array.from({ length: compact ? 4 : 5 }).map((_, i) => (
