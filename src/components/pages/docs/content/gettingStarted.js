@@ -40,6 +40,7 @@ export const gettingStartedContent = {
           'Set employee salaries in the Salary section.',
           'Connect the kiosk tablet (see Kiosk setup).',
           "Register each employee's face on the kiosk.",
+          'Optional: create shift templates and enable manual punch under Settings if you need them.',
           'Watch attendance on the Dashboard and Live Attendance pages.',
           'Download attendance and payroll reports from the Reports page.',
         ],
@@ -51,6 +52,8 @@ export const gettingStartedContent = {
           [
             'Most “late / leave / salary looks wrong” issues come from Settings. Open ',
             docLink('/admin/settings/attendance', 'Attendance rules'),
+            ', ',
+            docLink('/admin/settings/shifts', 'Shifts'),
             ', ',
             docLink('/admin/settings/payment', 'Payment rules'),
             ', and ',
@@ -72,6 +75,10 @@ export const gettingStartedContent = {
             ' — Create templates (Morning/Night + breaks) under Settings → Shifts; assign Mon–Sun on each employee when per-employee mode is on.',
           ],
           [
+            docStrong('Attendance → Manual punch'),
+            ' — Optional. Lets admins clock someone in or out from Live Attendance if the kiosk is down. Requires typing a confirmation phrase.',
+          ],
+          [
             docStrong('Attendance → Minimum clock-out wait'),
             ' — Stops accidental immediate clock-out after clock-in.',
           ],
@@ -83,6 +90,50 @@ export const gettingStartedContent = {
         tip: [
           'Need every field explained? Read the full ',
           docLink('/docs/settings', 'Settings guide'),
+          '.',
+        ],
+      },
+      {
+        title: 'Shifts & manual punch (new)',
+        span: 'full',
+        paragraphs: [
+          [
+            'Two attendance tools you will use often after basic setup: ',
+            docStrong('shift templates'),
+            ' and ',
+            docStrong('manual punch'),
+            '.',
+          ],
+        ],
+        list: [
+          [
+            'Open ',
+            docLink('/admin/settings/shifts', 'Settings → Shifts'),
+            ' to create Morning, Evening, or Night templates with start/end and optional breaks.',
+          ],
+          [
+            'Under ',
+            docLink('/admin/settings/attendance', 'Attendance rules'),
+            ', pick ',
+            docStrong('Per employee'),
+            ', then assign Mon–Sun templates on each person’s profile.',
+          ],
+          [
+            'Turn on ',
+            docStrong('Manual attendance'),
+            ' in Attendance rules. On ',
+            docLink('/admin/attendance', 'Live Attendance'),
+            ' (today only), use In / Out, pick a time (not in the future), and type ',
+            docStrong('manual attendance approved'),
+            ' to confirm.',
+          ],
+          'Prefer the kiosk for normal days. Use manual punch only when face scan is unavailable.',
+        ],
+        footer: [
+          'Details: ',
+          docLink('/docs/settings', 'Settings guide'),
+          ' · ',
+          docLink('/docs/attendance', 'Live Attendance'),
           '.',
         ],
       },
@@ -150,6 +201,7 @@ export const gettingStartedContent = {
           'Salary सेक्शन में कर्मचारी वेतन सेट करें।',
           'कियोस्क टैबलेट कनेक्ट करें (Kiosk setup देखें)।',
           'हर कर्मचारी का चेहरा कियोस्क पर रजिस्टर करें।',
+          'वैकल्पिक: जरूरत हो तो Settings में shift templates बनाएँ और manual punch चालू करें।',
           'डैशबोर्ड और Live Attendance पर हाजिरी देखें।',
           'Reports पेज से हाजिरी और पेरोल रिपोर्ट डाउनलोड करें।',
         ],
@@ -161,6 +213,8 @@ export const gettingStartedContent = {
           [
             'ज़्यादातर “late / leave / salary गलत लगना” समस्याएँ Settings से आती हैं। लाइव हाजिरी या पेरोल पर भरोसा करने से पहले ',
             docLink('/admin/settings/attendance', 'Attendance rules'),
+            ', ',
+            docLink('/admin/settings/shifts', 'Shifts'),
             ', ',
             docLink('/admin/settings/payment', 'Payment rules'),
             ', और ',
@@ -182,6 +236,10 @@ export const gettingStartedContent = {
             ' — Settings → Shifts में टेम्पलेट बनाएँ; per-employee मोड में कर्मचारी पर Mon–Sun असाइन करें।',
           ],
           [
+            docStrong('Attendance → Manual punch'),
+            ' — वैकल्पिक। कियोस्क न हो तो Live Attendance से In/Out। पुष्टि वाक्य टाइप करना ज़रूरी है।',
+          ],
+          [
             docStrong('Attendance → Minimum clock-out wait'),
             ' — क्लॉक-इन के तुरंत बाद आकस्मिक क्लॉक-आउट रोकता है।',
           ],
@@ -194,6 +252,46 @@ export const gettingStartedContent = {
           'हर फ़ील्ड की व्याख्या चाहिए? पूरी ',
           docLink('/docs/settings', 'Settings गाइड'),
           ' पढ़ें।',
+        ],
+      },
+      {
+        title: 'शिफ्ट और मैनुअल पंच (नया)',
+        span: 'full',
+        paragraphs: [
+          [
+            'बेसिक सेटअप के बाद अक्सर इस्तेमाल: ',
+            docStrong('shift templates'),
+            ' और ',
+            docStrong('manual punch'),
+            '।',
+          ],
+        ],
+        list: [
+          [
+            docLink('/admin/settings/shifts', 'Settings → Shifts'),
+            ' में Morning/Evening टेम्पलेट बनाएँ।',
+          ],
+          [
+            docLink('/admin/settings/attendance', 'Attendance rules'),
+            ' में ',
+            docStrong('Per employee'),
+            ' चुनें, फिर कर्मचारी प्रोफ़ाइल पर Mon–Sun असाइन करें।',
+          ],
+          [
+            'Manual attendance चालू करें। ',
+            docLink('/admin/attendance', 'Live Attendance'),
+            ' (आज) पर In/Out से समय चुनें और ',
+            docStrong('manual attendance approved'),
+            ' टाइप करें।',
+          ],
+          'सामान्य दिनों में कियोस्क प्राथमिक रखें; मैनुअल पंच केवल जरूरत पर।',
+        ],
+        footer: [
+          'विवरण: ',
+          docLink('/docs/settings', 'Settings गाइड'),
+          ' · ',
+          docLink('/docs/attendance', 'Live Attendance'),
+          '।',
         ],
       },
       {
@@ -260,6 +358,7 @@ export const gettingStartedContent = {
           'Salary വിഭാഗത്തിൽ ജീവനക്കാരുടെ ശമ്പളം സെറ്റ് ചെയ്യുക.',
           'കിയോസ്ക് ടാബ്ലെറ്റ് കണക്റ്റ് ചെയ്യുക (Kiosk setup കാണുക).',
           'ഓരോ ജീവനക്കാരുടെയും മുഖം കിയോസ്കിൽ രജിസ്റ്റർ ചെയ്യുക.',
+          'ഓപ്ഷണൽ: ആവശ്യമെങ്കിൽ Settings-ൽ shift templates ഉണ്ടാക്കി manual punch ഓണാക്കുക.',
           'ഡാഷ്‌ബോർഡിലും Live Attendance-ലും ഹാജർ നിരീക്ഷിക്കുക.',
           'Reports പേജിൽ നിന്ന് ഹാജർ, പേറോൾ റിപ്പോർട്ടുകൾ ഡൗൺലോഡ് ചെയ്യുക.',
         ],
@@ -271,6 +370,8 @@ export const gettingStartedContent = {
           [
             'മിക്ക “late / leave / salary തെറ്റായി തോന്നുന്നു” പ്രശ്നങ്ങളും Settings-ൽ നിന്നാണ്. ലൈവ് ഹാജറിലോ പേറോളിലോ ആശ്രയിക്കുന്നതിന് മുമ്പ് ',
             docLink('/admin/settings/attendance', 'Attendance rules'),
+            ', ',
+            docLink('/admin/settings/shifts', 'Shifts'),
             ', ',
             docLink('/admin/settings/payment', 'Payment rules'),
             ', കൂടാതെ ',
@@ -292,6 +393,10 @@ export const gettingStartedContent = {
             ' — Settings → Shifts-ൽ ടെംപ്ലേറ്റ് ഉണ്ടാക്കുക; per-employee മോഡിൽ Mon–Sun നൽകുക.',
           ],
           [
+            docStrong('Attendance → Manual punch'),
+            ' — ഓപ്ഷണൽ. കിയോസ്ക് ലഭ്യമല്ലെങ്കിൽ Live Attendance-ൽ In/Out. സ്ഥിരീകരണ വാക്യം ടൈപ്പ് ചെയ്യണം.',
+          ],
+          [
             docStrong('Attendance → Minimum clock-out wait'),
             ' — ക്ലോക്ക്-ഇന് ശേഷമുള്ള ആകസ്മിക ഉടൻ ക്ലോക്ക്-ഔട്ട് തടയുന്നു.',
           ],
@@ -304,6 +409,46 @@ export const gettingStartedContent = {
           'ഓരോ ഫീൽഡും വിശദീകരിക്കണോ? പൂർണ്ണ ',
           docLink('/docs/settings', 'Settings ഗൈഡ്'),
           ' വായിക്കുക.',
+        ],
+      },
+      {
+        title: 'ഷിഫ്റ്റും മാനുവൽ പഞ്ചും (പുതിയത്)',
+        span: 'full',
+        paragraphs: [
+          [
+            'അടിസ്ഥാന സെറ്റപ്പിന് ശേഷം പതിവായി ഉപയോഗിക്കുന്നവ: ',
+            docStrong('shift templates'),
+            ', ',
+            docStrong('manual punch'),
+            '.',
+          ],
+        ],
+        list: [
+          [
+            docLink('/admin/settings/shifts', 'Settings → Shifts'),
+            '-ൽ Morning/Evening ടെംപ്ലേറ്റ് ഉണ്ടാക്കുക.',
+          ],
+          [
+            docLink('/admin/settings/attendance', 'Attendance rules'),
+            '-ൽ ',
+            docStrong('Per employee'),
+            ' തിരഞ്ഞെടുത്ത് ജീവനക്കാരുടെ പ്രൊഫൈലിൽ Mon–Sun നൽകുക.',
+          ],
+          [
+            'Manual attendance ഓണാക്കുക. ',
+            docLink('/admin/attendance', 'Live Attendance'),
+            ' (ഇന്ന്) In/Out ഉപയോഗിച്ച് സമയം തിരഞ്ഞെടുത്ത് ',
+            docStrong('manual attendance approved'),
+            ' ടൈപ്പ് ചെയ്യുക.',
+          ],
+          'സാധാരണ ദിവസങ്ങളിൽ കിയോസ്ക് മുൻഗണന; മാനുവൽ പഞ്ച് ആവശ്യമുള്ളപ്പോൾ മാത്രം.',
+        ],
+        footer: [
+          'വിശദാംശം: ',
+          docLink('/docs/settings', 'Settings ഗൈഡ്'),
+          ' · ',
+          docLink('/docs/attendance', 'Live Attendance'),
+          '.',
         ],
       },
       {
@@ -370,6 +515,7 @@ export const gettingStartedContent = {
           'Salary ವಿಭಾಗದಲ್ಲಿ ಉದ್ಯೋಗಿ ಸಂಬಳ ಹೊಂದಿಸಿ.',
           'ಕಿಯೋಸ್ಕ್ ಟ್ಯಾಬ್ಲೆಟ್ ಸಂಪರ್ಕಿಸಿ (Kiosk setup ನೋಡಿ).',
           'ಪ್ರತಿ ಉದ್ಯೋಗಿಯ ಮುಖವನ್ನು ಕಿಯೋಸ್ಕ್‌ನಲ್ಲಿ ನೋಂದಾಯಿಸಿ.',
+          'ಐಚ್ಛಿಕ: ಅಗತ್ಯವಿದ್ದರೆ Settings ನಲ್ಲಿ shift templates ರಚಿಸಿ ಮತ್ತು manual punch ಆನ್ ಮಾಡಿ.',
           'ಡ್ಯಾಶ್‌ಬೋರ್ಡ್ ಮತ್ತು Live Attendance ನಲ್ಲಿ ಹಾಜರಾತಿ ನೋಡಿ.',
           'Reports ಪುಟದಿಂದ ಹಾಜರಾತಿ ಮತ್ತು ಪೇರೋಲ್ ವರದಿಗಳನ್ನು ಡೌನ್‌ಲೋಡ್ ಮಾಡಿ.',
         ],
@@ -381,6 +527,8 @@ export const gettingStartedContent = {
           [
             'ಹೆಚ್ಚಿನ “late / leave / salary ತಪ್ಪಾಗಿ ಕಾಣುವ” ಸಮಸ್ಯೆಗಳು Settings ನಿಂದ ಬರುತ್ತವೆ. ಲೈವ್ ಹಾಜರಾತಿ ಅಥವಾ ಪೇರೋಲ್ ಮೇಲೆ ಅವಲಂಬಿಸುವ ಮೊದಲು ',
             docLink('/admin/settings/attendance', 'Attendance rules'),
+            ', ',
+            docLink('/admin/settings/shifts', 'Shifts'),
             ', ',
             docLink('/admin/settings/payment', 'Payment rules'),
             ', ಮತ್ತು ',
@@ -402,6 +550,10 @@ export const gettingStartedContent = {
             ' — Settings → Shifts ನಲ್ಲಿ ಟೆಂಪ್ಲೇಟ್ ರಚಿಸಿ; per-employee ಮೋಡ್‌ನಲ್ಲಿ Mon–Sun ನಿಗದಿಪಡಿಸಿ.',
           ],
           [
+            docStrong('Attendance → Manual punch'),
+            ' — ಐಚ್ಛಿಕ. ಕಿಯೋಸ್ಕ್ ಇಲ್ಲದಿದ್ದರೆ Live Attendance ನಲ್ಲಿ In/Out. ದೃಢೀಕರಣ ವಾಕ್ಯ ಟೈಪ್ ಮಾಡಬೇಕು.',
+          ],
+          [
             docStrong('Attendance → Minimum clock-out wait'),
             ' — ಕ್ಲಾಕ್-ಇನ್ ನಂತರ ಆಕಸ್ಮಿಕ ತಕ್ಷಣ ಕ್ಲಾಕ್-ಔಟ್ ತಡೆಯುತ್ತದೆ.',
           ],
@@ -414,6 +566,46 @@ export const gettingStartedContent = {
           'ಪ್ರತಿ ಫೀಲ್ಡ್ ವಿವರ ಬೇಕೇ? ಪೂರ್ಣ ',
           docLink('/docs/settings', 'Settings ಮಾರ್ಗದರ್ಶಿ'),
           ' ಓದಿ.',
+        ],
+      },
+      {
+        title: 'ಶಿಫ್ಟ್ ಮತ್ತು ಮ್ಯಾನುವಲ್ ಪಂಚ್ (ಹೊಸದು)',
+        span: 'full',
+        paragraphs: [
+          [
+            'ಮೂಲ ಸೆಟಪ್ ನಂತರ ಆಗಾಗ್ಗೆ ಬಳಸುವವು: ',
+            docStrong('shift templates'),
+            ' ಮತ್ತು ',
+            docStrong('manual punch'),
+            '.',
+          ],
+        ],
+        list: [
+          [
+            docLink('/admin/settings/shifts', 'Settings → Shifts'),
+            ' ನಲ್ಲಿ Morning/Evening ಟೆಂಪ್ಲೇಟ್ ರಚಿಸಿ.',
+          ],
+          [
+            docLink('/admin/settings/attendance', 'Attendance rules'),
+            ' ನಲ್ಲಿ ',
+            docStrong('Per employee'),
+            ' ಆಯ್ಕೆಮಾಡಿ, ನಂತರ ಉದ್ಯೋಗಿ ಪ್ರೊಫೈಲ್‌ನಲ್ಲಿ Mon–Sun ನಿಗದಿಪಡಿಸಿ.',
+          ],
+          [
+            'Manual attendance ಆನ್ ಮಾಡಿ. ',
+            docLink('/admin/attendance', 'Live Attendance'),
+            ' (ಇಂದು) In/Out ಬಳಸಿ ಸಮಯ ಆಯ್ಕೆಮಾಡಿ ಮತ್ತು ',
+            docStrong('manual attendance approved'),
+            ' ಟೈಪ್ ಮಾಡಿ.',
+          ],
+          'ಸಾಮಾನ್ಯ ದಿನಗಳಲ್ಲಿ ಕಿಯೋಸ್ಕ್ ಆದ್ಯತೆ; ಮ್ಯಾನುವಲ್ ಪಂಚ್ ಅಗತ್ಯವಿದ್ದಾಗ ಮಾತ್ರ.',
+        ],
+        footer: [
+          'ವಿವರ: ',
+          docLink('/docs/settings', 'Settings ಮಾರ್ಗದರ್ಶಿ'),
+          ' · ',
+          docLink('/docs/attendance', 'Live Attendance'),
+          '.',
         ],
       },
       {

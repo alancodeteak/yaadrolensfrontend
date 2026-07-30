@@ -376,8 +376,17 @@ export function mapDailyRowToLiveEmployee(row, now = null) {
   };
 }
 
-export function transformDailyRowsToLogs(response) {
-  const rows = response?.rows || [];
+export function transformDailyRowsToLogs(response, maxLogs = Infinity) {
+  const allRows = response?.rows || [];
+  const rows =
+    Number.isFinite(maxLogs) && maxLogs < Infinity
+      ? allRows.filter(
+          (row) =>
+            row.clock_in ||
+            row.clock_out ||
+            (Array.isArray(row.sessions) && row.sessions.length > 0)
+        )
+      : allRows;
   const logs = [];
 
   rows.forEach((row) => {
@@ -445,9 +454,9 @@ export function transformDailyRowsToLogs(response) {
     }
   });
 
-  return logs.sort(
-    (a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
-  );
+  return logs
+    .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
+    .slice(0, maxLogs);
 }
 
 export function transformSettingsResponse(settings) {

@@ -212,8 +212,8 @@ const Sidebar = ({ className, forceExpanded = false, onNavigate, onExpandedChang
       className={clsx(
         'z-40 shrink-0 overflow-hidden transition-[width] duration-300 ease-in-out',
         forceExpanded
-          ? 'fixed inset-y-0 left-0 flex h-screen w-[260px] py-3 pl-2'
-          : 'hidden h-screen w-[72px] lg:fixed lg:inset-y-0 lg:left-0 lg:flex lg:py-3 lg:pl-2',
+          ? 'fixed inset-y-0 left-0 flex h-dvh w-[260px] py-3 pl-2'
+          : 'hidden h-dvh w-[72px] lg:fixed lg:inset-y-0 lg:left-0 lg:flex lg:py-3 lg:pl-2',
         !forceExpanded && hovered && 'lg:w-[260px]',
         className
       )}

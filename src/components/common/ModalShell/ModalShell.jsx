@@ -44,7 +44,7 @@ const ModalShell = ({
       <div
         ref={dialogRef}
         className={clsx(
-          'flex max-h-[90vh] w-full flex-col overflow-hidden rounded-2xl border border-gray-200/60 bg-white shadow-[0_12px_40px_rgba(0,0,0,0.12)]',
+          'flex max-h-[min(90dvh,90vh)] w-full flex-col overflow-hidden rounded-2xl border border-gray-200/60 bg-white shadow-[0_12px_40px_rgba(0,0,0,0.12)]',
           SIZE_CLASSES[size] || SIZE_CLASSES.md,
           className
         )}

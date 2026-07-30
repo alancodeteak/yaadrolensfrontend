@@ -19,7 +19,7 @@ export const attendanceContent = {
         list: [
           'Pick a date — today or any past day.',
           'Search for someone by name or employee code.',
-          'Filter by status: Present, Late, Absent, or Clocked Out.',
+          'Filter by status: Present, Late, Absent, Scheduled off, or Clocked Out.',
           "Click a person's row to open their profile.",
           'Press Refresh to get the latest updates.',
         ],
@@ -29,8 +29,49 @@ export const attendanceContent = {
         list: [
           'Live activity — recent clock-in and clock-out events.',
           'Summary numbers — present, absent, late, and total staff count.',
-          'Hourly chart — when people arrived during the day.',
-          "Staff table — each person's status and clock-in time.",
+          'Staff table — status, shift label, clock-in time, and hours.',
+          'Attendance timeline — markers for each punch; use Play to replay the day in order.',
+        ],
+      },
+      {
+        title: 'Manual punch in / out',
+        span: 'full',
+        paragraphs: [
+          [
+            'Enable ',
+            docStrong('Manual attendance'),
+            ' under ',
+            docLink('/admin/settings/attendance', 'Settings → Attendance rules'),
+            '. Then, on ',
+            docStrong('today'),
+            ' only, the table shows In / Out actions.',
+          ],
+        ],
+        list: [
+          'Choose In or Out for that employee.',
+          'Pick the punch time (cannot be in the future).',
+          [
+            'Type ',
+            docStrong('manual attendance approved'),
+            ' exactly, then confirm.',
+          ],
+          'Prefer the kiosk for normal days. Use this when face scan is unavailable.',
+        ],
+      },
+      {
+        title: 'Shifts on this page',
+        list: [
+          [
+            'The Shift column shows the person’s scheduled hours for the day (from org hours or ',
+            docLink('/docs/settings', 'shift templates'),
+            ').',
+          ],
+          'If a punch does not match the scheduled shift (off day, before start, after end, late), a toast alert summarizes those mismatches for admins.',
+        ],
+        tip: [
+          'Set up templates under ',
+          docLink('/admin/settings/shifts', 'Settings → Shifts'),
+          ' and assign Mon–Sun on each employee when using per-employee mode.',
         ],
       },
       {
@@ -40,6 +81,10 @@ export const attendanceContent = {
         ],
         footer: [
           'Also see: ',
+          docLink('/docs/getting-started', 'Getting started'),
+          ' · ',
+          docLink('/docs/settings', 'Settings'),
+          ' · ',
           docLink('/docs/dashboard', 'Dashboard'),
           ' · ',
           docLink('/docs/analytics', 'Analytics'),
@@ -65,7 +110,7 @@ export const attendanceContent = {
         list: [
           'कोई तारीख चुनें — आज या पिछला कोई भी दिन।',
           'नाम या कर्मचारी कोड से किसी व्यक्ति को खोजें।',
-          'स्थिति से फिल्टर करें: Present, Late, Absent, या Clocked Out.',
+          'स्थिति से फिल्टर करें: Present, Late, Absent, Scheduled off, या Clocked Out.',
           'किसी व्यक्ति की पंक्ति पर क्लिक करके उसकी प्रोफाइल खोलें।',
           'नवीनतम अपडेट पाने के लिए Refresh दबाएँ।',
         ],
@@ -75,8 +120,43 @@ export const attendanceContent = {
         list: [
           'Live activity — हाल के clock-in और clock-out इवेंट।',
           'Summary numbers — उपस्थित, अनुपस्थित, देर से आए और कुल स्टाफ संख्या।',
-          'Hourly chart — दिन में लोग कब पहुँचे।',
-          'Staff table — हर व्यक्ति की स्थिति और clock-in समय।',
+          'Staff table — स्थिति, शिफ्ट, clock-in समय और घंटे।',
+          'Attendance timeline — पंच मार्कर; Play से दिन क्रम से देखें।',
+        ],
+      },
+      {
+        title: 'मैनुअल पंच इन / आउट',
+        span: 'full',
+        paragraphs: [
+          [
+            docLink('/admin/settings/attendance', 'Settings → Attendance rules'),
+            ' में ',
+            docStrong('Manual attendance'),
+            ' चालू करें। फिर केवल ',
+            docStrong('आज'),
+            ' की टेबल में In / Out दिखता है।',
+          ],
+        ],
+        list: [
+          'कर्मचारी के लिए In या Out चुनें।',
+          'पंच समय चुनें (भविष्य का समय नहीं)।',
+          [
+            'ठीक ',
+            docStrong('manual attendance approved'),
+            ' टाइप करके पुष्टि करें।',
+          ],
+          'सामान्य दिनों में कियोस्क प्राथमिक; फेस स्कैन न हो तब मैनुअल उपयोग करें।',
+        ],
+      },
+      {
+        title: 'इस पेज पर शिफ्ट',
+        list: [
+          'Shift कॉलम दिन का निर्धारित समय दिखाता है।',
+          'शिफ्ट से मेल न खाने वाले पंच पर एडमिन को टोस्ट अलर्ट मिलता है।',
+        ],
+        tip: [
+          docLink('/admin/settings/shifts', 'Settings → Shifts'),
+          ' में टेम्पलेट बनाएँ; per-employee मोड में Mon–Sun असाइन करें।',
         ],
       },
       {
@@ -86,6 +166,10 @@ export const attendanceContent = {
         ],
         footer: [
           'यह भी देखें: ',
+          docLink('/docs/getting-started', 'Getting started'),
+          ' · ',
+          docLink('/docs/settings', 'Settings'),
+          ' · ',
           docLink('/docs/dashboard', 'Dashboard'),
           ' · ',
           docLink('/docs/analytics', 'Analytics'),
@@ -111,7 +195,7 @@ export const attendanceContent = {
         list: [
           'ഒരു തീയതി തിരഞ്ഞെടുക്കുക — ഇന്ന് അല്ലെങ്കിൽ കഴിഞ്ഞ ഏതെങ്കിലും ദിവസം.',
           'പേര് അല്ലെങ്കിൽ employee code ഉപയോഗിച്ച് ഒരാളെ തിരയുക.',
-          'സ്ഥിതി പ്രകാരം ഫിൽട്ടർ ചെയ്യുക: Present, Late, Absent, അല്ലെങ്കിൽ Clocked Out.',
+          'സ്ഥിതി പ്രകാരം ഫിൽട്ടർ ചെയ്യുക: Present, Late, Absent, Scheduled off, അല്ലെങ്കിൽ Clocked Out.',
           'ആ വ്യക്തിയുടെ പ്രൊഫൈൽ തുറക്കാൻ വരിയിൽ ക്ലിക്ക് ചെയ്യുക.',
           'പുതിയ അപ്ഡേറ്റുകൾ ലഭിക്കാൻ Refresh അമർത്തുക.',
         ],
@@ -121,8 +205,43 @@ export const attendanceContent = {
         list: [
           'Live activity — അടുത്തിടെ നടന്ന clock-in, clock-out ഇവന്റുകൾ.',
           'Summary numbers — ഹാജർ, അഭാവം, വൈകിയെത്തൽ, മൊത്തം സ്റ്റാഫ് എണ്ണം.',
-          'Hourly chart — ദിവസത്തിൽ ആളുകൾ എപ്പോൾ എത്തിയെന്ന്.',
-          'Staff table — ഓരോ വ്യക്തിയുടെയും നിലയും clock-in സമയവും.',
+          'Staff table — നില, ഷിഫ്റ്റ്, clock-in സമയം, മണിക്കൂർ.',
+          'Attendance timeline — പഞ്ച് മാർക്കറുകൾ; Play കൊണ്ട് ദിവസം ക്രമത്തിൽ കാണുക.',
+        ],
+      },
+      {
+        title: 'മാനുവൽ പഞ്ച് ഇൻ / ഔട്ട്',
+        span: 'full',
+        paragraphs: [
+          [
+            docLink('/admin/settings/attendance', 'Settings → Attendance rules'),
+            '-ൽ ',
+            docStrong('Manual attendance'),
+            ' ഓണാക്കുക. പിന്നെ ',
+            docStrong('ഇന്ന്'),
+            ' മാത്രം ടേബിളിൽ In / Out കാണും.',
+          ],
+        ],
+        list: [
+          'ജീവനക്കാരന് In അല്ലെങ്കിൽ Out തിരഞ്ഞെടുക്കുക.',
+          'പഞ്ച് സമയം തിരഞ്ഞെടുക്കുക (ഭാവി സമയമാകരുത്).',
+          [
+            'കൃത്യമായി ',
+            docStrong('manual attendance approved'),
+            ' ടൈപ്പ് ചെയ്ത് സ്ഥിരീകരിക്കുക.',
+          ],
+          'സാധാരണ ദിവസങ്ങളിൽ കിയോസ്ക് മുൻഗണന; ഫേസ് സ്കാൻ ലഭ്യമല്ലെങ്കിൽ മാനുവൽ ഉപയോഗിക്കുക.',
+        ],
+      },
+      {
+        title: 'ഈ പേജിലെ ഷിഫ്റ്റ്',
+        list: [
+          'Shift കോളം ദിവസത്തിന്റെ ഷെഡ്യൂൾഡ് സമയം കാണിക്കുന്നു.',
+          'ഷിഫ്റ്റുമായി പൊരുത്തപ്പെടാത്ത പഞ്ചുകൾക്ക് അഡ്മിന് ടോസ്റ്റ് അലേർട്ട് ലഭിക്കും.',
+        ],
+        tip: [
+          docLink('/admin/settings/shifts', 'Settings → Shifts'),
+          '-ൽ ടെംപ്ലേറ്റ് ഉണ്ടാക്കുക; per-employee മോഡിൽ Mon–Sun നൽകുക.',
         ],
       },
       {
@@ -132,6 +251,10 @@ export const attendanceContent = {
         ],
         footer: [
           'ഇതും കാണുക: ',
+          docLink('/docs/getting-started', 'Getting started'),
+          ' · ',
+          docLink('/docs/settings', 'Settings'),
+          ' · ',
           docLink('/docs/dashboard', 'Dashboard'),
           ' · ',
           docLink('/docs/analytics', 'Analytics'),
@@ -157,7 +280,7 @@ export const attendanceContent = {
         list: [
           'ಒಂದು ದಿನಾಂಕ ಆಯ್ಕೆಮಾಡಿ — ಇಂದು ಅಥವಾ ಹಿಂದಿನ ಯಾವುದೇ ದಿನ.',
           'ಹೆಸರು ಅಥವಾ employee code ಮೂಲಕ ಯಾರನ್ನಾದರೂ ಹುಡುಕಿ.',
-          'ಸ್ಥಿತಿ ಮೂಲಕ ಫಿಲ್ಟರ್ ಮಾಡಿ: Present, Late, Absent, ಅಥವಾ Clocked Out.',
+          'ಸ್ಥಿತಿ ಮೂಲಕ ಫಿಲ್ಟರ್ ಮಾಡಿ: Present, Late, Absent, Scheduled off, ಅಥವಾ Clocked Out.',
           'ವ್ಯಕ್ತಿಯ ಸಾಲನ್ನು ಕ್ಲಿಕ್ ಮಾಡಿ ಅವರ ಪ್ರೊಫೈಲ್ ತೆರೆಯಿರಿ.',
           'ಇತ್ತೀಚಿನ ಅಪ್ಡೇಟ್‌ಗಳಿಗೆ Refresh ಒತ್ತಿ.',
         ],
@@ -167,8 +290,43 @@ export const attendanceContent = {
         list: [
           'Live activity — ಇತ್ತೀಚಿನ clock-in ಮತ್ತು clock-out ಘಟನೆಗಳು.',
           'Summary numbers — ಹಾಜರು, ಗೈರುಹಾಜರು, ತಡ, ಮತ್ತು ಒಟ್ಟು ಸಿಬ್ಬಂದಿ ಸಂಖ್ಯೆ.',
-          'Hourly chart — ದಿನದಲ್ಲಿ ಜನರು ಯಾವಾಗ ಬಂದರು.',
-          'Staff table — ಪ್ರತಿ ವ್ಯಕ್ತಿಯ ಸ್ಥಿತಿ ಮತ್ತು clock-in ಸಮಯ.',
+          'Staff table — ಸ್ಥಿತಿ, ಶಿಫ್ಟ್, clock-in ಸಮಯ ಮತ್ತು ಗಂಟೆಗಳು.',
+          'Attendance timeline — ಪಂಚ್ ಮಾರ್ಕರ್‌ಗಳು; Play ನಿಂದ ದಿನವನ್ನು ಕ್ರಮದಲ್ಲಿ ನೋಡಿ.',
+        ],
+      },
+      {
+        title: 'ಮ್ಯಾನುವಲ್ ಪಂಚ್ ಇನ್ / ಔಟ್',
+        span: 'full',
+        paragraphs: [
+          [
+            docLink('/admin/settings/attendance', 'Settings → Attendance rules'),
+            ' ನಲ್ಲಿ ',
+            docStrong('Manual attendance'),
+            ' ಆನ್ ಮಾಡಿ. ನಂತರ ',
+            docStrong('ಇಂದು'),
+            ' ಮಾತ್ರ ಟೇಬಲ್‌ನಲ್ಲಿ In / Out ಕಾಣುತ್ತದೆ.',
+          ],
+        ],
+        list: [
+          'ಉದ್ಯೋಗಿಗೆ In ಅಥವಾ Out ಆಯ್ಕೆಮಾಡಿ.',
+          'ಪಂಚ್ ಸಮಯ ಆಯ್ಕೆಮಾಡಿ (ಭವಿಷ್ಯದ ಸಮಯವಲ್ಲ).',
+          [
+            'ನಿಖರವಾಗಿ ',
+            docStrong('manual attendance approved'),
+            ' ಟೈಪ್ ಮಾಡಿ ದೃಢೀಕರಿಸಿ.',
+          ],
+          'ಸಾಮಾನ್ಯ ದಿನಗಳಲ್ಲಿ ಕಿಯೋಸ್ಕ್ ಆದ್ಯತೆ; ಫೇಸ್ ಸ್ಕ್ಯಾನ್ ಇಲ್ಲದಿದ್ದಾಗ ಮ್ಯಾನುವಲ್ ಬಳಸಿ.',
+        ],
+      },
+      {
+        title: 'ಈ ಪುಟದಲ್ಲಿ ಶಿಫ್ಟ್',
+        list: [
+          'Shift ಕಾಲಮ್ ದಿನದ ನಿಗದಿತ ಸಮಯವನ್ನು ತೋರಿಸುತ್ತದೆ.',
+          'ಶಿಫ್ಟ್‌ಗೆ ಹೊಂದದ ಪಂಚ್‌ಗಳಿಗೆ ಅಡ್ಮಿನ್‌ಗೆ ಟೋಸ್ಟ್ ಅಲರ್ಟ್ ಬರುತ್ತದೆ.',
+        ],
+        tip: [
+          docLink('/admin/settings/shifts', 'Settings → Shifts'),
+          ' ನಲ್ಲಿ ಟೆಂಪ್ಲೇಟ್ ರಚಿಸಿ; per-employee ಮೋಡ್‌ನಲ್ಲಿ Mon–Sun ನಿಗದಿಪಡಿಸಿ.',
         ],
       },
       {
@@ -178,6 +336,10 @@ export const attendanceContent = {
         ],
         footer: [
           'ಇದನ್ನೂ ನೋಡಿ: ',
+          docLink('/docs/getting-started', 'Getting started'),
+          ' · ',
+          docLink('/docs/settings', 'Settings'),
+          ' · ',
           docLink('/docs/dashboard', 'Dashboard'),
           ' · ',
           docLink('/docs/analytics', 'Analytics'),

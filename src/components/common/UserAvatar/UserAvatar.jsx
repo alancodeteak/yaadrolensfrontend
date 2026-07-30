@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { getDefaultAvatar, resolveAvatar } from '../../../utils/avatar';
 import {
-  fetchAuthenticatedPhotoBlob,
+  ensureAuthenticatedPhotoObjectUrl,
   isAuthenticatedPhotoPath,
   resolveEmployeePhotoUrl,
 } from '../../../utils/employeePhoto';
@@ -23,7 +23,6 @@ const UserAvatar = ({ src, name, seed, className, alt }) => {
   }, [primary]);
 
   useEffect(() => {
-    let objectUrl;
     let cancelled = false;
 
     const load = async () => {
@@ -31,16 +30,15 @@ const UserAvatar = ({ src, name, seed, className, alt }) => {
         setAuthSrc(null);
         return;
       }
-      const blob = await fetchAuthenticatedPhotoBlob(src);
+      const objectUrl = await ensureAuthenticatedPhotoObjectUrl(src);
       if (cancelled) {
         return;
       }
-      if (!blob) {
+      if (!objectUrl) {
         setAuthSrc(null);
         setFailed(true);
         return;
       }
-      objectUrl = URL.createObjectURL(blob);
       setAuthSrc(objectUrl);
     };
 
@@ -48,9 +46,6 @@ const UserAvatar = ({ src, name, seed, className, alt }) => {
 
     return () => {
       cancelled = true;
-      if (objectUrl) {
-        URL.revokeObjectURL(objectUrl);
-      }
     };
   }, [src]);
 

@@ -158,12 +158,12 @@ const PersonalInfoTimeline = ({
       className="grid grid-cols-1 gap-3 lg:h-[min(420px,70vh)] lg:grid-cols-[200px_minmax(0,1fr)]"
       data-tour="employee-personal-roadmap"
     >
-      <div className={clsx(DASHBOARD_PANEL, 'flex max-h-[280px] min-h-0 flex-col overflow-hidden lg:max-h-none')}>
+      <div className={clsx(DASHBOARD_PANEL, 'flex min-h-0 flex-col overflow-hidden lg:max-h-none')}>
         <div className="shrink-0 border-b border-gray-100 px-3 py-2.5">
           <h3 className="text-xs font-semibold text-gray-900">Profile snapshot</h3>
           <p className="text-[10px] text-gray-500">Key details at a glance</p>
         </div>
-        <div className="grid min-h-0 flex-1 grid-cols-2 gap-1.5 overflow-y-auto p-2.5 lg:grid-cols-1 lg:space-y-0">
+        <div className="grid min-h-0 flex-1 grid-cols-2 gap-1.5 p-2.5 lg:grid-cols-1 lg:space-y-0 lg:overflow-y-auto">
           <StatChip
             label="Code"
             value={employee.employee_code || '—'}
@@ -183,7 +183,7 @@ const PersonalInfoTimeline = ({
         </div>
       </div>
 
-      <div className={clsx(DASHBOARD_PANEL, 'flex max-h-[360px] min-h-0 flex-col overflow-hidden lg:max-h-none')}>
+      <div className={clsx(DASHBOARD_PANEL, 'flex min-h-0 flex-col overflow-hidden lg:max-h-none')}>
         <div className="shrink-0 border-b border-gray-100 px-3 py-2.5">
           <div className="flex flex-wrap items-start justify-between gap-2">
             <div>
@@ -201,7 +201,7 @@ const PersonalInfoTimeline = ({
           </div>
         </div>
 
-        <ol className="min-h-0 flex-1 overflow-y-auto px-3 py-3">
+        <ol className="min-h-0 flex-1 px-3 py-3 lg:overflow-y-auto">
           <TimelineStep
             icon={CalendarDays}
             accent={DASHBOARD_ACCENTS.blue}

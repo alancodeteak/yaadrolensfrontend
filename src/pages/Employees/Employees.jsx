@@ -8,7 +8,8 @@ import {
   DASHBOARD_PANEL,
 } from '../../components/pages/dashboard';
 import {
-  EMPLOYEES_GUIDE_STEPS,
+  EMPLOYEES_GUIDE_STEPS_BY_LANG,
+  EMPLOYEES_PAGE_LABELS,
   Pagination,
   ConfirmationDialog,
   LoadingScreen,
@@ -32,9 +33,10 @@ import { usePaginatedEmployees } from '../../hooks/usePaginatedEmployees';
 import { useGetDepartmentsQuery } from '../../store/api/settingsApi';
 
 const Employees = () => {
-  const { infoOpen, startTutorial, startInfo, closeInfo } = usePageTour(
-    EMPLOYEES_GUIDE_STEPS,
-    'employees_tour_completed'
+  const { infoOpen, startTutorial, startInfo, closeInfo, steps, pageLabel, language } = usePageTour(
+    EMPLOYEES_GUIDE_STEPS_BY_LANG,
+    'employees_tour_completed',
+    EMPLOYEES_PAGE_LABELS
   );
   const [searchTerm, setSearchTerm] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
@@ -360,9 +362,10 @@ const Employees = () => {
 
       {infoOpen && (
         <PageInfoOverlay
-          steps={EMPLOYEES_GUIDE_STEPS}
+          steps={steps}
           onClose={closeInfo}
-          pageLabel="Employees"
+          pageLabel={pageLabel || 'Employees'}
+          language={language}
         />
       )}
     </div>

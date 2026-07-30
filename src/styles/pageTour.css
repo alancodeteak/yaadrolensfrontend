@@ -3,32 +3,64 @@
   border: 1px solid rgba(229, 231, 235, 0.6) !important;
   box-shadow: 0 2px 16px rgba(0, 0, 0, 0.08) !important;
   font-family: inherit !important;
-  max-width: 320px !important;
+  min-width: 280px !important;
+  max-width: min(380px, calc(100vw - 2rem)) !important;
+  box-sizing: border-box !important;
 }
 
 .page-driver-popover .driver-popover-title {
   font-size: 0.875rem !important;
   font-weight: 600 !important;
   color: #111827 !important;
+  padding-right: 1.5rem !important;
+  line-height: 1.45 !important;
 }
 
 .page-driver-popover .driver-popover-description {
   font-size: 0.75rem !important;
-  line-height: 1.5 !important;
+  line-height: 1.55 !important;
   color: #6b7280 !important;
 }
 
 .page-driver-popover .driver-popover-progress-text {
   font-size: 0.6875rem !important;
   color: #9ca3af !important;
+  flex: 0 1 auto;
+  min-width: 0;
+  line-height: 1.4 !important;
+}
+
+.page-driver-popover .driver-popover-footer {
+  display: flex !important;
+  flex-wrap: wrap !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 0.5rem !important;
+  margin-top: 0.875rem !important;
+}
+
+.page-driver-popover .driver-popover-navigation-btns {
+  display: flex !important;
+  flex-wrap: wrap !important;
+  flex: 1 1 auto !important;
+  align-items: center !important;
+  justify-content: flex-end !important;
+  gap: 0.25rem !important;
+  min-width: 0 !important;
+}
+
+.page-driver-popover .driver-popover-navigation-btns button + button {
+  margin-left: 0 !important;
 }
 
 .page-driver-popover .driver-popover-footer button {
   border-radius: 0.75rem !important;
   font-size: 0.75rem !important;
   font-weight: 600 !important;
-  padding: 0.375rem 0.75rem !important;
+  padding: 0.4rem 0.7rem !important;
   text-shadow: none !important;
+  white-space: nowrap !important;
+  line-height: 1.35 !important;
 }
 
 .page-driver-popover .driver-popover-next-btn,
@@ -56,8 +88,10 @@
   font-size: 0.75rem;
   font-weight: 500;
   cursor: pointer;
-  padding: 0.375rem 0.5rem;
+  padding: 0.4rem 0.5rem;
   border-radius: 0.5rem;
+  white-space: nowrap;
+  line-height: 1.35;
 }
 
 .page-driver-skip:hover {

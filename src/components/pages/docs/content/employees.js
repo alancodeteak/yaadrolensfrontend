@@ -39,13 +39,19 @@ export const employeesContent = {
           ],
           'Mark someone inactive when they leave. You can turn them active again later.',
           '"Face enrolled" means they have registered on the kiosk and can clock in.',
+          [
+            docStrong('Weekly shift schedule'),
+            ' — When Settings uses per-employee shifts, edit an employee and assign Mon–Sun templates from ',
+            docLink('/admin/settings/shifts', 'Settings → Shifts'),
+            '. Leave a day empty for Off.',
+          ],
         ],
       },
       {
         title: 'Employee profile page',
         list: [
           'Personal — contact, job details, and identity documents (view secure links from the profile).',
-          'Attendance — history view (being improved).',
+          'Attendance — history and recent timeline.',
           'Training — face registration status.',
           "You can also see today's summary and monthly report for each person.",
         ],
@@ -57,6 +63,13 @@ export const employeesContent = {
           'Profile photos are for display only — face scanning is separate.',
           'Identity documents are admin-only, stored privately, and never shared with the kiosk app.',
           'Departments are set up by your system provider and appear in the dropdown.',
+          [
+            'For shift templates and manual punch setup, see ',
+            docLink('/docs/getting-started', 'Getting started'),
+            ' and ',
+            docLink('/docs/settings', 'Settings'),
+            '.',
+          ],
         ],
         footer: ['Ready for the kiosk? See ', docLink('/docs/kiosk', 'Kiosk setup'), '.'],
       },
@@ -95,6 +108,12 @@ export const employeesContent = {
           ],
           'जब कोई व्यक्ति छोड़कर जाए, तो उसे inactive मार्क करें। बाद में फिर active कर सकते हैं।',
           '"Face enrolled" का मतलब है कि व्यक्ति ने कियोस्क पर रजिस्ट्रेशन कर लिया है और clock in कर सकता है।',
+          [
+            docStrong('Weekly shift schedule'),
+            ' — per-employee मोड में कर्मचारी संपादित करके Mon–Sun टेम्पलेट असाइन करें (',
+            docLink('/admin/settings/shifts', 'Settings → Shifts'),
+            ')।',
+          ],
         ],
       },
       {

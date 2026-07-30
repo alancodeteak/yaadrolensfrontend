@@ -8,6 +8,7 @@ import {
   useGetShiftTemplatesQuery,
   usePutEmployeeWeeklyShiftsMutation,
 } from '../../../../store/api/shiftApi';
+import useAppScrollLock from '../../../../hooks/useAppScrollLock';
 
 const WEEKDAY_OPTIONS = [
   { value: 0, label: 'Mon' },
@@ -33,6 +34,7 @@ const emptyWeekMap = () =>
   }, {});
 
 const EmployeeEditModal = ({ isOpen, onClose, onSave, employee, isLoading }) => {
+  useAppScrollLock(isOpen);
   const [formData, setFormData] = useState({
     name: '',
     department_id: '',
@@ -256,7 +258,7 @@ const EmployeeEditModal = ({ isOpen, onClose, onSave, employee, isLoading }) => 
       role="presentation"
     >
       <div
-        className="flex max-h-[90vh] w-full max-w-2xl flex-col overflow-hidden rounded-2xl border border-gray-200/60 bg-white shadow-[0_2px_16px_rgba(0,0,0,0.06)]"
+        className="flex max-h-[min(90dvh,90vh)] w-full max-w-2xl flex-col overflow-hidden rounded-2xl border border-gray-200/60 bg-white shadow-[0_2px_16px_rgba(0,0,0,0.06)]"
         onClick={(e) => e.stopPropagation()}
         role="dialog"
         aria-modal="true"

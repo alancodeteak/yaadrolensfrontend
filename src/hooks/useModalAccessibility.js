@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef } from 'react';
+import { lockAppScroll, unlockAppScroll } from '../utils/appScrollLock';
 
 const FOCUSABLE_SELECTOR = [
   'a[href]',
@@ -22,7 +23,7 @@ const getFocusableElements = (container) => {
  * - Moves initial focus into the dialog (or a given ref) on open
  * - Traps Tab / Shift+Tab focus within the dialog container
  * - Calls onClose when Escape is pressed
- * - Locks body scroll while open
+ * - Locks #main-content scroll while open (not document.body)
  *
  * Attach `dialogRef` to the dialog panel element and spread/attach
  * `onKeyDown` on the same element (or a parent that wraps all focusable content).
@@ -42,12 +43,11 @@ const useModalAccessibility = ({ isOpen, onClose, initialFocusRef } = {}) => {
       target?.focus?.();
     }, 0);
 
-    const previousOverflow = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
+    lockAppScroll();
 
     return () => {
       window.clearTimeout(focusTimer);
-      document.body.style.overflow = previousOverflow;
+      unlockAppScroll();
 
       const previouslyFocused = previouslyFocusedRef.current;
       if (previouslyFocused && typeof previouslyFocused.focus === 'function') {

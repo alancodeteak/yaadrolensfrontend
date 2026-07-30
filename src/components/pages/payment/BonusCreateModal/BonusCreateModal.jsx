@@ -1,9 +1,11 @@
 import { useState } from 'react';
 import { X } from 'lucide-react';
 import { ButtonSpinner, DashboardEmployeeSelect } from '../../../common';
+import useAppScrollLock from '../../../../hooks/useAppScrollLock';
 import { MONTHS } from '../PaymentPeriodBar';
 
 const BonusCreateModal = ({ isOpen, onClose, onSave, isLoading, employees = [], defaultYear, defaultMonth }) => {
+  useAppScrollLock(isOpen);
   const [formData, setFormData] = useState({
     employee_id: '',
     period_year: defaultYear || new Date().getFullYear(),
@@ -37,12 +39,17 @@ const BonusCreateModal = ({ isOpen, onClose, onSave, isLoading, employees = [], 
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/20 p-4 backdrop-blur-sm" onClick={onClose} role="presentation">
-      <div className="w-full max-w-lg rounded-2xl border border-gray-200/60 bg-white shadow-[0_2px_16px_rgba(0,0,0,0.06)]" onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true">
-        <div className="flex items-center justify-between border-b border-gray-100 px-5 py-4">
+      <div
+        className="flex max-h-[min(90dvh,90vh)] w-full max-w-lg flex-col overflow-hidden rounded-2xl border border-gray-200/60 bg-white shadow-[0_2px_16px_rgba(0,0,0,0.06)]"
+        onClick={(e) => e.stopPropagation()}
+        role="dialog"
+        aria-modal="true"
+      >
+        <div className="flex shrink-0 items-center justify-between border-b border-gray-100 px-5 py-4">
           <h2 className="text-lg font-semibold text-gray-900">Schedule bonus</h2>
           <button type="button" onClick={onClose} className="rounded-lg p-2 text-gray-400 hover:bg-gray-100"><X className="h-5 w-5" /></button>
         </div>
-        <form onSubmit={handleSubmit} className="space-y-4 px-5 py-4">
+        <form onSubmit={handleSubmit} className="space-y-4 overflow-y-auto px-5 py-4">
           <div>
             <label className="mb-1.5 block text-sm font-medium text-gray-700">Employee</label>
             <DashboardEmployeeSelect

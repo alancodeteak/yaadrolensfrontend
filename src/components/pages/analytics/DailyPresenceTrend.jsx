@@ -122,7 +122,7 @@ const DailyPresenceTrend = ({
 
   const scrollButtonClass = (disabled) =>
     clsx(
-      'flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border border-gray-200/80 bg-white text-gray-600 shadow-sm transition-colors',
+      'flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-gray-200/80 bg-white text-gray-600 shadow-sm transition-colors',
       disabled
         ? 'cursor-not-allowed opacity-35'
         : 'hover:border-gray-300 hover:bg-gray-50 hover:text-gray-900'

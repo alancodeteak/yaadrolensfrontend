@@ -1,6 +1,7 @@
 import clsx from 'clsx';
 import { X } from 'lucide-react';
 import { LottieLoader } from '../../../common';
+import useAppScrollLock from '../../../../hooks/useAppScrollLock';
 import {
   ADVANCE_STATUS_LABELS,
   ADVANCE_STATUS_STYLES,
@@ -20,6 +21,7 @@ const AdvanceDetailPanel = ({
   onCancel,
   onRecover,
 }) => {
+  useAppScrollLock(isOpen);
   if (!isOpen) return null;
 
   const detail = advance;

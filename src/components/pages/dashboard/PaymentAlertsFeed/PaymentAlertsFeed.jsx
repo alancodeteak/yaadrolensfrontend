@@ -45,7 +45,7 @@ const PaymentAlertsFeed = ({
         )}
       </div>
 
-      <div className={clsx('min-h-0 flex-1 overflow-y-auto', compact ? 'p-2' : 'p-3')}>
+      <div className={clsx('min-h-0 flex-1 lg:overflow-y-auto', compact ? 'p-2' : 'p-3')}>
         {loading ? (
           <div className={clsx(compact ? 'space-y-1.5' : 'space-y-2')}>
             {Array.from({ length: compact ? 3 : 4 }).map((_, i) => (

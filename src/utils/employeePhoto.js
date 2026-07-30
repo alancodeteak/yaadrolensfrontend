@@ -20,27 +20,71 @@ async function fetchPhotoWithToken(url, token) {
   });
 }
 
+const blobInflight = new Map();
+const objectUrlCache = new Map();
+
+export function clearAuthenticatedPhotoCache() {
+  objectUrlCache.forEach((objectUrl) => URL.revokeObjectURL(objectUrl));
+  objectUrlCache.clear();
+  blobInflight.clear();
+}
+
 export async function fetchAuthenticatedPhotoBlob(profilePhotoUrl) {
   const url = resolveEmployeePhotoUrl(profilePhotoUrl);
   if (!url || !isAuthenticatedPhotoPath(profilePhotoUrl)) {
     return null;
   }
-  let token = localStorage.getItem('access_token');
-  if (!token) {
-    return null;
+
+  if (blobInflight.has(profilePhotoUrl)) {
+    return blobInflight.get(profilePhotoUrl);
   }
 
-  let response = await fetchPhotoWithToken(url, token);
-  if (response.status === 401) {
-    token = await refreshAccessToken();
+  const fetchPromise = (async () => {
+    let token = localStorage.getItem('access_token');
     if (!token) {
       return null;
     }
-    response = await fetchPhotoWithToken(url, token);
-  }
 
-  if (!response.ok) {
+    let response = await fetchPhotoWithToken(url, token);
+    if (response.status === 401) {
+      token = await refreshAccessToken();
+      if (!token) {
+        return null;
+      }
+      response = await fetchPhotoWithToken(url, token);
+    }
+
+    if (!response.ok) {
+      return null;
+    }
+    return response.blob();
+  })();
+
+  blobInflight.set(profilePhotoUrl, fetchPromise);
+
+  try {
+    return await fetchPromise;
+  } finally {
+    blobInflight.delete(profilePhotoUrl);
+  }
+}
+
+export async function ensureAuthenticatedPhotoObjectUrl(profilePhotoUrl) {
+  if (!profilePhotoUrl || !isAuthenticatedPhotoPath(profilePhotoUrl)) {
     return null;
   }
-  return response.blob();
+
+  const cached = objectUrlCache.get(profilePhotoUrl);
+  if (cached) {
+    return cached;
+  }
+
+  const blob = await fetchAuthenticatedPhotoBlob(profilePhotoUrl);
+  if (!blob) {
+    return null;
+  }
+
+  const objectUrl = URL.createObjectURL(blob);
+  objectUrlCache.set(profilePhotoUrl, objectUrl);
+  return objectUrl;
 }

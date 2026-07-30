@@ -1,5 +1,6 @@
 import { createContext, useContext, useMemo, useState } from 'react';
 import {
+  DEFAULT_DOCS_LANGUAGE,
   DOCS_LANGUAGE_STORAGE_KEY,
   resolveDocsLanguage,
 } from './docsI18n';
@@ -9,6 +10,10 @@ const DocsLanguageContext = createContext(null);
 const LEGACY_LANGUAGE_STORAGE_KEY = 'docs-getting-started-lang';
 
 const readInitialLanguage = () => {
+  if (typeof window === 'undefined') {
+    return DEFAULT_DOCS_LANGUAGE;
+  }
+
   const saved = localStorage.getItem(DOCS_LANGUAGE_STORAGE_KEY);
   if (saved) {
     return resolveDocsLanguage(saved);
@@ -16,12 +21,14 @@ const readInitialLanguage = () => {
 
   const legacy = localStorage.getItem(LEGACY_LANGUAGE_STORAGE_KEY);
   if (legacy) {
-    localStorage.setItem(DOCS_LANGUAGE_STORAGE_KEY, legacy);
+    const resolved = resolveDocsLanguage(legacy);
+    localStorage.setItem(DOCS_LANGUAGE_STORAGE_KEY, resolved);
     localStorage.removeItem(LEGACY_LANGUAGE_STORAGE_KEY);
-    return resolveDocsLanguage(legacy);
+    return resolved;
   }
 
-  return 'en';
+  localStorage.setItem(DOCS_LANGUAGE_STORAGE_KEY, DEFAULT_DOCS_LANGUAGE);
+  return DEFAULT_DOCS_LANGUAGE;
 };
 
 export const DocsLanguageProvider = ({ children }) => {

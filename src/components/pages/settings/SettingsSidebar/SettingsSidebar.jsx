@@ -15,7 +15,7 @@ const SettingsSidebar = () => {
       <nav
         data-tour="settings-nav"
         aria-label="Settings sections"
-        className="flex gap-1 overflow-x-auto pb-1 lg:flex-col lg:overflow-visible lg:pb-0"
+        className="flex gap-1 overflow-x-auto overscroll-x-contain pb-1 lg:flex-col lg:overflow-visible lg:pb-0"
       >
         {SETTINGS_NAV_ITEMS.map((item) => (
           <SettingsNavItem

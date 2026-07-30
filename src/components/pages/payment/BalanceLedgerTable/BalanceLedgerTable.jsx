@@ -1,7 +1,12 @@
 import clsx from 'clsx';
 import { Users } from 'lucide-react';
 import { UserAvatar } from '../../../common';
-import { DASHBOARD_BTN_PRIMARY, DASHBOARD_PANEL } from '../../dashboard/dashboardTheme';
+import {
+  DASHBOARD_BTN_PRIMARY,
+  DASHBOARD_MOBILE_STACK,
+  DASHBOARD_PANEL,
+  DASHBOARD_TABLE_DESKTOP,
+} from '../../dashboard/dashboardTheme';
 import {
   BALANCE_TRANSACTION_LABELS,
   BALANCE_TRANSACTION_STYLES,
@@ -53,78 +58,140 @@ const BalanceLedgerTable = ({
           )}
         </div>
       ) : (
-        <div
-          className={clsx(
-            'overflow-x-auto transition-opacity duration-200',
-            isFetching && 'pointer-events-none opacity-60'
-          )}
-        >
-          <table className="w-full min-w-[900px]">
-            <thead>
-              <tr className="border-b border-gray-100">
-                <th className={clsx(TH, 'min-w-28')}>Date</th>
-                <th className={clsx(TH, 'min-w-40')}>Employee</th>
-                <th className={clsx(TH, 'min-w-20')}>Type</th>
-                <th className={clsx(TH, 'min-w-24')}>Amount</th>
-                <th className={clsx(TH, 'min-w-28 hidden md:table-cell')}>Reference</th>
-                <th className={clsx(TH, 'min-w-40 hidden lg:table-cell')}>Reason</th>
-                <th className={clsx(TH, 'min-w-24')}>Balance after</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-100">
-              {rows.map((row) => (
-                <tr key={row.id} className="transition-colors duration-200 hover:bg-gray-50/80">
-                  <td className={TD}>
-                    <span className="text-gray-700">{formatDate(row.transaction_date)}</span>
-                    <p className="text-[10px] text-gray-400">{formatDateTime(row.created_at)}</p>
-                  </td>
-                  <td className={TD}>
-                    <button
-                      type="button"
-                      onClick={() => onSelectEmployee?.(row)}
-                      className="flex items-center gap-2 text-left"
-                    >
-                      <UserAvatar
-                        className="h-8 w-8 shrink-0 rounded-full object-cover ring-1 ring-gray-100"
-                        src={row.profilePhotoUrl || row.photo || row.avatar}
-                        name={row.employee_name}
-                        seed={row.employee_id}
-                      />
-                      <span className="font-semibold text-gray-900 hover:text-[#007AFF]">
-                        {row.employee_name}
-                      </span>
-                    </button>
-                  </td>
-                  <td className={TD}>
-                    <span
-                      className={clsx(
-                        'inline-flex rounded-full px-2 py-0.5 text-[10px] font-semibold capitalize',
-                        BALANCE_TRANSACTION_STYLES[row.transaction_type] ||
-                          BALANCE_TRANSACTION_STYLES.give
-                      )}
-                    >
-                      {BALANCE_TRANSACTION_LABELS[row.transaction_type] || row.transaction_type}
-                    </span>
-                  </td>
-                  <td className={TD}>
-                    <span className="tabular-nums font-medium">{formatMoney(row.amount)}</span>
-                  </td>
-                  <td className={clsx(TD, 'hidden md:table-cell')}>
-                    <span className="text-gray-600">{row.reference || '—'}</span>
-                  </td>
-                  <td className={clsx(TD, 'hidden lg:table-cell')}>
-                    <span className="line-clamp-2 text-gray-600">{row.notes || '—'}</span>
-                  </td>
-                  <td className={TD}>
-                    <span className="tabular-nums font-medium text-gray-700">
-                      {formatMoney(row.balance_after)}
-                    </span>
-                  </td>
+        <>
+          <div
+            className={clsx(
+              DASHBOARD_TABLE_DESKTOP,
+              'transition-opacity duration-200',
+              isFetching && 'pointer-events-none opacity-60'
+            )}
+          >
+            <table className="w-full min-w-[900px]">
+              <thead>
+                <tr className="border-b border-gray-100">
+                  <th className={clsx(TH, 'min-w-28')}>Date</th>
+                  <th className={clsx(TH, 'min-w-40')}>Employee</th>
+                  <th className={clsx(TH, 'min-w-20')}>Type</th>
+                  <th className={clsx(TH, 'min-w-24')}>Amount</th>
+                  <th className={clsx(TH, 'min-w-28 hidden md:table-cell')}>Reference</th>
+                  <th className={clsx(TH, 'min-w-40 hidden lg:table-cell')}>Reason</th>
+                  <th className={clsx(TH, 'min-w-24')}>Balance after</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody className="divide-y divide-gray-100">
+                {rows.map((row) => (
+                  <tr key={row.id} className="transition-colors duration-200 hover:bg-gray-50/80">
+                    <td className={TD}>
+                      <span className="text-gray-700">{formatDate(row.transaction_date)}</span>
+                      <p className="text-[10px] text-gray-400">{formatDateTime(row.created_at)}</p>
+                    </td>
+                    <td className={TD}>
+                      <button
+                        type="button"
+                        onClick={() => onSelectEmployee?.(row)}
+                        className="flex items-center gap-2 text-left"
+                      >
+                        <UserAvatar
+                          className="h-8 w-8 shrink-0 rounded-full object-cover ring-1 ring-gray-100"
+                          src={row.profilePhotoUrl || row.photo || row.avatar}
+                          name={row.employee_name}
+                          seed={row.employee_id}
+                        />
+                        <span className="font-semibold text-gray-900 hover:text-[#007AFF]">
+                          {row.employee_name}
+                        </span>
+                      </button>
+                    </td>
+                    <td className={TD}>
+                      <span
+                        className={clsx(
+                          'inline-flex rounded-full px-2 py-0.5 text-[10px] font-semibold capitalize',
+                          BALANCE_TRANSACTION_STYLES[row.transaction_type] ||
+                            BALANCE_TRANSACTION_STYLES.give
+                        )}
+                      >
+                        {BALANCE_TRANSACTION_LABELS[row.transaction_type] || row.transaction_type}
+                      </span>
+                    </td>
+                    <td className={TD}>
+                      <span className="tabular-nums font-medium">{formatMoney(row.amount)}</span>
+                    </td>
+                    <td className={clsx(TD, 'hidden md:table-cell')}>
+                      <span className="text-gray-600">{row.reference || '—'}</span>
+                    </td>
+                    <td className={clsx(TD, 'hidden lg:table-cell')}>
+                      <span className="line-clamp-2 text-gray-600">{row.notes || '—'}</span>
+                    </td>
+                    <td className={TD}>
+                      <span className="tabular-nums font-medium text-gray-700">
+                        {formatMoney(row.balance_after)}
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          <div
+            className={clsx(
+              DASHBOARD_MOBILE_STACK,
+              'transition-opacity duration-200',
+              isFetching && 'pointer-events-none opacity-60'
+            )}
+          >
+            {rows.map((row) => (
+              <div
+                key={row.id}
+                className="rounded-xl border border-gray-100 bg-gray-50/40 p-4"
+              >
+                <button
+                  type="button"
+                  onClick={() => onSelectEmployee?.(row)}
+                  className="flex w-full items-start gap-3 text-left"
+                >
+                  <UserAvatar
+                    className="h-10 w-10 shrink-0 rounded-full object-cover ring-1 ring-gray-100"
+                    src={row.profilePhotoUrl || row.photo || row.avatar}
+                    name={row.employee_name}
+                    seed={row.employee_id}
+                  />
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-semibold text-gray-900">
+                      {row.employee_name}
+                    </p>
+                    <p className="mt-0.5 text-xs text-gray-500">
+                      {formatDate(row.transaction_date)}
+                      {row.created_at ? ` · ${formatDateTime(row.created_at)}` : ''}
+                    </p>
+                    <div className="mt-2 flex flex-wrap items-center gap-1.5">
+                      <span
+                        className={clsx(
+                          'inline-flex rounded-full px-2 py-0.5 text-[10px] font-semibold capitalize',
+                          BALANCE_TRANSACTION_STYLES[row.transaction_type] ||
+                            BALANCE_TRANSACTION_STYLES.give
+                        )}
+                      >
+                        {BALANCE_TRANSACTION_LABELS[row.transaction_type] || row.transaction_type}
+                      </span>
+                    </div>
+                    <p className="mt-2 text-base font-semibold tabular-nums text-gray-900">
+                      {formatMoney(row.amount)}
+                    </p>
+                    <p className="mt-0.5 text-xs text-gray-500">
+                      Balance after {formatMoney(row.balance_after)}
+                    </p>
+                    {(row.reference || row.notes) && (
+                      <p className="mt-1 line-clamp-2 text-xs text-gray-500">
+                        {[row.reference, row.notes].filter(Boolean).join(' · ')}
+                      </p>
+                    )}
+                  </div>
+                </button>
+              </div>
+            ))}
+          </div>
+        </>
       )}
     </div>
   );

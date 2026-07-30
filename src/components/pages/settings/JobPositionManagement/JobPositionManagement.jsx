@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import Card from '../../../common/Card/Card';
 import { LoadingScreen } from '../../../common';
+import useAppScrollLock from '../../../../hooks/useAppScrollLock';
 import { toast } from 'react-toastify';
 import {
   useGetJobPositionsQuery,
@@ -26,6 +27,8 @@ const JobPositionManagement = ({ departmentId = null, departmentName = null }) =
   const [createPosition, { isLoading: isCreating }] = useCreateJobPositionMutation();
   const [updatePosition, { isLoading: isUpdating }] = useUpdateJobPositionMutation();
   const [deletePosition, { isLoading: isDeleting }] = useDeleteJobPositionMutation();
+
+  useAppScrollLock(isModalOpen);
 
   // Form state
   const [formData, setFormData] = useState({

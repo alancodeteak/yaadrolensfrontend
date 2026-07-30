@@ -1,7 +1,8 @@
 import React, { useMemo } from 'react';
 import { useSelector } from 'react-redux';
 import {
-  DASHBOARD_GUIDE_STEPS,
+  DASHBOARD_GUIDE_STEPS_BY_LANG,
+  DASHBOARD_PAGE_LABELS,
   PageInfoOverlay,
   PageTourButtons,
   usePageTour,
@@ -50,9 +51,10 @@ const PLACEHOLDER_ACTIVITY_RINGS = [
 
 const Dashboard = () => {
   const user = useSelector((state) => state.auth.user);
-  const { infoOpen, startTutorial, startInfo, closeInfo } = usePageTour(
-    DASHBOARD_GUIDE_STEPS,
-    'dashboard_tour_completed'
+  const { infoOpen, startTutorial, startInfo, closeInfo, steps, pageLabel, language } = usePageTour(
+    DASHBOARD_GUIDE_STEPS_BY_LANG,
+    'dashboard_tour_completed',
+    DASHBOARD_PAGE_LABELS
   );
   const { data: summary, isLoading, isError } = useGetDashboardSummaryQuery({});
 
@@ -248,7 +250,7 @@ const Dashboard = () => {
       </div>
 
       <div className="dashboard-activity-row mb-6 grid grid-cols-1 gap-6 lg:grid-cols-2 xl:grid-cols-3 xl:items-stretch">
-        <div data-tour="calendar" className="dashboard-panel-slot h-full min-h-[24rem]">
+        <div data-tour="calendar" className="dashboard-panel-slot h-full min-h-[16rem] sm:min-h-[24rem]">
           <AttendanceMonthCalendar
             month={summary?.month}
             calendar={summary?.month?.calendar}
@@ -259,7 +261,7 @@ const Dashboard = () => {
         </div>
         <div
           data-tour="activity-rings"
-          className="dashboard-chart-panel flex min-h-[24rem] flex-col overflow-hidden rounded-2xl border border-gray-200/60 bg-white shadow-[0_2px_16px_rgba(0,0,0,0.06)]"
+          className="dashboard-chart-panel flex min-h-[16rem] flex-col overflow-hidden rounded-2xl border border-gray-200/60 bg-white shadow-[0_2px_16px_rgba(0,0,0,0.06)] sm:min-h-[24rem]"
         >
           <div className="shrink-0 border-b border-gray-100 px-4 py-3">
             <h2 className="text-sm font-semibold text-gray-900">Activity</h2>
@@ -275,7 +277,7 @@ const Dashboard = () => {
             />
           </div>
         </div>
-        <div data-tour="recent-activity" className="dashboard-panel-slot h-full min-h-[24rem]">
+        <div data-tour="recent-activity" className="dashboard-panel-slot h-full min-h-[16rem] sm:min-h-[24rem]">
           <RecentActivityFeed
             activities={recentActivities}
             loading={isLoading || activitiesLoading}
@@ -302,9 +304,10 @@ const Dashboard = () => {
 
       {infoOpen && (
         <PageInfoOverlay
-          steps={DASHBOARD_GUIDE_STEPS}
+          steps={steps}
           onClose={closeInfo}
-          pageLabel="Dashboard"
+          pageLabel={pageLabel || 'Dashboard'}
+          language={language}
         />
       )}
     </div>

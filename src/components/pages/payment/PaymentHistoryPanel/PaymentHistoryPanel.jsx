@@ -1,5 +1,6 @@
 import { Scale, X } from 'lucide-react';
 import { LottieLoader, Pagination, UserAvatar } from '../../../common';
+import useAppScrollLock from '../../../../hooks/useAppScrollLock';
 import {
   formatDate,
   formatDateTime,
@@ -26,6 +27,7 @@ const PaymentHistoryPanel = ({
   onClose,
   onAdjustBalance,
 }) => {
+  useAppScrollLock(Boolean(isOpen));
   if (!isOpen || !employee) return null;
 
   const items = history?.items || [];

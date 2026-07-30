@@ -5,6 +5,8 @@ export const DOCS_LANGUAGES = [
   { id: 'kn', label: 'ಕನ್ನಡ' },
 ];
 
+export const DEFAULT_DOCS_LANGUAGE = 'en';
+
 export const DOCS_LANGUAGE_STORAGE_KEY = 'docs-language';
 
 export const DOCS_LANGUAGE_LABEL = {
@@ -18,7 +20,7 @@ export const resolveDocsLanguage = (langId) => {
   if (langId && DOCS_LANGUAGES.some((lang) => lang.id === langId)) {
     return langId;
   }
-  return 'en';
+  return DEFAULT_DOCS_LANGUAGE;
 };
 
 /** Pick translated guide content, falling back to English when a locale is incomplete. */

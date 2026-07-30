@@ -60,7 +60,7 @@ const AdminLogin = () => {
   };
 
   return (
-    <div className="login-page relative flex min-h-screen flex-col items-center justify-center bg-gray-50 px-4 py-10 sm:px-6">
+    <div className="login-page relative flex min-h-dvh flex-col items-center justify-center bg-gray-50 px-4 py-10 sm:px-6">
       <div
         aria-hidden="true"
         className="pointer-events-none absolute inset-0 overflow-hidden"

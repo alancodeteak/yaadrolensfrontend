@@ -1,7 +1,12 @@
 import clsx from 'clsx';
 import { Users } from 'lucide-react';
 import { UserAvatar } from '../../../common';
-import { DASHBOARD_BTN_PRIMARY, DASHBOARD_PANEL } from '../../dashboard/dashboardTheme';
+import {
+  DASHBOARD_BTN_PRIMARY,
+  DASHBOARD_MOBILE_STACK,
+  DASHBOARD_PANEL,
+  DASHBOARD_TABLE_DESKTOP,
+} from '../../dashboard/dashboardTheme';
 import {
   BONUS_STATUS_LABELS,
   BONUS_STATUS_STYLES,
@@ -55,81 +60,141 @@ const BonusTable = ({
           )}
         </div>
       ) : (
-        <div
-          className={clsx(
-            'overflow-x-auto transition-opacity duration-200',
-            isFetching && 'pointer-events-none opacity-60'
-          )}
-        >
-          <table className="w-full min-w-[760px]">
-            <thead>
-              <tr className="border-b border-gray-100">
-                <th className={clsx(TH, 'min-w-40')}>Employee</th>
-                <th className={clsx(TH, 'min-w-28')}>Period</th>
-                <th className={clsx(TH, 'min-w-24')}>Amount</th>
-                <th className={clsx(TH, 'min-w-24')}>Status</th>
-                <th className={clsx(TH, 'min-w-32 hidden lg:table-cell')}>Created</th>
-                <th className={clsx(TH, 'w-32 text-right')}>Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-100">
-              {rows.map((row) => (
-                <tr key={row.id} className="transition-colors duration-200 hover:bg-gray-50/80">
-                  <td className={TD}>
-                    <div className="flex items-center gap-3">
-                      <UserAvatar
-                        className="h-9 w-9 shrink-0 rounded-full object-cover ring-1 ring-gray-100"
-                        src={row.profilePhotoUrl || row.photo || row.avatar}
-                        name={row.employee_name}
-                        seed={row.employee_id}
-                      />
-                      <div className="min-w-0">
-                        <p className="truncate text-sm font-semibold text-gray-900">
-                          {row.employee_name}
-                        </p>
-                        {row.notes && (
-                          <p className="truncate text-xs text-gray-500">{row.notes}</p>
-                        )}
+        <>
+          <div
+            className={clsx(
+              DASHBOARD_TABLE_DESKTOP,
+              'transition-opacity duration-200',
+              isFetching && 'pointer-events-none opacity-60'
+            )}
+          >
+            <table className="w-full min-w-[760px]">
+              <thead>
+                <tr className="border-b border-gray-100">
+                  <th className={clsx(TH, 'min-w-40')}>Employee</th>
+                  <th className={clsx(TH, 'min-w-28')}>Period</th>
+                  <th className={clsx(TH, 'min-w-24')}>Amount</th>
+                  <th className={clsx(TH, 'min-w-24')}>Status</th>
+                  <th className={clsx(TH, 'min-w-32 hidden lg:table-cell')}>Created</th>
+                  <th className={clsx(TH, 'w-32 text-right')}>Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-100">
+                {rows.map((row) => (
+                  <tr key={row.id} className="transition-colors duration-200 hover:bg-gray-50/80">
+                    <td className={TD}>
+                      <div className="flex items-center gap-3">
+                        <UserAvatar
+                          className="h-9 w-9 shrink-0 rounded-full object-cover ring-1 ring-gray-100"
+                          src={row.profilePhotoUrl || row.photo || row.avatar}
+                          name={row.employee_name}
+                          seed={row.employee_id}
+                        />
+                        <div className="min-w-0">
+                          <p className="truncate text-sm font-semibold text-gray-900">
+                            {row.employee_name}
+                          </p>
+                          {row.notes && (
+                            <p className="truncate text-xs text-gray-500">{row.notes}</p>
+                          )}
+                        </div>
                       </div>
-                    </div>
-                  </td>
-                  <td className={TD}>
-                    <span className="text-gray-700">
+                    </td>
+                    <td className={TD}>
+                      <span className="text-gray-700">
+                        {periodLabel(row.period_year, row.period_month)}
+                      </span>
+                    </td>
+                    <td className={TD}>
+                      <span className="tabular-nums font-medium">{formatMoney(row.amount)}</span>
+                    </td>
+                    <td className={TD}>
+                      <span
+                        className={clsx(
+                          'inline-flex rounded-full px-2 py-0.5 text-[10px] font-semibold',
+                          BONUS_STATUS_STYLES[row.status] || BONUS_STATUS_STYLES.scheduled
+                        )}
+                      >
+                        {BONUS_STATUS_LABELS[row.status] || row.status}
+                      </span>
+                    </td>
+                    <td className={clsx(TD, 'hidden lg:table-cell')}>
+                      <span className="text-gray-600">{formatDateTime(row.created_at)}</span>
+                    </td>
+                    <td className={clsx(TD, 'text-right')}>
+                      {row.status === 'scheduled' && (
+                        <button
+                          type="button"
+                          onClick={() => onRelease?.(row)}
+                          className="min-h-11 rounded-lg px-3 py-2 text-xs font-semibold text-[#007AFF] transition-colors hover:bg-[#007AFF]/10 md:min-h-0 md:px-2.5 md:py-1"
+                        >
+                          Quick release
+                        </button>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          <div
+            className={clsx(
+              DASHBOARD_MOBILE_STACK,
+              'transition-opacity duration-200',
+              isFetching && 'pointer-events-none opacity-60'
+            )}
+          >
+            {rows.map((row) => (
+              <div
+                key={row.id}
+                className="rounded-xl border border-gray-100 bg-gray-50/40 p-4"
+              >
+                <div className="flex items-start gap-3">
+                  <UserAvatar
+                    className="h-10 w-10 shrink-0 rounded-full object-cover ring-1 ring-gray-100"
+                    src={row.profilePhotoUrl || row.photo || row.avatar}
+                    name={row.employee_name}
+                    seed={row.employee_id}
+                  />
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-semibold text-gray-900">
+                      {row.employee_name}
+                    </p>
+                    {row.notes && (
+                      <p className="truncate text-xs text-gray-500">{row.notes}</p>
+                    )}
+                    <p className="mt-2 text-base font-semibold tabular-nums text-gray-900">
+                      {formatMoney(row.amount)}
+                    </p>
+                    <p className="mt-0.5 text-xs text-gray-500">
                       {periodLabel(row.period_year, row.period_month)}
-                    </span>
-                  </td>
-                  <td className={TD}>
-                    <span className="tabular-nums font-medium">{formatMoney(row.amount)}</span>
-                  </td>
-                  <td className={TD}>
+                    </p>
                     <span
                       className={clsx(
-                        'inline-flex rounded-full px-2 py-0.5 text-[10px] font-semibold',
+                        'mt-2 inline-flex rounded-full px-2 py-0.5 text-[10px] font-semibold',
                         BONUS_STATUS_STYLES[row.status] || BONUS_STATUS_STYLES.scheduled
                       )}
                     >
                       {BONUS_STATUS_LABELS[row.status] || row.status}
                     </span>
-                  </td>
-                  <td className={clsx(TD, 'hidden lg:table-cell')}>
-                    <span className="text-gray-600">{formatDateTime(row.created_at)}</span>
-                  </td>
-                  <td className={clsx(TD, 'text-right')}>
-                    {row.status === 'scheduled' && (
-                      <button
-                        type="button"
-                        onClick={() => onRelease?.(row)}
-                        className="rounded-lg px-2.5 py-1 text-xs font-semibold text-[#007AFF] transition-colors hover:bg-[#007AFF]/10"
-                      >
-                        Quick release
-                      </button>
-                    )}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+                  </div>
+                </div>
+                {row.status === 'scheduled' && (
+                  <div className="mt-3 border-t border-gray-100 pt-3">
+                    <button
+                      type="button"
+                      onClick={() => onRelease?.(row)}
+                      className="inline-flex w-full min-h-11 items-center justify-center rounded-xl border border-[#007AFF]/20 bg-[#007AFF]/10 px-3 py-2.5 text-xs font-semibold text-[#007AFF]"
+                    >
+                      Quick release
+                    </button>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        </>
       )}
     </div>
   );

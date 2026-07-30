@@ -66,7 +66,7 @@ const ConfirmationDialog = ({
   };
 
   const { dialogRef, onKeyDown } = useModalAccessibility({
-    isOpen: mounted,
+    isOpen: isOpen && visible,
     onClose: handleRequestClose,
   });
 

@@ -11,6 +11,7 @@ import {
   DASHBOARD_BTN_PRIMARY,
   DASHBOARD_BTN_SECONDARY,
 } from '../../dashboard/dashboardTheme';
+import useAppScrollLock from '../../../../hooks/useAppScrollLock';
 import { formatMonthlySalary } from '../../../../utils/helpers';
 
 const labelClass = 'mb-1.5 block text-xs font-medium text-gray-500';
@@ -20,6 +21,7 @@ const inputClass =
 const todayIso = () => new Date().toISOString().slice(0, 10);
 
 const SalaryEditModal = ({ isOpen, employee, onClose, onSave, isLoading, isHourly = false }) => {
+  useAppScrollLock(isOpen);
   const [formData, setFormData] = useState({
     new_amount: '',
     effective_date: todayIso(),
@@ -88,7 +90,7 @@ const SalaryEditModal = ({ isOpen, employee, onClose, onSave, isLoading, isHourl
       role="presentation"
     >
       <div
-        className="flex max-h-[90vh] w-full max-w-lg flex-col overflow-hidden rounded-2xl border border-gray-200/60 bg-white shadow-[0_2px_16px_rgba(0,0,0,0.06)]"
+        className="flex max-h-[min(90dvh,90vh)] w-full max-w-lg flex-col overflow-hidden rounded-2xl border border-gray-200/60 bg-white shadow-[0_2px_16px_rgba(0,0,0,0.06)]"
         onClick={(e) => e.stopPropagation()}
         role="dialog"
         aria-modal="true"

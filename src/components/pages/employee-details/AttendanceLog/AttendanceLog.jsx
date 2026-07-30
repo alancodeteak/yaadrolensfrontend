@@ -2,7 +2,12 @@ import { useMemo, useState } from 'react';
 import clsx from 'clsx';
 import { ChevronLeft, ChevronRight, Plus } from 'lucide-react';
 import { dashboardToast } from '../../../common';
-import { DASHBOARD_BTN_PRIMARY, DASHBOARD_PANEL } from '../../dashboard/dashboardTheme';
+import {
+  DASHBOARD_BTN_PRIMARY,
+  DASHBOARD_MOBILE_STACK,
+  DASHBOARD_PANEL,
+  DASHBOARD_TABLE_DESKTOP,
+} from '../../dashboard/dashboardTheme';
 import EmployeeMonthCalendar from '../EmployeeMonthCalendar/EmployeeMonthCalendar';
 import EmployeeAttendanceTimeline from '../EmployeeAttendanceTimeline/EmployeeAttendanceTimeline';
 import MarkLeaveModal from '../MarkLeaveModal/MarkLeaveModal';
@@ -32,7 +37,7 @@ const TH =
 const TD = 'px-4 py-3.5 text-sm text-gray-900 first:pl-5 last:pr-5';
 
 const navButtonClass =
-  'rounded-xl border border-gray-200/60 p-2 text-gray-600 shadow-[0_2px_16px_rgba(0,0,0,0.04)] transition-colors hover:bg-gray-50';
+  'inline-flex min-h-11 min-w-11 items-center justify-center rounded-xl border border-gray-200/60 p-2 text-gray-600 shadow-[0_2px_16px_rgba(0,0,0,0.04)] transition-colors hover:bg-gray-50 sm:min-h-0 sm:min-w-0';
 
 const AttendanceLog = ({ employeeId }) => {
   const now = new Date();
@@ -159,54 +164,95 @@ const AttendanceLog = ({ employeeId }) => {
             No leave marked for this month.
           </p>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full min-w-[480px]">
-              <thead>
-                <tr className="border-b border-gray-100">
-                  {['Date', 'Type', 'Status', 'Reason', 'Actions'].map((h) => (
-                    <th key={h} className={TH}>
-                      {h}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-100">
-                {leaves.map((leave) => {
-                  const isScheduled = leave.leave_date > today;
-                  return (
-                    <tr key={leave.id} className="hover:bg-gray-50/80">
-                      <td className={clsx(TD, 'whitespace-nowrap')}>{leave.leave_date}</td>
-                      <td className={clsx(TD, 'whitespace-nowrap text-gray-700')}>
-                        {leaveTypeLabel[leave.leave_type] || leave.leave_type}
-                      </td>
-                      <td className={clsx(TD, 'whitespace-nowrap')}>
+          <>
+            <div className={DASHBOARD_TABLE_DESKTOP}>
+              <table className="w-full min-w-[480px]">
+                <thead>
+                  <tr className="border-b border-gray-100">
+                    {['Date', 'Type', 'Status', 'Reason', 'Actions'].map((h) => (
+                      <th key={h} className={TH}>
+                        {h}
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-100">
+                  {leaves.map((leave) => {
+                    const isScheduled = leave.leave_date > today;
+                    return (
+                      <tr key={leave.id} className="hover:bg-gray-50/80">
+                        <td className={clsx(TD, 'whitespace-nowrap')}>{leave.leave_date}</td>
+                        <td className={clsx(TD, 'whitespace-nowrap text-gray-700')}>
+                          {leaveTypeLabel[leave.leave_type] || leave.leave_type}
+                        </td>
+                        <td className={clsx(TD, 'whitespace-nowrap')}>
+                          {isScheduled ? (
+                            <span className="inline-flex rounded-full border border-dashed border-[#007AFF]/40 bg-[#007AFF]/10 px-2 py-0.5 text-[10px] font-semibold text-[#007AFF]">
+                              Scheduled
+                            </span>
+                          ) : (
+                            <span className="inline-flex rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-semibold text-emerald-700">
+                              Active
+                            </span>
+                          )}
+                        </td>
+                        <td className={clsx(TD, 'text-gray-600')}>{leave.reason || '—'}</td>
+                        <td className={clsx(TD, 'whitespace-nowrap text-right')}>
+                          <button
+                            type="button"
+                            disabled={isCancelling}
+                            onClick={() => handleCancelLeave(leave.id)}
+                            className="min-h-11 rounded-lg px-3 py-2 text-xs font-semibold text-[#FF3B30] transition-colors hover:bg-red-50 disabled:opacity-50 md:min-h-0 md:px-2.5 md:py-1.5"
+                          >
+                            Cancel
+                          </button>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+
+            <div className={DASHBOARD_MOBILE_STACK}>
+              {leaves.map((leave) => {
+                const isScheduled = leave.leave_date > today;
+                return (
+                  <div
+                    key={leave.id}
+                    className="rounded-xl border border-gray-100 bg-gray-50/40 p-4"
+                  >
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="min-w-0">
+                        <p className="text-sm font-semibold text-gray-900">{leave.leave_date}</p>
+                        <p className="mt-0.5 text-xs text-gray-500">
+                          {leaveTypeLabel[leave.leave_type] || leave.leave_type}
+                        </p>
                         {isScheduled ? (
-                          <span className="inline-flex rounded-full border border-dashed border-[#007AFF]/40 bg-[#007AFF]/10 px-2 py-0.5 text-[10px] font-semibold text-[#007AFF]">
+                          <span className="mt-2 inline-flex rounded-full border border-dashed border-[#007AFF]/40 bg-[#007AFF]/10 px-2 py-0.5 text-[10px] font-semibold text-[#007AFF]">
                             Scheduled
                           </span>
                         ) : (
-                          <span className="inline-flex rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-semibold text-emerald-700">
+                          <span className="mt-2 inline-flex rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-semibold text-emerald-700">
                             Active
                           </span>
                         )}
-                      </td>
-                      <td className={clsx(TD, 'text-gray-600')}>{leave.reason || '—'}</td>
-                      <td className={clsx(TD, 'whitespace-nowrap text-right')}>
-                        <button
-                          type="button"
-                          disabled={isCancelling}
-                          onClick={() => handleCancelLeave(leave.id)}
-                          className="rounded-lg px-2.5 py-1.5 text-xs font-semibold text-[#FF3B30] transition-colors hover:bg-red-50 disabled:opacity-50"
-                        >
-                          Cancel
-                        </button>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
+                        <p className="mt-2 text-xs text-gray-600">{leave.reason || '—'}</p>
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      disabled={isCancelling}
+                      onClick={() => handleCancelLeave(leave.id)}
+                      className="mt-3 inline-flex w-full min-h-11 items-center justify-center rounded-xl border border-red-200 bg-white px-3 py-2.5 text-xs font-semibold text-[#FF3B30] disabled:opacity-50"
+                    >
+                      Cancel leave
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+          </>
         )}
       </div>
 

@@ -15,7 +15,7 @@ const NotFoundState = ({
   animationClassName = 'h-24 w-24',
 }) => {
   const containerClass = fullScreen
-    ? 'flex min-h-screen flex-col items-center justify-center bg-gray-50 px-4 py-12'
+    ? 'flex min-h-full flex-col items-center justify-center bg-gray-50 px-4 py-12'
     : 'flex min-h-[50vh] flex-col items-center justify-center px-4 py-12';
 
   return (

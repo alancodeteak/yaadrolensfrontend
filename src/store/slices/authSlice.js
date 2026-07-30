@@ -2,6 +2,7 @@ import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import { authApi } from '../api/authApi';
 import { buildUserFromToken } from '../api/transforms';
 import { clearLocalAuth, revokeRefreshToken } from '../../utils/authSession';
+import { clearAuthenticatedPhotoCache } from '../../utils/employeePhoto';
 
 const clearAuthState = (state) => {
   state.user = null;
@@ -10,6 +11,7 @@ const clearAuthState = (state) => {
   state.isAuthenticated = false;
   state.error = null;
   clearLocalAuth();
+  clearAuthenticatedPhotoCache();
 };
 
 export const logoutUser = createAsyncThunk('auth/logoutUser', async (_, { getState }) => {

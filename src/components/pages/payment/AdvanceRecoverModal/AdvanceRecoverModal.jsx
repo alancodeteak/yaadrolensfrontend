@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { X } from 'lucide-react';
 import { ButtonSpinner, DashboardDatePicker, dashboardToast } from '../../../common';
+import useAppScrollLock from '../../../../hooks/useAppScrollLock';
 import { formatMoney } from '../paymentUtils';
 
 const labelClass = 'mb-1.5 block text-xs font-medium text-gray-500';
@@ -10,6 +11,7 @@ const inputClass =
 const todayIso = () => new Date().toISOString().slice(0, 10);
 
 const AdvanceRecoverModal = ({ isOpen, advance, onClose, onSave, isLoading }) => {
+  useAppScrollLock(isOpen);
   const [formData, setFormData] = useState({
     amount: '',
     payment_date: todayIso(),
@@ -69,7 +71,7 @@ const AdvanceRecoverModal = ({ isOpen, advance, onClose, onSave, isLoading }) =>
       role="presentation"
     >
       <div
-        className="flex max-h-[90vh] w-full max-w-lg flex-col overflow-hidden rounded-2xl border border-gray-200/60 bg-white shadow-[0_2px_16px_rgba(0,0,0,0.06)]"
+        className="flex max-h-[min(90dvh,90vh)] w-full max-w-lg flex-col overflow-hidden rounded-2xl border border-gray-200/60 bg-white shadow-[0_2px_16px_rgba(0,0,0,0.06)]"
         onClick={(e) => e.stopPropagation()}
         role="dialog"
         aria-modal="true"

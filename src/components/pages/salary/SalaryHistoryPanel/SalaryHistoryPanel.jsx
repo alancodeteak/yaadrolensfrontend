@@ -1,5 +1,6 @@
 import { X } from 'lucide-react';
 import { LottieLoader, Pagination, UserAvatar } from '../../../common';
+import useAppScrollLock from '../../../../hooks/useAppScrollLock';
 import { formatCurrency } from '../../../../utils/helpers';
 
 const formatSalary = (value) =>
@@ -37,6 +38,7 @@ const SalaryHistoryPanel = ({
   onPageChange,
   onClose,
 }) => {
+  useAppScrollLock(Boolean(isOpen));
   if (!isOpen || !employee) return null;
 
   const items = history?.items || [];

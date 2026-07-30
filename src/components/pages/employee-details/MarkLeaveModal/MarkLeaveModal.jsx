@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { X } from 'lucide-react';
 import { dashboardToast } from '../../../common';
+import useAppScrollLock from '../../../../hooks/useAppScrollLock';
 
 const labelClass = 'mb-1.5 block text-xs font-medium text-gray-500';
 const inputClass =
@@ -36,6 +37,7 @@ const MarkLeaveModal = ({
   defaultDate,
   maxFutureLeaveDays = 90,
 }) => {
+  useAppScrollLock(isOpen);
   const today = useMemo(() => toDateInputValue(new Date()), []);
   const maxDate = useMemo(() => addDays(today, maxFutureLeaveDays), [today, maxFutureLeaveDays]);
 
@@ -88,7 +90,7 @@ const MarkLeaveModal = ({
       role="presentation"
     >
       <div
-        className="w-full max-w-md rounded-2xl border border-gray-200/60 bg-white shadow-[0_2px_16px_rgba(0,0,0,0.06)]"
+        className="flex max-h-[min(90dvh,90vh)] w-full max-w-md flex-col overflow-hidden rounded-2xl border border-gray-200/60 bg-white shadow-[0_2px_16px_rgba(0,0,0,0.06)]"
         onClick={(e) => e.stopPropagation()}
         role="dialog"
         aria-modal="true"

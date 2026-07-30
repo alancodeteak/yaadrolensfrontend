@@ -1,14 +1,14 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import clsx from 'clsx';
 import { useNavigate } from 'react-router-dom';
-import { LogIn, LogOut, RefreshCw, Search, Users } from 'lucide-react';
+import { RefreshCw, Search } from 'lucide-react';
 import {
-  ATTENDANCE_GUIDE_STEPS,
+  ATTENDANCE_GUIDE_STEPS_BY_LANG,
+  ATTENDANCE_PAGE_LABELS,
   DashboardDatePicker,
   LoadingScreen,
   PageInfoOverlay,
   PageTourButtons,
-  UserAvatar,
   dashboardToast,
   usePageTour,
 } from '../../../common';
@@ -21,16 +21,16 @@ import {
 import { DashboardWidgetCard, RecentActivityFeed } from '../../dashboard';
 import LiveAttendanceInsights from '../LiveAttendanceInsights';
 import ManualPunchConfirmModal from '../ManualPunchConfirmModal';
+import LiveAttendanceLiveClock from './LiveAttendanceLiveClock';
+import LiveAttendanceEmployeeSection from './LiveAttendanceEmployeeSection';
 import {
   useGetDailySummaryQuery,
   useManualPunchMutation,
 } from '../../../../store/api/attendanceApi';
 import { useGetSettingsQuery } from '../../../../store/api/settingsApi';
 import {
-  formatDurationHours,
   isLiveOnSiteStatus,
   mapDailyRowToLiveEmployee,
-  matchesLiveAttendanceStatusFilter,
   orgToday,
   transformDailyRowsToLogs,
 } from '../../../../store/api/transforms';
@@ -39,11 +39,6 @@ import {
   DUMMY_SUMMARY,
   DUMMY_LIVE_ACTIVITIES,
 } from '../liveAttendanceDummy';
-
-const TH =
-  'px-4 py-3 text-left text-[10px] font-medium uppercase tracking-wide text-gray-400 first:pl-5 last:pr-5';
-
-const TD = 'px-4 py-3.5 text-sm text-gray-900 first:pl-5 last:pr-5';
 
 const inputClass =
   'rounded-xl border border-gray-200/60 bg-white px-3 py-2.5 text-sm text-gray-900 shadow-[0_2px_16px_rgba(0,0,0,0.04)] focus:border-[#007AFF] focus:outline-none focus:ring-2 focus:ring-[#007AFF]/20';
@@ -67,18 +62,20 @@ const STATUS_OPTIONS = [
   'Clocked Out (Late)',
 ];
 
+const EMPTY_ROWS = [];
+
 const LiveAttendanceMonitoring = () => {
   const navigate = useNavigate();
-  const { infoOpen, startTutorial, startInfo, closeInfo } = usePageTour(
-    ATTENDANCE_GUIDE_STEPS,
-    'attendance_tour_completed'
+  const { infoOpen, startTutorial, startInfo, closeInfo, steps, pageLabel, language } = usePageTour(
+    ATTENDANCE_GUIDE_STEPS_BY_LANG,
+    'attendance_tour_completed',
+    ATTENDANCE_PAGE_LABELS
   );
   const { data: settings } = useGetSettingsQuery();
   const orgTimezone = settings?.timezone || 'Asia/Kolkata';
   const todayKey = orgToday(orgTimezone);
   const manualAttendanceEnabled = Boolean(settings?.manual_attendance_enabled);
 
-  const [currentTime, setCurrentTime] = useState(new Date());
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedStatus, setSelectedStatus] = useState('All Status');
   const [selectedDay, setSelectedDay] = useState(todayKey);
@@ -108,19 +105,12 @@ const LiveAttendanceMonitoring = () => {
     refetch,
   } = useGetDailySummaryQuery({ date: selectedDay }, { pollingInterval: isToday ? 30000 : 0 });
 
-  useEffect(() => {
-    if (!isToday) return undefined;
-    const timer = setInterval(() => setCurrentTime(new Date()), 1000);
-    return () => clearInterval(timer);
-  }, [isToday]);
-
-  const employees = useMemo(
-    () =>
-      (dailyData?.rows || []).map((row) =>
-        mapDailyRowToLiveEmployee(row, isToday ? currentTime : null)
-      ),
-    [dailyData, isToday, currentTime]
+  const baseEmployees = useMemo(
+    () => (dailyData?.rows || []).map((row) => mapDailyRowToLiveEmployee(row, null)),
+    [dailyData]
   );
+
+  const dailyRows = useMemo(() => dailyData?.rows ?? EMPTY_ROWS, [dailyData?.rows]);
 
   const shiftWarningsToastKeyRef = useRef('');
 
@@ -158,7 +148,7 @@ const LiveAttendanceMonitoring = () => {
   }, [dailyData, dailyLoading, selectedDay]);
 
   const realSummaryData = useMemo(() => {
-    if (!employees.length) {
+    if (!baseEmployees.length) {
       return {
         currentlyPresent: 0,
         currentlyAbsent: 0,
@@ -167,19 +157,19 @@ const LiveAttendanceMonitoring = () => {
         presentRate: '0.0%',
       };
     }
-    const currentlyPresent = employees.filter((emp) => isLiveOnSiteStatus(emp.status)).length;
-    const totalEmployees = employees.length;
+    const currentlyPresent = baseEmployees.filter((emp) => isLiveOnSiteStatus(emp.status)).length;
+    const totalEmployees = baseEmployees.length;
     return {
       // On-site only: clocked in, not yet clocked out (includes late arrivals still present).
       currentlyPresent,
-      currentlyAbsent: employees.filter((emp) => emp.status === 'Absent').length,
+      currentlyAbsent: baseEmployees.filter((emp) => emp.status === 'Absent').length,
       lateArrivalsToday:
         dailyData?.late_count ??
         (dailyData?.rows || []).filter((row) => row.attendance_status === 'late').length,
       totalEmployees,
       presentRate: `${((currentlyPresent / totalEmployees) * 100).toFixed(1)}%`,
     };
-  }, [employees, dailyData]);
+  }, [baseEmployees, dailyData]);
 
   const useDummyTop = USE_DUMMY_LIVE_ATTENDANCE && realSummaryData.totalEmployees === 0;
   const summaryData = useDummyTop
@@ -193,7 +183,7 @@ const LiveAttendanceMonitoring = () => {
     : realSummaryData;
 
   const realRecentActivities = useMemo(() => {
-    const logs = transformDailyRowsToLogs({ rows: dailyData?.rows || [] });
+    const logs = transformDailyRowsToLogs({ rows: dailyData?.rows || [] }, 30);
     return logs.map((log) => ({
       id: log.id,
       name: log.employee_name,
@@ -215,31 +205,6 @@ const LiveAttendanceMonitoring = () => {
   }, [dailyData]);
 
   const recentActivities = useDummyTop ? DUMMY_LIVE_ACTIVITIES : realRecentActivities;
-
-  const filteredEmployees = useMemo(() => {
-    const term = searchTerm.toLowerCase();
-    return employees
-      .filter((employee) => {
-        const matchesSearch =
-          !term ||
-          employee.name.toLowerCase().includes(term) ||
-          String(employee.employee_code || '').toLowerCase().includes(term);
-        const matchesStatus = matchesLiveAttendanceStatusFilter(
-          employee.status,
-          selectedStatus
-        );
-        return matchesSearch && matchesStatus;
-      })
-      .sort((a, b) => a.name.localeCompare(b.name));
-  }, [employees, searchTerm, selectedStatus]);
-
-  const formatClock = (date) =>
-    date.toLocaleTimeString('en-US', {
-      hour: '2-digit',
-      minute: '2-digit',
-      second: '2-digit',
-      hour12: true,
-    });
 
   const formatSelectedDate = (dateStr) => {
     if (!dateStr) return '';
@@ -269,14 +234,17 @@ const LiveAttendanceMonitoring = () => {
       ? 'Clock in / out events today'
       : `Clock in / out for ${formatSelectedDate(selectedDay)}`;
 
-  const openAttendanceReport = (employeeId) => {
-    navigate(`/admin/employees/${employeeId}/attendance-report`);
-  };
+  const openAttendanceReport = useCallback(
+    (employeeId) => {
+      navigate(`/admin/employees/${employeeId}/attendance-report`);
+    },
+    [navigate]
+  );
 
-  const openManualPunch = (employee, action, event) => {
+  const openManualPunch = useCallback((employee, action, event) => {
     event.stopPropagation();
     setManualPunchTarget({ employee, action, openedAt: Date.now() });
-  };
+  }, []);
 
   const handleManualPunchConfirm = async ({ employee_id, action, confirmation, punch_time }) => {
     const result = await manualPunch({ employee_id, action, confirmation, punch_time }).unwrap();
@@ -307,15 +275,15 @@ const LiveAttendanceMonitoring = () => {
 
   return (
     <div className="mx-auto max-w-7xl space-y-6 px-4 py-8 sm:px-6 lg:px-8">
-      <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-        <div>
+      <div className="flex flex-col gap-4 sm:flex-row sm:flex-wrap sm:items-end sm:justify-between">
+        <div className="min-w-0">
           <h1 className="text-3xl font-bold text-gray-900">Live attendance</h1>
           <p className="mt-1 text-sm text-gray-500">
             {formatSelectedDate(selectedDay)}
-            {isToday ? ` · ${formatClock(currentTime)}` : ''}
+            <LiveAttendanceLiveClock active={isToday} />
           </p>
         </div>
-        <div className="flex flex-wrap items-center gap-3">
+        <div className="flex w-full flex-col gap-3 sm:w-auto sm:flex-row sm:flex-wrap sm:items-center">
           {isToday && (
             <div className="flex items-center gap-2 text-xs font-medium text-emerald-600">
               <span className="h-2 w-2 animate-pulse rounded-full bg-emerald-500" />
@@ -323,10 +291,13 @@ const LiveAttendanceMonitoring = () => {
             </div>
           )}
           <div
-            className={clsx(DASHBOARD_PANEL, 'flex flex-wrap items-center gap-3 px-3 py-2')}
+            className={clsx(
+              DASHBOARD_PANEL,
+              'flex w-full flex-col gap-3 px-3 py-2 sm:w-auto sm:flex-row sm:flex-wrap sm:items-center'
+            )}
             data-tour="date-refresh"
           >
-            <div className="flex items-center gap-2">
+            <div className="flex min-w-0 flex-1 items-center gap-2 sm:flex-none">
               <span className="text-[10px] font-medium uppercase tracking-wide text-gray-400">
                 Date
               </span>
@@ -338,7 +309,11 @@ const LiveAttendanceMonitoring = () => {
                 maxDate={todayKey}
               />
             </div>
-            <button type="button" onClick={() => refetch()} className={DASHBOARD_BTN_SECONDARY}>
+            <button
+              type="button"
+              onClick={() => refetch()}
+              className={clsx(DASHBOARD_BTN_SECONDARY, 'min-h-11 w-full justify-center sm:min-h-0 sm:w-auto')}
+            >
               <RefreshCw
                 className={clsx('h-4 w-4', dailyFetching && 'animate-spin')}
                 strokeWidth={2}
@@ -350,9 +325,9 @@ const LiveAttendanceMonitoring = () => {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-3 lg:items-stretch">
-        {/* min-h-0 + overflow-hidden: match Today card height; scroll inside Live activity */}
-        <div data-tour="live-activity" className="min-h-0 overflow-hidden">
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 lg:items-stretch">
+        {/* On mobile: expand with page scroll; on lg match Today card height */}
+        <div data-tour="live-activity" className="min-h-0 lg:overflow-hidden">
           <RecentActivityFeed
             activities={recentActivities}
             loading={dailyFetching && !useDummyTop}
@@ -418,156 +393,22 @@ const LiveAttendanceMonitoring = () => {
         </div>
       </div>
 
-      <div className={clsx(DASHBOARD_PANEL, 'relative overflow-hidden')} data-tour="employee-table">
-        <div className="border-b border-gray-100 px-4 py-3">
-          <h2 className="text-sm font-semibold text-gray-900">Employee status</h2>
-          <p className="text-[11px] text-gray-500">
-            {filteredEmployees.length} of {employees.length} employees
-            {dailyFetching ? ' · Updating…' : ''}
-          </p>
-        </div>
-
-        {filteredEmployees.length === 0 ? (
-          <div className="flex flex-col items-center justify-center px-6 py-14 text-center">
-            <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-gray-50">
-              <Users className="h-6 w-6 text-gray-400" strokeWidth={1.75} />
-            </div>
-            <p className="text-sm font-medium text-gray-900">No employees found</p>
-            <p className="mt-1 max-w-sm text-xs text-gray-500">
-              {searchTerm || selectedStatus !== 'All Status'
-                ? 'Try adjusting your search or filters.'
-                : 'No employee data for this date.'}
-            </p>
-            {(searchTerm || selectedStatus !== 'All Status') && (
-              <button type="button" onClick={clearFilters} className={`${DASHBOARD_BTN_PRIMARY} mt-3`}>
-                Clear filters
-              </button>
-            )}
-          </div>
-        ) : (
-          <div
-            className={clsx(
-              'overflow-x-auto transition-opacity duration-200',
-              dailyFetching && 'pointer-events-none opacity-60'
-            )}
-          >
-            <table className="w-full min-w-[640px]">
-              <thead>
-                <tr className="border-b border-gray-100">
-                  <th className={clsx(TH, 'min-w-36')}>Name</th>
-                  <th className={clsx(TH, 'hidden md:table-cell')}>Department</th>
-                  <th className={clsx(TH, 'hidden xl:table-cell')}>Shift</th>
-                  <th className={TH}>Status</th>
-                  <th className={clsx(TH, 'hidden sm:table-cell')}>Clock in</th>
-                  <th className={clsx(TH, 'hidden lg:table-cell')}>Last seen</th>
-                  <th className={TH}>Hours</th>
-                  {isToday && manualAttendanceEnabled && (
-                    <th className={clsx(TH, 'text-right')}>Manual</th>
-                  )}
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-100">
-                {filteredEmployees.map((employee) => {
-                  const onSite = isLiveOnSiteStatus(employee.status);
-                  return (
-                  <tr
-                    key={employee.id}
-                    className="cursor-pointer transition-colors hover:bg-gray-50/80"
-                    onClick={() => openAttendanceReport(employee.id)}
-                    title="View attendance report"
-                  >
-                    <td className={TD}>
-                      <div className="flex items-center gap-3">
-                        <UserAvatar
-                          className="h-9 w-9 shrink-0 rounded-full ring-1 ring-gray-100"
-                          src={employee.profilePhotoUrl || employee.photo || employee.avatar}
-                          name={employee.name}
-                          seed={employee.id}
-                        />
-                        <div className="min-w-0">
-                          <p className="truncate text-sm font-semibold text-gray-900">
-                            {employee.name}
-                          </p>
-                          {employee.employee_code && (
-                            <p className="truncate text-xs text-gray-500 md:hidden">
-                              {employee.employee_code}
-                            </p>
-                          )}
-                          <p className="truncate text-xs text-gray-500 sm:hidden">
-                            {employee.clockIn || '—'}
-                          </p>
-                          <p className="truncate text-xs text-gray-500 md:hidden">
-                            {employee.department || '—'}
-                          </p>
-                        </div>
-                      </div>
-                    </td>
-                    <td className={clsx(TD, 'hidden md:table-cell')}>
-                      <span className="truncate text-gray-700">{employee.department || '—'}</span>
-                    </td>
-                    <td className={clsx(TD, 'hidden xl:table-cell')}>
-                      <span className="truncate text-xs text-gray-600">
-                        {employee.shiftLabel || '—'}
-                      </span>
-                    </td>
-                    <td className={TD}>
-                      <div className="flex flex-wrap items-center gap-1.5">
-                        <span
-                          className={clsx(
-                            'inline-flex rounded-full px-2 py-0.5 text-[10px] font-semibold',
-                            STATUS_BADGE[employee.status] || 'bg-gray-100 text-gray-600'
-                          )}
-                        >
-                          {employee.status}
-                        </span>
-                      </div>
-                    </td>
-                    <td className={clsx(TD, 'hidden sm:table-cell tabular-nums text-gray-700')}>
-                      {employee.clockIn || '—'}
-                    </td>
-                    <td className={clsx(TD, 'hidden lg:table-cell text-gray-700')}>
-                      {employee.lastSeen || '—'}
-                    </td>
-                    <td className={clsx(TD, 'tabular-nums text-gray-700')}>
-                      {formatDurationHours(employee.totalHours)}
-                    </td>
-                    {isToday && manualAttendanceEnabled && (
-                      <td className={clsx(TD, 'text-right')}>
-                        {onSite ? (
-                          <button
-                            type="button"
-                            className={clsx(DASHBOARD_BTN_SECONDARY, 'px-2.5 py-1.5 text-xs')}
-                            onClick={(event) => openManualPunch(employee, 'clock_out', event)}
-                            title="Manual clock out"
-                          >
-                            <LogOut className="h-3.5 w-3.5" strokeWidth={2} />
-                            Out
-                          </button>
-                        ) : (
-                          <button
-                            type="button"
-                            className={clsx(DASHBOARD_BTN_SECONDARY, 'px-2.5 py-1.5 text-xs')}
-                            onClick={(event) => openManualPunch(employee, 'clock_in', event)}
-                            title="Manual clock in"
-                          >
-                            <LogIn className="h-3.5 w-3.5" strokeWidth={2} />
-                            In
-                          </button>
-                        )}
-                      </td>
-                    )}
-                  </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </div>
+      <LiveAttendanceEmployeeSection
+        dailyData={dailyData}
+        isToday={isToday}
+        dailyFetching={dailyFetching}
+        searchTerm={searchTerm}
+        selectedStatus={selectedStatus}
+        manualAttendanceEnabled={manualAttendanceEnabled}
+        statusBadgeMap={STATUS_BADGE}
+        onOpenReport={openAttendanceReport}
+        onManualPunch={openManualPunch}
+        onClearFilters={clearFilters}
+      />
 
       <div data-tour="hourly-chart">
         <LiveAttendanceInsights
-          rows={dailyData?.rows || []}
+          rows={dailyRows}
           selectedDay={selectedDay}
           orgWorkStartTime={settings?.work_start_time}
           orgWorkEndTime={settings?.work_end_time}
@@ -590,9 +431,10 @@ const LiveAttendanceMonitoring = () => {
 
       {infoOpen && (
         <PageInfoOverlay
-          steps={ATTENDANCE_GUIDE_STEPS}
+          steps={steps}
           onClose={closeInfo}
-          pageLabel="Live Attendance"
+          pageLabel={pageLabel || 'Live Attendance'}
+          language={language}
         />
       )}
     </div>

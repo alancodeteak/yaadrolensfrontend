@@ -3,6 +3,7 @@ import clsx from 'clsx';
 import { AlertCircle, CheckCircle2, Clock, Info } from 'lucide-react';
 import { ButtonSpinner, DashboardTimePicker, dashboardToast } from '../../common';
 import { formatOrgNowTime, orgMaxPunchTime, orgNowTime, clampManualPunchTime, isManualPunchTimeAllowed } from '../../../store/api/transforms';
+import useAppScrollLock from '../../../hooks/useAppScrollLock';
 
 export const MANUAL_ATTENDANCE_CONFIRMATION = 'manual attendance approved';
 
@@ -23,6 +24,7 @@ export default function ManualPunchConfirmModal({
   onClose,
   onConfirm,
 }) {
+  useAppScrollLock(isOpen);
   const mountedRef = useRef(true);
   const [confirmationText, setConfirmationText] = useState('');
   const [punchTime, setPunchTime] = useState(() => orgNowTime(timezone));

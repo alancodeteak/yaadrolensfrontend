@@ -1,5 +1,6 @@
 import { Scale, X } from 'lucide-react';
 import { LottieLoader, Pagination, UserAvatar } from '../../../common';
+import useAppScrollLock from '../../../../hooks/useAppScrollLock';
 import {
   BALANCE_TRANSACTION_LABELS,
   BALANCE_TRANSACTION_STYLES,
@@ -22,6 +23,7 @@ const BalanceHistoryPanel = ({
   onClose,
   onAdjust,
 }) => {
+  useAppScrollLock(Boolean(isOpen));
   if (!isOpen || !employee) return null;
 
   const items = transactions?.items || [];

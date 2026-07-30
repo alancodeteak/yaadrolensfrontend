@@ -1,6 +1,8 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { X } from 'lucide-react';
+import { lockAppScroll, unlockAppScroll } from '../../../utils/appScrollLock';
 import { getPageInfoOverlayCopy } from './pageTourI18n';
+
 function measureSteps(steps) {
   return steps
     .map((step) => {
@@ -43,18 +45,32 @@ const PageInfoOverlay = ({
     setPositions(measureSteps(steps));
   }, [steps]);
 
-  useEffect(() => {
-    document.body.style.overflow = 'hidden';
-    refresh();
+  const refreshRef = useRef(refresh);
+  refreshRef.current = refresh;
 
-    const onResize = () => refresh();
-    window.addEventListener('resize', onResize);
-    window.addEventListener('scroll', onResize, true);
+  useEffect(() => {
+    lockAppScroll();
+    refreshRef.current();
+
+    let rafId = 0;
+    const scheduleRefresh = () => {
+      if (rafId) return;
+      rafId = window.requestAnimationFrame(() => {
+        rafId = 0;
+        refreshRef.current();
+      });
+    };
+
+    window.addEventListener('resize', scheduleRefresh);
+    window.addEventListener('scroll', scheduleRefresh, true);
 
     return () => {
-      document.body.style.overflow = '';
-      window.removeEventListener('resize', onResize);
-      window.removeEventListener('scroll', onResize, true);
+      if (rafId) {
+        window.cancelAnimationFrame(rafId);
+      }
+      unlockAppScroll();
+      window.removeEventListener('resize', scheduleRefresh);
+      window.removeEventListener('scroll', scheduleRefresh, true);
     };
   }, [refresh]);
 
@@ -107,12 +123,12 @@ const PageInfoOverlay = ({
       ))}
 
       {isMobile ? (
-        <div className="pointer-events-auto absolute inset-x-4 bottom-4 top-16 z-[210] overflow-hidden rounded-2xl border border-gray-200/60 bg-white shadow-[0_2px_16px_rgba(0,0,0,0.12)]">
-          <div className="border-b border-gray-100 px-4 py-3">
+        <div className="pointer-events-auto absolute inset-x-4 bottom-4 top-16 z-[210] flex flex-col overflow-hidden rounded-2xl border border-gray-200/60 bg-white shadow-[0_2px_16px_rgba(0,0,0,0.12)]">
+          <div className="shrink-0 border-b border-gray-100 px-4 py-3">
             <h2 className="text-sm font-semibold text-gray-900">{copy.heading(pageLabel)}</h2>
             <p className="text-[11px] text-gray-500">{copy.subheading}</p>
           </div>
-          <ul className="max-h-full divide-y divide-gray-100 overflow-y-auto px-4 py-2">
+          <ul className="min-h-0 flex-1 divide-y divide-gray-100 overflow-y-auto px-4 py-2">
             {steps.map((step) => (
               <li key={step.id} className="py-3">
                 <p className="text-sm font-semibold text-gray-900">{step.title}</p>

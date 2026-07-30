@@ -1,4 +1,6 @@
 import React from 'react';
+import { resetAppScrollLock } from '../../utils/appScrollLock';
+import { clearDriverTourArtifacts } from '../../utils/driverTourCleanup';
 
 class ErrorBoundary extends React.Component {
   constructor(props) {
@@ -11,6 +13,8 @@ class ErrorBoundary extends React.Component {
   }
 
   componentDidCatch(error, errorInfo) {
+    resetAppScrollLock();
+    clearDriverTourArtifacts();
     console.error('ErrorBoundary caught an error:', error, errorInfo);
   }
 

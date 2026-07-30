@@ -179,7 +179,7 @@ const AttendanceMonthCalendar = ({
   };
 
   return (
-    <div className="flex h-full min-h-[24rem] flex-col rounded-2xl border border-gray-200/60 bg-white shadow-[0_2px_16px_rgba(0,0,0,0.06)] [contain:layout]">
+    <div className="flex h-full min-h-[16rem] flex-col rounded-2xl border border-gray-200/60 bg-white shadow-[0_2px_16px_rgba(0,0,0,0.06)] sm:min-h-[24rem] [contain:layout]">
       <div className="border-b border-gray-100 px-4 py-3">
         <h2 className="text-sm font-semibold text-gray-900">{title}</h2>
         <div className="flex flex-wrap items-center gap-2">
@@ -226,11 +226,11 @@ const AttendanceMonthCalendar = ({
         <div className="grid grid-cols-7 gap-0.5">
           {loading
             ? Array.from({ length: 28 }).map((_, i) => (
-                <div key={i} className="h-7 w-7 animate-pulse rounded bg-gray-100" />
+                <div key={i} className="min-h-10 min-w-10 animate-pulse rounded bg-gray-100 sm:h-7 sm:w-7 sm:min-h-0 sm:min-w-0" />
               ))
             : weeks.flat().map((cell, idx) => {
                 if (cell.type === 'pad') {
-                  return <div key={`pad-${idx}`} className="h-7 w-7" aria-hidden="true" />;
+                  return <div key={`pad-${idx}`} className="min-h-10 min-w-10 sm:h-7 sm:w-7 sm:min-h-0 sm:min-w-0" aria-hidden="true" />;
                 }
 
                 const dayType = cell.data?.day_type || 'future';
@@ -245,13 +245,13 @@ const AttendanceMonthCalendar = ({
                   : undefined;
 
                 return (
-                  <div key={cell.iso} className="relative h-7 w-7">
+                  <div key={cell.iso} className="relative min-h-10 min-w-10 sm:h-7 sm:w-7 sm:min-h-0 sm:min-w-0">
                     <button
                       type="button"
                       title={tipText}
                       style={heat.style}
                       className={clsx(
-                        'flex h-7 w-7 items-center justify-center rounded border text-[10px] font-medium leading-none transition-colors',
+                        'flex min-h-10 min-w-10 items-center justify-center rounded border text-[10px] font-medium leading-none transition-colors sm:h-7 sm:w-7 sm:min-h-0 sm:min-w-0',
                         heat.className,
                         isToday && 'ring-1 ring-[#007AFF] ring-offset-1',
                         hasTooltip && 'cursor-pointer'

@@ -5,7 +5,9 @@ import { History, Scale, Wallet } from 'lucide-react';
 import { LottieLoader, Pagination } from '../../../common';
 import {
   DASHBOARD_BTN_SECONDARY,
+  DASHBOARD_MOBILE_STACK,
   DASHBOARD_PANEL,
+  DASHBOARD_TABLE_DESKTOP,
 } from '../../dashboard/dashboardTheme';
 import {
   BalanceHistoryPanel,
@@ -284,7 +286,7 @@ const PayAndSalarySection = ({ employee, onAdjustBalance }) => {
             </button>
           }
         />
-        <div className="overflow-x-auto">
+        <div className={DASHBOARD_TABLE_DESKTOP}>
           <table className="min-w-full divide-y divide-gray-100">
             <thead>
               <tr className="bg-gray-50/80">
@@ -338,6 +340,49 @@ const PayAndSalarySection = ({ employee, onAdjustBalance }) => {
             </tbody>
           </table>
         </div>
+        <div className={DASHBOARD_MOBILE_STACK}>
+          {payoutLoading ? (
+            <div className="flex justify-center py-8">
+              <LottieLoader size={36} />
+            </div>
+          ) : payoutItems.length === 0 ? (
+            <p className="py-6 text-center text-sm text-gray-500">No payouts recorded yet.</p>
+          ) : (
+            payoutItems.map((item) => (
+              <div
+                key={item.id}
+                className="rounded-xl border border-gray-100 bg-gray-50/40 p-4"
+              >
+                <div className="flex flex-wrap gap-1.5">
+                  <span
+                    className={clsx(
+                      'inline-flex rounded-full px-2 py-0.5 text-[10px] font-semibold',
+                      PAYMENT_TYPE_STYLES[item.payment_type] || PAYMENT_TYPE_STYLES.other
+                    )}
+                  >
+                    {PAYMENT_TYPE_LABELS[item.payment_type] || item.payment_type}
+                  </span>
+                  <span
+                    className={clsx(
+                      'inline-flex rounded-full px-2 py-0.5 text-[10px] font-semibold',
+                      PAYMENT_STATUS_STYLES[item.status] || 'bg-gray-100 text-gray-600'
+                    )}
+                  >
+                    {PAYMENT_STATUS_LABELS[item.status] || item.status}
+                  </span>
+                </div>
+                <p className="mt-2 text-base font-semibold tabular-nums text-gray-900">
+                  {formatMoney(item.amount)}
+                </p>
+                <p className="mt-0.5 text-xs text-gray-500">
+                  {formatDate(item.payment_date || item.created_at)}
+                  {' · '}
+                  {periodLabel(item.period_year, item.period_month)}
+                </p>
+              </div>
+            ))
+          )}
+        </div>
         {payoutTotal > HISTORY_PER_PAGE ? (
           <div className="border-t border-gray-100 px-4 py-3 sm:px-5">
             <Pagination
@@ -354,7 +399,7 @@ const PayAndSalarySection = ({ employee, onAdjustBalance }) => {
       <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
         <div className={DASHBOARD_PANEL}>
           <SectionHeader title="Advances" subtitle="Open and recent advance requests" />
-          <div className="overflow-x-auto">
+          <div className={DASHBOARD_TABLE_DESKTOP}>
             <table className="min-w-full divide-y divide-gray-100">
               <thead>
                 <tr className="bg-gray-50/80">
@@ -399,11 +444,43 @@ const PayAndSalarySection = ({ employee, onAdjustBalance }) => {
               </tbody>
             </table>
           </div>
+          <div className={DASHBOARD_MOBILE_STACK}>
+            {advancesLoading ? (
+              <div className="flex justify-center py-8">
+                <LottieLoader size={32} />
+              </div>
+            ) : advances.length === 0 ? (
+              <p className="py-6 text-center text-sm text-gray-500">No advances for this employee.</p>
+            ) : (
+              advances.map((item) => (
+                <div
+                  key={item.id}
+                  className="rounded-xl border border-gray-100 bg-gray-50/40 p-4"
+                >
+                  <span
+                    className={clsx(
+                      'inline-flex rounded-full px-2 py-0.5 text-[10px] font-semibold',
+                      ADVANCE_STATUS_STYLES[item.status] || 'bg-gray-100 text-gray-600'
+                    )}
+                  >
+                    {ADVANCE_STATUS_LABELS[item.status] || item.status}
+                  </span>
+                  <p className="mt-2 text-base font-semibold tabular-nums text-gray-900">
+                    {formatMoney(item.amount)}
+                  </p>
+                  <p className="mt-0.5 text-xs text-gray-500">
+                    {formatDate(item.advance_date || item.created_at)} · Outstanding{' '}
+                    {formatMoney(item.outstanding_amount ?? item.outstanding)}
+                  </p>
+                </div>
+              ))
+            )}
+          </div>
         </div>
 
         <div className={DASHBOARD_PANEL}>
           <SectionHeader title="Bonuses" subtitle="Recorded bonuses for this employee" />
-          <div className="overflow-x-auto">
+          <div className={DASHBOARD_TABLE_DESKTOP}>
             <table className="min-w-full divide-y divide-gray-100">
               <thead>
                 <tr className="bg-gray-50/80">
@@ -444,6 +521,37 @@ const PayAndSalarySection = ({ employee, onAdjustBalance }) => {
               </tbody>
             </table>
           </div>
+          <div className={DASHBOARD_MOBILE_STACK}>
+            {bonusesLoading ? (
+              <div className="flex justify-center py-8">
+                <LottieLoader size={32} />
+              </div>
+            ) : bonuses.length === 0 ? (
+              <p className="py-6 text-center text-sm text-gray-500">No bonuses recorded yet.</p>
+            ) : (
+              bonuses.map((item) => (
+                <div
+                  key={item.id}
+                  className="rounded-xl border border-gray-100 bg-gray-50/40 p-4"
+                >
+                  <span
+                    className={clsx(
+                      'inline-flex rounded-full px-2 py-0.5 text-[10px] font-semibold',
+                      BONUS_STATUS_STYLES[item.status] || 'bg-gray-100 text-gray-600'
+                    )}
+                  >
+                    {BONUS_STATUS_LABELS[item.status] || item.status}
+                  </span>
+                  <p className="mt-2 text-base font-semibold tabular-nums text-gray-900">
+                    {formatMoney(item.amount)}
+                  </p>
+                  <p className="mt-0.5 text-xs text-gray-500">
+                    {periodLabel(item.period_year, item.period_month)}
+                  </p>
+                </div>
+              ))
+            )}
+          </div>
         </div>
       </div>
 
@@ -464,7 +572,7 @@ const PayAndSalarySection = ({ employee, onAdjustBalance }) => {
             </button>
           }
         />
-        <div className="overflow-x-auto">
+        <div className={DASHBOARD_TABLE_DESKTOP}>
           <table className="min-w-full divide-y divide-gray-100">
             <thead>
               <tr className="bg-gray-50/80">
@@ -495,6 +603,29 @@ const PayAndSalarySection = ({ employee, onAdjustBalance }) => {
               )}
             </tbody>
           </table>
+        </div>
+        <div className={DASHBOARD_MOBILE_STACK}>
+          {salaryPreviewItems.length === 0 ? (
+            <p className="py-6 text-center text-sm text-gray-500">
+              No salary changes recorded yet.
+            </p>
+          ) : (
+            salaryPreviewItems.map((item) => (
+              <div
+                key={item.id}
+                className="rounded-xl border border-gray-100 bg-gray-50/40 p-4"
+              >
+                <p className="text-sm font-semibold text-gray-900">
+                  {formatDate(item.effective_date)}
+                </p>
+                <p className="mt-1 text-sm tabular-nums text-gray-700">
+                  {formatSalaryChange(item.previous_amount)} →{' '}
+                  <span className="font-semibold">{formatSalaryChange(item.new_amount)}</span>
+                </p>
+                <p className="mt-1 text-xs text-gray-500">{item.reason || '—'}</p>
+              </div>
+            ))
+          )}
         </div>
       </div>
 

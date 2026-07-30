@@ -60,7 +60,7 @@ const RecentActivityFeed = ({
 
     <div
       className={clsx(
-        'min-h-0 flex-1 overflow-y-auto overscroll-contain',
+        'min-h-0 flex-1 lg:overflow-y-auto lg:overscroll-contain',
         compact ? 'p-2' : 'p-3'
       )}
     >

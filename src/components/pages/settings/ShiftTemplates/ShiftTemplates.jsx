@@ -20,8 +20,6 @@ import {
   useUnassignAndDeleteShiftTemplateMutation,
   useUpdateShiftTemplateMutation,
 } from '../../../../store/api/shiftApi';
-import { useGetSettingsQuery } from '../../../../store/api/settingsApi';
-
 const emptyBreak = () => ({
   name: 'Lunch',
   start_time: '13:00',
@@ -43,7 +41,6 @@ const normalizeTime = (value, fallback = '09:00') => {
 };
 
 const ShiftTemplates = () => {
-  const { data: settings } = useGetSettingsQuery();
   const { data: templates = [], isLoading, error, refetch } = useGetShiftTemplatesQuery();
   const [createTemplate, { isLoading: creating }] = useCreateShiftTemplateMutation();
   const [updateTemplate, { isLoading: updating }] = useUpdateShiftTemplateMutation();
@@ -54,18 +51,6 @@ const ShiftTemplates = () => {
   const [form, setForm] = useState(emptyForm);
   const [editingId, setEditingId] = useState(null);
   const [saveError, setSaveError] = useState(null);
-  const perEmployee = settings?.shift_schedule_mode === 'per_employee';
-
-  useEffect(() => {
-    if (isLoading || perEmployee) return;
-    const key = 'lens-toast-shifts-same-for-all';
-    if (sessionStorage.getItem(key)) return;
-    sessionStorage.setItem(key, '1');
-    dashboardToast.info(
-      'You can still create templates here. Enable Per employee under Attendance rules to assign Mon–Sun schedules.',
-      'Shift mode: same for all'
-    );
-  }, [isLoading, perEmployee]);
 
   useEffect(() => {
     if (!editingId) return;
@@ -193,7 +178,7 @@ const ShiftTemplates = () => {
       const hasAssignments = count > 0;
 
       dashboardToast.confirm({
-        variant: 'warning',
+        variant: 'info',
         title: hasAssignments
           ? 'Remove from employees, then delete?'
           : 'Delete shift template?',
@@ -303,7 +288,11 @@ const ShiftTemplates = () => {
   return (
     <div className="space-y-6" data-tour="shift-templates">
       <SettingsContentGrid>
-        <SettingsSection title={title} subtitle="Named hours with optional lunch/tea breaks">
+        <SettingsSection
+          title={title}
+          subtitle="Named hours with optional lunch/tea breaks"
+          tourId="shift-template-form"
+        >
           <div className="space-y-4">
             <div>
               <label className={settingsLabelClass}>Name</label>
@@ -462,7 +451,11 @@ const ShiftTemplates = () => {
           </div>
         </SettingsSection>
 
-        <SettingsSection title="Saved templates" subtitle="Assign these on each employee’s week grid">
+        <SettingsSection
+          title="Saved templates"
+          subtitle="Assign these on each employee’s week grid"
+          tourId="saved-templates"
+        >
           {templates.length === 0 ? (
             <p className="text-sm text-gray-500">No templates yet.</p>
           ) : (

@@ -30,7 +30,7 @@ export const shiftApi = baseApi.injectEndpoints({
           })),
         },
       }),
-      invalidatesTags: ['ShiftTemplate', 'Dashboard'],
+      invalidatesTags: ['ShiftTemplate', 'Attendance'],
     }),
 
     updateShiftTemplate: builder.mutation({
@@ -59,7 +59,7 @@ export const shiftApi = baseApi.injectEndpoints({
             : {}),
         },
       }),
-      invalidatesTags: ['ShiftTemplate', 'Dashboard', 'Attendance'],
+      invalidatesTags: ['ShiftTemplate', 'Attendance'],
     }),
 
     deleteShiftTemplate: builder.mutation({
@@ -67,7 +67,7 @@ export const shiftApi = baseApi.injectEndpoints({
         url: `/org-admin/shifts/templates/${id}`,
         method: 'DELETE',
       }),
-      invalidatesTags: ['ShiftTemplate', 'Dashboard'],
+      invalidatesTags: ['ShiftTemplate', 'Attendance'],
     }),
 
     unassignAndDeleteShiftTemplate: builder.mutation({
@@ -101,7 +101,6 @@ export const shiftApi = baseApi.injectEndpoints({
         { type: 'Employee', id: employeeId },
         'ShiftTemplate',
         'Attendance',
-        'Dashboard',
       ],
     }),
   }),

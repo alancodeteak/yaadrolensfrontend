@@ -172,7 +172,7 @@ const AttendanceRules = () => {
 
   const openSwitchConfirm = useCallback(() => {
     dashboardToast.confirm({
-      variant: 'warning',
+      variant: 'info',
       title: 'Switch to same shift for all?',
       message: SWITCH_CONFIRM_MESSAGE,
       actions: [
@@ -235,24 +235,7 @@ const AttendanceRules = () => {
       return;
     }
     setShiftMode(nextMode);
-    if (nextMode === 'per_employee') {
-      dashboardToast.info(
-        'Create templates under Settings → Shifts, then assign Mon–Sun on each employee.',
-        'Per-employee shifts'
-      );
-    }
   };
-
-  useEffect(() => {
-    if (isLoading || shiftMode !== 'per_employee' || savedShiftMode !== 'per_employee') return;
-    const key = 'lens-toast-attendance-per-employee';
-    if (sessionStorage.getItem(key)) return;
-    sessionStorage.setItem(key, '1');
-    dashboardToast.info(
-      'Create templates under Settings → Shifts, then assign Mon–Sun on each employee.',
-      'Per-employee shifts'
-    );
-  }, [isLoading, shiftMode, savedShiftMode]);
 
   if (isLoading) {
     return <LoadingScreen message="Loading attendance rules..." fullScreen={false} size="md" />;
@@ -331,7 +314,7 @@ const AttendanceRules = () => {
           </div>
         </SettingsSection>
 
-        {shiftMode === 'same_for_all' && (
+        {shiftMode === 'same_for_all' ? (
           <SettingsSection title="Working hours" tourId="working-hours">
             <div className="grid gap-4 sm:grid-cols-2">
               <div>
@@ -358,6 +341,14 @@ const AttendanceRules = () => {
               Kiosk &amp; device.
             </p>
           </SettingsSection>
+        ) : (
+          <div
+            className="rounded-xl border border-gray-100 bg-gray-50/80 px-4 py-3 text-sm text-gray-600"
+            data-tour="working-hours"
+          >
+            Working hours come from Templates under Settings → Shifts. Assign Mon–Sun on each
+            employee when editing their profile.
+          </div>
         )}
 
         <SettingsSection title="Grace periods" subtitle="Minutes before marking late or early" tourId="grace-periods">

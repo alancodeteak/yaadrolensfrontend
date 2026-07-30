@@ -11,7 +11,12 @@ import {
 } from 'lucide-react';
 import { useUpdateEmployeeMutation } from '../../../../store/api';
 import { UserAvatar, dashboardToast } from '../../../common';
-import { DASHBOARD_PANEL } from '../../dashboard/dashboardTheme';
+import {
+  DASHBOARD_ICON_BTN,
+  DASHBOARD_MOBILE_STACK,
+  DASHBOARD_PANEL,
+  DASHBOARD_TABLE_DESKTOP,
+} from '../../dashboard/dashboardTheme';
 
 const TH =
   'px-4 py-3 text-left text-[10px] font-medium uppercase tracking-wide text-gray-400 first:pl-5 last:pr-5';
@@ -24,11 +29,11 @@ const ActionButton = ({ onClick, title, children, tone = 'neutral' }) => (
     onClick={onClick}
     title={title}
     className={clsx(
-      'rounded-lg p-1.5 transition-colors duration-200',
-      tone === 'blue' && 'text-gray-400 hover:bg-blue-50 hover:text-[#007AFF]',
-      tone === 'green' && 'text-gray-400 hover:bg-emerald-50 hover:text-[#34C759]',
-      tone === 'red' && 'text-gray-400 hover:bg-red-50 hover:text-[#FF3B30]',
-      tone === 'neutral' && 'text-gray-400 hover:bg-gray-50 hover:text-gray-700'
+      DASHBOARD_ICON_BTN,
+      tone === 'blue' && 'hover:bg-blue-50 hover:text-[#007AFF]',
+      tone === 'green' && 'hover:bg-emerald-50 hover:text-[#34C759]',
+      tone === 'red' && 'hover:bg-red-50 hover:text-[#FF3B30]',
+      tone === 'neutral' && 'hover:bg-gray-50 hover:text-gray-700'
     )}
   >
     {children}
@@ -92,9 +97,11 @@ const EmployeeTable = ({
           </p>
         </div>
       ) : (
+        <>
         <div
           className={clsx(
-            'overflow-x-auto transition-opacity duration-200',
+            DASHBOARD_TABLE_DESKTOP,
+            'transition-opacity duration-200',
             isFetching && 'pointer-events-none opacity-60'
           )}
         >
@@ -226,6 +233,104 @@ const EmployeeTable = ({
             </tbody>
           </table>
         </div>
+
+        <div
+          className={clsx(
+            DASHBOARD_MOBILE_STACK,
+            'transition-opacity duration-200',
+            isFetching && 'pointer-events-none opacity-60'
+          )}
+        >
+          {employees.map((employee) => (
+            <div key={employee.id} className="rounded-xl border border-gray-100 bg-gray-50/40 p-4">
+              <div className="flex items-start gap-3">
+                <UserAvatar
+                  className="h-10 w-10 shrink-0 rounded-full object-cover ring-1 ring-gray-100"
+                  src={employee.photo || employee.avatar}
+                  name={employee.name}
+                  seed={employee.id}
+                />
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-sm font-semibold text-gray-900">{employee.name}</p>
+                  <p className="truncate text-xs text-gray-500">
+                    {employee.employee_code}
+                    {employee.department ? ` · ${employee.department}` : ''}
+                  </p>
+                  <p className="mt-1 text-sm tabular-nums text-gray-800">
+                    {employee.salary != null && employee.salary !== ''
+                      ? formatMonthlySalary(employee.salary)
+                      : 'Salary not set'}
+                  </p>
+                  <div className="mt-2 flex flex-wrap gap-1.5">
+                    {showActiveEmployees && (
+                      <span
+                        className={clsx(
+                          'inline-flex rounded-full px-2 py-0.5 text-[10px] font-semibold',
+                          employee.is_active
+                            ? 'bg-emerald-100 text-emerald-700'
+                            : 'bg-gray-100 text-gray-600'
+                        )}
+                      >
+                        {employee.is_active ? 'Active' : 'Inactive'}
+                      </span>
+                    )}
+                    <span
+                      className={clsx(
+                        'inline-flex rounded-full px-2 py-0.5 text-[10px] font-semibold',
+                        employee.has_face_enrolled
+                          ? 'bg-emerald-100 text-emerald-700'
+                          : 'bg-orange-100 text-orange-700'
+                      )}
+                    >
+                      {employee.has_face_enrolled ? 'Face enrolled' : 'Not enrolled'}
+                    </span>
+                  </div>
+                </div>
+              </div>
+              <div className="mt-3 grid grid-cols-2 gap-2 border-t border-gray-100 pt-3">
+                <button
+                  type="button"
+                  onClick={() => onEdit?.(employee)}
+                  className="inline-flex items-center justify-center gap-1.5 rounded-xl border border-gray-200 bg-white px-3 py-2.5 text-xs font-semibold text-gray-700"
+                >
+                  <Pencil className="h-3.5 w-3.5" /> Edit
+                </button>
+                <button
+                  type="button"
+                  onClick={() => navigate(`/admin/employees/${employee.id}`)}
+                  className="inline-flex items-center justify-center gap-1.5 rounded-xl border border-gray-200 bg-white px-3 py-2.5 text-xs font-semibold text-gray-700"
+                >
+                  <Eye className="h-3.5 w-3.5" /> View
+                </button>
+                <button
+                  type="button"
+                  onClick={() => navigate(`/admin/salary?employeeId=${employee.id}`)}
+                  className="inline-flex items-center justify-center gap-1.5 rounded-xl border border-gray-200 bg-white px-3 py-2.5 text-xs font-semibold text-gray-700"
+                >
+                  <DollarSign className="h-3.5 w-3.5" /> Salary
+                </button>
+                {employee.is_active && showActiveEmployees ? (
+                  <button
+                    type="button"
+                    onClick={() => onDeactivate?.(employee)}
+                    className="inline-flex items-center justify-center gap-1.5 rounded-xl border border-red-100 bg-white px-3 py-2.5 text-xs font-semibold text-red-600"
+                  >
+                    <Trash2 className="h-3.5 w-3.5" /> Deactivate
+                  </button>
+                ) : !employee.is_active && !showActiveEmployees ? (
+                  <button
+                    type="button"
+                    onClick={() => handleReactivate(employee)}
+                    className="inline-flex items-center justify-center gap-1.5 rounded-xl border border-emerald-100 bg-white px-3 py-2.5 text-xs font-semibold text-emerald-700"
+                  >
+                    <RotateCcw className="h-3.5 w-3.5" /> Reactivate
+                  </button>
+                ) : null}
+              </div>
+            </div>
+          ))}
+        </div>
+        </>
       )}
     </div>
   );

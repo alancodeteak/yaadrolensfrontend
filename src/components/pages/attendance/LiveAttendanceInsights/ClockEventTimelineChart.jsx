@@ -1,4 +1,4 @@
-import { useEffect, useId, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { memo, useEffect, useId, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import clsx from 'clsx';
 import { UserAvatar } from '../../../common';
 import { resolveRowProfilePhoto } from '../../../../store/api/transforms';
@@ -602,7 +602,6 @@ const ClockEventTimelineChart = ({
                 cy={y}
                 r={AVATAR_SIZE / 2 + 2}
                 fill={glowColor}
-                className={isHighlighted ? undefined : 'animate-pulse'}
                 style={{
                   animationDuration: '2.8s',
                   ...(isHighlighted ? { fill: glowColor.replace('0.25', '0.45').replace('0.28', '0.5') } : {}),
@@ -798,4 +797,4 @@ const ClockEventTimelineChart = ({
   );
 };
 
-export default ClockEventTimelineChart;
+export default memo(ClockEventTimelineChart);

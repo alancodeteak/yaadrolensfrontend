@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Pause, Play } from 'lucide-react';
 import { DASHBOARD_PANEL } from '../../dashboard/dashboardTheme';
 import {
@@ -180,4 +180,4 @@ const LiveAttendanceInsights = ({
   );
 };
 
-export default LiveAttendanceInsights;
+export default memo(LiveAttendanceInsights);

@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import {
-  ANALYTICS_GUIDE_STEPS,
+  ANALYTICS_GUIDE_STEPS_BY_LANG,
+  ANALYTICS_PAGE_LABELS,
   DashboardDatePicker,
   LoadingScreen,
   PageInfoOverlay,
@@ -50,9 +51,10 @@ const AttendanceDashboard = () => {
   const [selectedDay, setSelectedDay] = useState(today());
   const heatmapRef = useRef(null);
   const [heatmapHeight, setHeatmapHeight] = useState(null);
-  const { infoOpen, startTutorial, startInfo, closeInfo } = usePageTour(
-    ANALYTICS_GUIDE_STEPS,
-    'analytics_tour_completed'
+  const { infoOpen, startTutorial, startInfo, closeInfo, steps, pageLabel, language } = usePageTour(
+    ANALYTICS_GUIDE_STEPS_BY_LANG,
+    'analytics_tour_completed',
+    ANALYTICS_PAGE_LABELS
   );
 
   const {
@@ -284,9 +286,10 @@ const AttendanceDashboard = () => {
 
       {infoOpen && (
         <PageInfoOverlay
-          steps={ANALYTICS_GUIDE_STEPS}
+          steps={steps}
           onClose={closeInfo}
-          pageLabel="Analytics"
+          pageLabel={pageLabel || 'Analytics'}
+          language={language}
         />
       )}
     </div>

@@ -78,6 +78,9 @@ const PayrollManagement = () => {
     return Array.from({ length: 5 }, (_, i) => String(y - 2 + i));
   }, [currentDate]);
 
+  const needsEmployeeRoster =
+    recordModalOpen || createAdvanceOpen || bonusModalOpen || Boolean(balanceEmployee);
+
   const {
     payrollPeriodStillOpen,
     paymentsLoading,
@@ -161,6 +164,7 @@ const PayrollManagement = () => {
     searchTerm,
     currentPage,
     balanceLedgerPage,
+    needsEmployeeRoster,
   });
 
   const defaultPeriodStats = {

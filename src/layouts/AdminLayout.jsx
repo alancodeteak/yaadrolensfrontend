@@ -1,15 +1,26 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import clsx from 'clsx';
-import { Outlet } from 'react-router-dom';
+import { Outlet, useLocation } from 'react-router-dom';
 import { Menu, X } from 'lucide-react';
 import { Sidebar } from '../components/common';
+import useAppScrollLock from '../hooks/useAppScrollLock';
+import { resetAppScrollLock } from '../utils/appScrollLock';
+import { clearDriverTourArtifacts } from '../utils/driverTourCleanup';
 
 const AdminLayout = () => {
+  const location = useLocation();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [sidebarExpanded, setSidebarExpanded] = useState(false);
+  useAppScrollLock(mobileOpen);
+
+  useEffect(() => {
+    resetAppScrollLock();
+    clearDriverTourArtifacts();
+    setMobileOpen(false);
+  }, [location.pathname]);
 
   return (
-    <div className="flex h-screen overflow-hidden bg-[#F7F7F9]">
+    <div className="flex h-dvh overflow-hidden bg-[#F7F7F9]">
       {mobileOpen && (
         <button
           type="button"
@@ -59,7 +70,10 @@ const AdminLayout = () => {
           </div>
         </header>
 
-        <main id="main-content" className="min-h-0 flex-1 overflow-y-auto">
+        <main
+          id="main-content"
+          className="min-h-0 flex-1 overflow-y-auto [-webkit-overflow-scrolling:touch]"
+        >
           <Outlet />
         </main>
       </div>

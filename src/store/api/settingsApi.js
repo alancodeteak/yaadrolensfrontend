@@ -16,7 +16,7 @@ export const settingsApi = baseApi.injectEndpoints({
         body: settingsData,
       }),
       transformResponse: transformSettingsResponse,
-      invalidatesTags: ['Settings', 'Dashboard'],
+      invalidatesTags: ['Settings'],
     }),
 
     getAttendanceRules: builder.query({
@@ -71,7 +71,7 @@ export const settingsApi = baseApi.injectEndpoints({
         },
       }),
       transformResponse: transformSettingsResponse,
-      invalidatesTags: ['Settings', 'Dashboard'],
+      invalidatesTags: ['Settings'],
     }),
 
     updateAttendanceRules: builder.mutation({
@@ -93,7 +93,7 @@ export const settingsApi = baseApi.injectEndpoints({
         },
       }),
       transformResponse: transformSettingsResponse,
-      invalidatesTags: ['Settings', 'Dashboard', 'Attendance'],
+      invalidatesTags: ['Settings', 'Attendance'],
     }),
 
     updateKioskSettings: builder.mutation({
@@ -105,7 +105,7 @@ export const settingsApi = baseApi.injectEndpoints({
         },
       }),
       transformResponse: transformSettingsResponse,
-      invalidatesTags: ['Settings', 'Dashboard'],
+      invalidatesTags: ['Settings'],
     }),
 
     getDeviceStatus: builder.query({

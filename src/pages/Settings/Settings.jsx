@@ -3,11 +3,12 @@ import { useSelector } from 'react-redux';
 import {
   PageInfoOverlay,
   PageTourButtons,
-  SETTINGS_ATTENDANCE_STEPS,
-  SETTINGS_SHIFTS_STEPS,
-  SETTINGS_HELP_STEPS,
-  SETTINGS_KIOSK_STEPS,
-  SETTINGS_PAYMENT_STEPS,
+  SETTINGS_ATTENDANCE_STEPS_BY_LANG,
+  SETTINGS_SHIFTS_STEPS_BY_LANG,
+  SETTINGS_HELP_STEPS_BY_LANG,
+  SETTINGS_KIOSK_STEPS_BY_LANG,
+  SETTINGS_PAYMENT_STEPS_BY_LANG,
+  SETTINGS_PAGE_LABELS,
   usePageTour,
 } from '../../components/common';
 import {
@@ -22,11 +23,11 @@ import {
 import { getSettingsNavItem } from '../../components/pages/settings/settingsNav';
 
 function getSettingsTourSteps(pathname) {
-  if (pathname.includes('/payment')) return SETTINGS_PAYMENT_STEPS;
-  if (pathname.includes('/cameras')) return SETTINGS_KIOSK_STEPS;
-  if (pathname.includes('/help')) return SETTINGS_HELP_STEPS;
-  if (pathname.includes('/shifts')) return SETTINGS_SHIFTS_STEPS;
-  return SETTINGS_ATTENDANCE_STEPS;
+  if (pathname.includes('/payment')) return SETTINGS_PAYMENT_STEPS_BY_LANG;
+  if (pathname.includes('/cameras')) return SETTINGS_KIOSK_STEPS_BY_LANG;
+  if (pathname.includes('/help')) return SETTINGS_HELP_STEPS_BY_LANG;
+  if (pathname.includes('/shifts')) return SETTINGS_SHIFTS_STEPS_BY_LANG;
+  return SETTINGS_ATTENDANCE_STEPS_BY_LANG;
 }
 
 function getSettingsTourStorageKey(pathname) {
@@ -40,11 +41,13 @@ function getSettingsTourStorageKey(pathname) {
 const Settings = () => {
   const location = useLocation();
   const user = useSelector((state) => state.auth.user);
-  const steps = getSettingsTourSteps(location.pathname);
+  const stepsByLang = getSettingsTourSteps(location.pathname);
   const activeSection = getSettingsNavItem(location.pathname);
-  const { infoOpen, startTutorial, startInfo, closeInfo } = usePageTour(
-    steps,
-    getSettingsTourStorageKey(location.pathname)
+  const { infoOpen, startTutorial, startInfo, closeInfo, steps, pageLabel, language } = usePageTour(
+    stepsByLang,
+    getSettingsTourStorageKey(location.pathname),
+    SETTINGS_PAGE_LABELS,
+    location.pathname
   );
 
   return (
@@ -114,7 +117,12 @@ const Settings = () => {
       </div>
 
       {infoOpen && (
-        <PageInfoOverlay steps={steps} onClose={closeInfo} pageLabel="Settings" />
+        <PageInfoOverlay
+          steps={steps}
+          onClose={closeInfo}
+          pageLabel={pageLabel || 'Settings'}
+          language={language}
+        />
       )}
     </div>
   );

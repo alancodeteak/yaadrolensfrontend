@@ -1,7 +1,11 @@
 import { useMemo, useState } from 'react';
 import clsx from 'clsx';
 import { LoadingScreen } from '../../../common';
-import { DASHBOARD_PANEL } from '../../dashboard/dashboardTheme';
+import {
+  DASHBOARD_MOBILE_STACK,
+  DASHBOARD_PANEL,
+  DASHBOARD_TABLE_DESKTOP,
+} from '../../dashboard/dashboardTheme';
 import { useGetEmployeeTimelineQuery } from '../../../../store/api/attendanceApi';
 import { formatDurationHours, resolveLiveAttendanceStatus } from '../../../../store/api/transforms';
 import { formatShiftLabel, resolveRowWorkHours } from '../../../../utils/shiftHours';
@@ -413,7 +417,7 @@ const EmployeeAttendanceTimeline = ({ employeeId, days = 7, endDate = null }) =>
         <div className="px-3 py-3 sm:px-4">
           <WeekTimelineChart days={dayRows} />
 
-          <div className="mt-3 overflow-x-auto">
+          <div className={clsx(DASHBOARD_TABLE_DESKTOP, 'mt-3')}>
             <table className="w-full min-w-[480px]">
               <thead>
                 <tr className="border-b border-gray-100">
@@ -462,6 +466,39 @@ const EmployeeAttendanceTimeline = ({ employeeId, days = 7, endDate = null }) =>
                 })}
               </tbody>
             </table>
+          </div>
+
+          <div className={clsx(DASHBOARD_MOBILE_STACK, '!px-0 pt-3')}>
+            {[...dayRows].reverse().map((row) => {
+              const status = resolveLiveAttendanceStatus(row);
+              return (
+                <div
+                  key={row.date}
+                  className="rounded-xl border border-gray-100 bg-gray-50/40 p-3"
+                >
+                  <div className="flex items-start justify-between gap-2">
+                    <div>
+                      <p className="text-sm font-semibold text-gray-900">
+                        {formatWeekday(row.date)}{' '}
+                        <span className="font-normal text-gray-400">{formatDayNum(row.date)}</span>
+                      </p>
+                      <p className="mt-0.5 text-xs text-gray-500">{formatShiftLabel(row)}</p>
+                    </div>
+                    <span
+                      className={clsx(
+                        'inline-flex shrink-0 rounded-full px-2 py-0.5 text-[10px] font-semibold',
+                        STATUS_BADGE[status] || 'bg-gray-100 text-gray-600'
+                      )}
+                    >
+                      {status}
+                    </span>
+                  </div>
+                  <p className="mt-2 text-xs tabular-nums text-gray-700">
+                    In {formatClock(row.clock_in) || '—'} · Out {formatClock(row.clock_out) || '—'}
+                  </p>
+                </div>
+              );
+            })}
           </div>
         </div>
       )}

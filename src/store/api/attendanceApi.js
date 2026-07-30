@@ -40,7 +40,7 @@ export const attendanceApi = baseApi.injectEndpoints({
         params: { day: end_date || start_date || today() },
       }),
       transformResponse: (response, meta, arg) =>
-        transformDailyRowsToLogs(response).slice(0, arg?.limit ?? 100),
+        transformDailyRowsToLogs(response, arg?.limit ?? 100),
       providesTags: ['Attendance'],
     }),
 
@@ -121,7 +121,7 @@ export const attendanceApi = baseApi.injectEndpoints({
           ...(punch_time ? { punch_time } : {}),
         },
       }),
-      invalidatesTags: ['Attendance', 'Dashboard'],
+      invalidatesTags: ['Attendance'],
     }),
   }),
 });

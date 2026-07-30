@@ -2,7 +2,13 @@ import { useEffect, useRef } from 'react';
 import clsx from 'clsx';
 import { History, Plus, Users, Wallet } from 'lucide-react';
 import { UserAvatar, ButtonSpinner } from '../../../common';
-import { DASHBOARD_BTN_PRIMARY, DASHBOARD_PANEL } from '../../dashboard/dashboardTheme';
+import {
+  DASHBOARD_BTN_PRIMARY,
+  DASHBOARD_ICON_BTN,
+  DASHBOARD_MOBILE_STACK,
+  DASHBOARD_PANEL,
+  DASHBOARD_TABLE_DESKTOP,
+} from '../../dashboard/dashboardTheme';
 import {
   formatDate,
   formatMoney,
@@ -26,10 +32,7 @@ const ActionButton = ({ onClick, title, children, className }) => (
     type="button"
     onClick={onClick}
     title={title}
-    className={clsx(
-      'rounded-lg p-1.5 text-gray-400 transition-colors duration-200 hover:bg-blue-50 hover:text-[#007AFF]',
-      className
-    )}
+    className={clsx(DASHBOARD_ICON_BTN, className)}
   >
     {children}
   </button>
@@ -90,7 +93,7 @@ const PaymentTable = ({
               type="button"
               onClick={onApproveSelected}
               disabled={isApprovingSelected}
-              className={`${DASHBOARD_BTN_PRIMARY} py-2`}
+              className={`${DASHBOARD_BTN_PRIMARY} w-full justify-center py-2 sm:w-auto`}
             >
               {isApprovingSelected && <ButtonSpinner size="sm" className="text-white" />}
               Approve selected
@@ -117,133 +120,234 @@ const PaymentTable = ({
           )}
         </div>
       ) : (
-        <div
-          className={clsx(
-            'overflow-x-auto transition-opacity duration-200',
-            isFetching && 'pointer-events-none opacity-60'
-          )}
-        >
-          <table className="w-full min-w-[880px]">
-            <thead>
-              <tr className="border-b border-gray-100">
-                {showApprovalColumn && (
-                  <th className={clsx(TH, 'w-10 pr-0')}>
-                    <input
-                      ref={selectAllRef}
-                      type="checkbox"
-                      checked={allApprovableSelected}
-                      onChange={onToggleSelectAll}
-                      className="h-4 w-4 rounded border-gray-300 text-[#007AFF] focus:ring-[#007AFF]/30"
-                      aria-label="Select all pending salaries on this page"
-                    />
-                  </th>
-                )}
-                <th className={clsx(TH, 'min-w-40')}>Employee</th>
-                <th className={clsx(TH, 'min-w-28 hidden sm:table-cell')}>Code</th>
-                <th className={clsx(TH, 'min-w-32')}>Type</th>
-                <th className={clsx(TH, 'min-w-24')}>Status</th>
-                <th className={clsx(TH, 'min-w-24')}>Amount</th>
-                <th className={clsx(TH, 'min-w-28 hidden md:table-cell')}>Date</th>
-                <th className={clsx(TH, 'min-w-28 hidden lg:table-cell')}>Period</th>
-                <th className={clsx(TH, 'w-28')}>Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-100">
-              {rows.map((row) => {
-                const approvable = isApprovableRow(row);
-                const isSelected = selectedIds.includes(row.id);
+        <>
+          <div
+            className={clsx(
+              DASHBOARD_TABLE_DESKTOP,
+              'transition-opacity duration-200',
+              isFetching && 'pointer-events-none opacity-60'
+            )}
+          >
+            <table className="w-full min-w-[880px]">
+              <thead>
+                <tr className="border-b border-gray-100">
+                  {showApprovalColumn && (
+                    <th className={clsx(TH, 'w-10 pr-0')}>
+                      <input
+                        ref={selectAllRef}
+                        type="checkbox"
+                        checked={allApprovableSelected}
+                        onChange={onToggleSelectAll}
+                        className="h-4 w-4 rounded border-gray-300 text-[#007AFF] focus:ring-[#007AFF]/30"
+                        aria-label="Select all pending salaries on this page"
+                      />
+                    </th>
+                  )}
+                  <th className={clsx(TH, 'min-w-40')}>Employee</th>
+                  <th className={clsx(TH, 'min-w-28 hidden sm:table-cell')}>Code</th>
+                  <th className={clsx(TH, 'min-w-32')}>Type</th>
+                  <th className={clsx(TH, 'min-w-24')}>Status</th>
+                  <th className={clsx(TH, 'min-w-24')}>Amount</th>
+                  <th className={clsx(TH, 'min-w-28 hidden md:table-cell')}>Date</th>
+                  <th className={clsx(TH, 'min-w-28 hidden lg:table-cell')}>Period</th>
+                  <th className={clsx(TH, 'w-28')}>Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-100">
+                {rows.map((row) => {
+                  const approvable = isApprovableRow(row);
+                  const isSelected = selectedIds.includes(row.id);
 
-                return (
-                  <tr
-                    key={row.id}
-                    className={clsx(
-                      'group transition-colors duration-200 hover:bg-gray-50/80',
-                      isSelected && 'bg-[#007AFF]/5'
-                    )}
-                  >
-                    {showApprovalColumn && (
-                      <td className={clsx(TD, 'pr-0')}>
-                        {approvable ? (
-                          <input
-                            type="checkbox"
-                            checked={isSelected}
-                            onChange={() => onToggleRow?.(row.id)}
-                            className="h-4 w-4 rounded border-gray-300 text-[#007AFF] focus:ring-[#007AFF]/30"
-                            aria-label={`Select ${row.employee_name}`}
+                  return (
+                    <tr
+                      key={row.id}
+                      className={clsx(
+                        'group transition-colors duration-200 hover:bg-gray-50/80',
+                        isSelected && 'bg-[#007AFF]/5'
+                      )}
+                    >
+                      {showApprovalColumn && (
+                        <td className={clsx(TD, 'pr-0')}>
+                          {approvable ? (
+                            <input
+                              type="checkbox"
+                              checked={isSelected}
+                              onChange={() => onToggleRow?.(row.id)}
+                              className="h-4 w-4 rounded border-gray-300 text-[#007AFF] focus:ring-[#007AFF]/30"
+                              aria-label={`Select ${row.employee_name}`}
+                            />
+                          ) : (
+                            <span className="inline-block h-4 w-4" aria-hidden="true" />
+                          )}
+                        </td>
+                      )}
+                      <td className={TD}>
+                        <div className="flex items-center gap-3">
+                          <UserAvatar
+                            className="h-9 w-9 shrink-0 rounded-full object-cover ring-1 ring-gray-100"
+                            src={row.profilePhotoUrl || row.photo || row.avatar}
+                            name={row.employee_name}
+                            seed={row.employee_id}
                           />
-                        ) : (
-                          <span className="inline-block h-4 w-4" aria-hidden="true" />
-                        )}
+                          <p className="truncate text-sm font-semibold text-gray-900">
+                            {row.employee_name}
+                          </p>
+                        </div>
                       </td>
-                    )}
-                    <td className={TD}>
-                      <div className="flex items-center gap-3">
-                        <UserAvatar
-                          className="h-9 w-9 shrink-0 rounded-full object-cover ring-1 ring-gray-100"
-                          src={row.profilePhotoUrl || row.photo || row.avatar}
-                          name={row.employee_name}
-                          seed={row.employee_id}
-                        />
-                        <p className="truncate text-sm font-semibold text-gray-900">
-                          {row.employee_name}
-                        </p>
-                      </div>
-                    </td>
-                    <td className={clsx(TD, 'hidden sm:table-cell')}>
-                      <span className="font-mono text-xs text-gray-600">{row.employee_code}</span>
-                    </td>
-                    <td className={TD}>
-                      <span
-                        className={clsx(
-                          'inline-flex rounded-full px-2 py-0.5 text-[10px] font-semibold',
-                          PAYMENT_TYPE_STYLES[row.payment_type] || PAYMENT_TYPE_STYLES.other
-                        )}
-                      >
-                        {PAYMENT_TYPE_LABELS[row.payment_type] || row.payment_type}
-                      </span>
-                    </td>
-                    <td className={TD}>
-                      <span
-                        className={clsx(
-                          'inline-flex rounded-full px-2 py-0.5 text-[10px] font-semibold',
-                          PAYMENT_STATUS_STYLES[row.status] || PAYMENT_STATUS_STYLES.paid
-                        )}
-                      >
-                        {PAYMENT_STATUS_LABELS[row.status] || row.status}
-                      </span>
-                    </td>
-                    <td className={TD}>
-                      <span className="tabular-nums font-medium">{formatMoney(row.amount)}</span>
-                    </td>
-                    <td className={clsx(TD, 'hidden md:table-cell')}>
-                      <span className="text-gray-600">{formatDate(row.payment_date)}</span>
-                    </td>
-                    <td className={clsx(TD, 'hidden lg:table-cell')}>
-                      <span className="text-gray-600">
-                        {periodLabel(row.period_year, row.period_month)}
-                      </span>
-                    </td>
-                    <td className={TD}>
-                      <div className="flex items-center gap-1">
-                        {row.status === 'approved' && row.payment_type === 'monthly_salary' && (
-                          <ActionButton onClick={() => onMarkPaid?.(row)} title="Mark as paid">
-                            <Wallet className="h-4 w-4" strokeWidth={2} />
+                      <td className={clsx(TD, 'hidden sm:table-cell')}>
+                        <span className="font-mono text-xs text-gray-600">{row.employee_code}</span>
+                      </td>
+                      <td className={TD}>
+                        <span
+                          className={clsx(
+                            'inline-flex rounded-full px-2 py-0.5 text-[10px] font-semibold',
+                            PAYMENT_TYPE_STYLES[row.payment_type] || PAYMENT_TYPE_STYLES.other
+                          )}
+                        >
+                          {PAYMENT_TYPE_LABELS[row.payment_type] || row.payment_type}
+                        </span>
+                      </td>
+                      <td className={TD}>
+                        <span
+                          className={clsx(
+                            'inline-flex rounded-full px-2 py-0.5 text-[10px] font-semibold',
+                            PAYMENT_STATUS_STYLES[row.status] || PAYMENT_STATUS_STYLES.paid
+                          )}
+                        >
+                          {PAYMENT_STATUS_LABELS[row.status] || row.status}
+                        </span>
+                      </td>
+                      <td className={TD}>
+                        <span className="tabular-nums font-medium">{formatMoney(row.amount)}</span>
+                      </td>
+                      <td className={clsx(TD, 'hidden md:table-cell')}>
+                        <span className="text-gray-600">{formatDate(row.payment_date)}</span>
+                      </td>
+                      <td className={clsx(TD, 'hidden lg:table-cell')}>
+                        <span className="text-gray-600">
+                          {periodLabel(row.period_year, row.period_month)}
+                        </span>
+                      </td>
+                      <td className={TD}>
+                        <div className="flex items-center gap-1">
+                          {row.status === 'approved' && row.payment_type === 'monthly_salary' && (
+                            <ActionButton onClick={() => onMarkPaid?.(row)} title="Mark as paid">
+                              <Wallet className="h-4 w-4" strokeWidth={2} />
+                            </ActionButton>
+                          )}
+                          <ActionButton onClick={() => onHistory(row)} title="View history">
+                            <History className="h-4 w-4" strokeWidth={2} />
                           </ActionButton>
-                        )}
-                        <ActionButton onClick={() => onHistory(row)} title="View history">
-                          <History className="h-4 w-4" strokeWidth={2} />
-                        </ActionButton>
-                        <ActionButton onClick={() => onRecord(row)} title="Record payment">
-                          <Plus className="h-4 w-4" strokeWidth={2} />
-                        </ActionButton>
+                          <ActionButton onClick={() => onRecord(row)} title="Record payment">
+                            <Plus className="h-4 w-4" strokeWidth={2} />
+                          </ActionButton>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+
+          <div
+            className={clsx(
+              DASHBOARD_MOBILE_STACK,
+              'transition-opacity duration-200',
+              isFetching && 'pointer-events-none opacity-60'
+            )}
+          >
+            {rows.map((row) => {
+              const approvable = isApprovableRow(row);
+              const isSelected = selectedIds.includes(row.id);
+              return (
+                <div
+                  key={row.id}
+                  className={clsx(
+                    'rounded-xl border border-gray-100 bg-gray-50/40 p-4',
+                    isSelected && 'border-[#007AFF]/30 bg-[#007AFF]/5'
+                  )}
+                >
+                  <div className="flex items-start gap-3">
+                    {showApprovalColumn && approvable && (
+                      <input
+                        type="checkbox"
+                        checked={isSelected}
+                        onChange={() => onToggleRow?.(row.id)}
+                        className="mt-1 h-5 w-5 rounded border-gray-300 text-[#007AFF] focus:ring-[#007AFF]/30"
+                        aria-label={`Select ${row.employee_name}`}
+                      />
+                    )}
+                    <UserAvatar
+                      className="h-10 w-10 shrink-0 rounded-full object-cover ring-1 ring-gray-100"
+                      src={row.profilePhotoUrl || row.photo || row.avatar}
+                      name={row.employee_name}
+                      seed={row.employee_id}
+                    />
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm font-semibold text-gray-900">
+                        {row.employee_name}
+                      </p>
+                      <p className="truncate font-mono text-xs text-gray-500">{row.employee_code}</p>
+                      <div className="mt-2 flex flex-wrap gap-1.5">
+                        <span
+                          className={clsx(
+                            'inline-flex rounded-full px-2 py-0.5 text-[10px] font-semibold',
+                            PAYMENT_TYPE_STYLES[row.payment_type] || PAYMENT_TYPE_STYLES.other
+                          )}
+                        >
+                          {PAYMENT_TYPE_LABELS[row.payment_type] || row.payment_type}
+                        </span>
+                        <span
+                          className={clsx(
+                            'inline-flex rounded-full px-2 py-0.5 text-[10px] font-semibold',
+                            PAYMENT_STATUS_STYLES[row.status] || PAYMENT_STATUS_STYLES.paid
+                          )}
+                        >
+                          {PAYMENT_STATUS_LABELS[row.status] || row.status}
+                        </span>
                       </div>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
+                      <p className="mt-2 text-base font-semibold tabular-nums text-gray-900">
+                        {formatMoney(row.amount)}
+                      </p>
+                      <p className="mt-0.5 text-xs text-gray-500">
+                        {formatDate(row.payment_date)}
+                        {row.period_year && row.period_month
+                          ? ` · ${periodLabel(row.period_year, row.period_month)}`
+                          : ''}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="mt-3 flex flex-wrap gap-2 border-t border-gray-100 pt-3">
+                    {row.status === 'approved' && row.payment_type === 'monthly_salary' && (
+                      <button
+                        type="button"
+                        onClick={() => onMarkPaid?.(row)}
+                        className={clsx(DASHBOARD_BTN_PRIMARY, 'flex-1 justify-center py-2 text-xs')}
+                      >
+                        Mark paid
+                      </button>
+                    )}
+                    <button
+                      type="button"
+                      onClick={() => onHistory(row)}
+                      className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-xl border border-gray-200 bg-white px-3 py-2 text-xs font-semibold text-gray-700"
+                    >
+                      <History className="h-3.5 w-3.5" /> History
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => onRecord(row)}
+                      className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-xl border border-gray-200 bg-white px-3 py-2 text-xs font-semibold text-gray-700"
+                    >
+                      <Plus className="h-3.5 w-3.5" /> Record
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </>
       )}
     </div>
   );

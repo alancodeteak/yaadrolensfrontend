@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useEffect, useState, useCallback } from 'react';
 import {
   buildEmployeePhotoMap,
   computePeriodPaymentStats,
@@ -61,6 +61,7 @@ export function usePayrollQueries({
   searchTerm,
   currentPage,
   balanceLedgerPage,
+  needsEmployeeRoster = false,
 }) {
   const { data: orgSettings } = useGetSettingsQuery();
   const payrollPeriodStillOpen = useMemo(() => {
@@ -122,10 +123,21 @@ export function usePayrollQueries({
   const advancesError = Boolean(advancesErr);
 
   const [triggerGetEmployees] = useLazyGetEmployeesQuery();
+  const [loadEmployees, setLoadEmployees] = useState(needsEmployeeRoster);
+
+  useEffect(() => {
+    if (needsEmployeeRoster) {
+      setLoadEmployees(true);
+      return undefined;
+    }
+    const timer = window.setTimeout(() => setLoadEmployees(true), 300);
+    return () => window.clearTimeout(timer);
+  }, [needsEmployeeRoster]);
+
   const { data: employeesData } = useFetchAllPages(
     triggerGetEmployees,
     {},
-    { limit: AGGREGATE_PAGE_LIMIT }
+    { skip: !loadEmployees, limit: AGGREGATE_PAGE_LIMIT }
   );
   const employeePhotoMap = useMemo(
     () => buildEmployeePhotoMap(employeesData?.items ?? []),
@@ -231,14 +243,34 @@ export function usePayrollQueries({
     }
   };
 
-  const refreshAll = () => {
-    safeRefetch(refetchPayments);
-    safeRefetch(refetchAdvances);
-    safeRefetch(refetchBonuses);
-    safeRefetch(refetchBalances);
-    safeRefetch(refetchBalanceLedger);
+  const refreshAll = useCallback(() => {
     safeRefetch(refetchSummary);
-  };
+
+    if (activeTab === 'ledger') {
+      safeRefetch(refetchPayments);
+      return;
+    }
+    if (activeTab === 'advances') {
+      safeRefetch(refetchAdvances);
+      return;
+    }
+    if (activeTab === 'bonuses') {
+      safeRefetch(refetchBonuses);
+      return;
+    }
+    if (activeTab === 'balance') {
+      safeRefetch(refetchBalances);
+      safeRefetch(refetchBalanceLedger);
+    }
+  }, [
+    activeTab,
+    refetchPayments,
+    refetchAdvances,
+    refetchBonuses,
+    refetchBalances,
+    refetchBalanceLedger,
+    refetchSummary,
+  ]);
 
   const periodStats = useMemo(
     () => computePeriodPaymentStats(paymentsData?.items || []),

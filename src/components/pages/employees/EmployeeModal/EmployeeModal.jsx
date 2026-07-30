@@ -3,6 +3,7 @@ import clsx from 'clsx';
 import { X } from 'lucide-react';
 import { LottieLoader, dashboardToast } from '../../../common';
 import { useGetDepartmentsQuery } from '../../../../store/api/settingsApi';
+import useAppScrollLock from '../../../../hooks/useAppScrollLock';
 import ProfilePhotoField from '../ProfilePhotoField';
 import EmployeeDocumentsField from '../EmployeeDocumentsField';
 import { EMPTY_DOCUMENT_STATE } from '../../../../utils/employeeDocumentConstants';
@@ -12,6 +13,7 @@ const inputClass =
   'w-full rounded-xl border border-gray-200/60 bg-white px-3.5 py-2.5 text-sm text-gray-900 shadow-[0_2px_16px_rgba(0,0,0,0.04)] placeholder:text-gray-400 transition-colors duration-200 focus:border-[#007AFF] focus:outline-none focus:ring-2 focus:ring-[#007AFF]/20 disabled:opacity-50';
 
 const EmployeeModal = ({ isOpen, onClose, onSave, isLoading }) => {
+  useAppScrollLock(isOpen);
   const [formData, setFormData] = useState({
     name: '',
     department_id: '',
@@ -99,7 +101,7 @@ const EmployeeModal = ({ isOpen, onClose, onSave, isLoading }) => {
       role="presentation"
     >
       <div
-        className="flex max-h-[90vh] w-full max-w-2xl flex-col overflow-hidden rounded-2xl border border-gray-200/60 bg-white shadow-[0_2px_16px_rgba(0,0,0,0.06)]"
+        className="flex max-h-[min(90dvh,90vh)] w-full max-w-2xl flex-col overflow-hidden rounded-2xl border border-gray-200/60 bg-white shadow-[0_2px_16px_rgba(0,0,0,0.06)]"
         onClick={(e) => e.stopPropagation()}
         role="dialog"
         aria-modal="true"

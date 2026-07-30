@@ -1,11 +1,14 @@
 import React, { useState } from 'react';
 import Card from '../../../common/Card/Card';
+import useAppScrollLock from '../../../../hooks/useAppScrollLock';
 
 const PositionManagement = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedDepartment, setSelectedDepartment] = useState('All Departments');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingPosition, setEditingPosition] = useState(null);
+
+  useAppScrollLock(isModalOpen);
 
   // Mock data for positions
   const positions = [
