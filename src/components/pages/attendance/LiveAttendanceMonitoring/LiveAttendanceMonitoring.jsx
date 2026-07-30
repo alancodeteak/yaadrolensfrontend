@@ -80,6 +80,7 @@ const LiveAttendanceMonitoring = () => {
   const [selectedStatus, setSelectedStatus] = useState('All Status');
   const [selectedDay, setSelectedDay] = useState(todayKey);
   const [manualPunchTarget, setManualPunchTarget] = useState(null);
+  const [listRefreshKey, setListRefreshKey] = useState(0);
   const [manualPunch] = useManualPunchMutation();
 
   // Align default date with org timezone once settings load (without overriding a manual pick).
@@ -246,6 +247,15 @@ const LiveAttendanceMonitoring = () => {
     setManualPunchTarget({ employee, action, openedAt: Date.now() });
   }, []);
 
+  const handleRefresh = useCallback(async () => {
+    try {
+      await refetch().unwrap();
+      setListRefreshKey((key) => key + 1);
+    } catch {
+      dashboardToast.error('Could not refresh attendance. Please try again.', 'Refresh failed');
+    }
+  }, [refetch]);
+
   const handleManualPunchConfirm = async ({ employee_id, action, confirmation, punch_time }) => {
     const result = await manualPunch({ employee_id, action, confirmation, punch_time }).unwrap();
     dashboardToast.success(
@@ -253,7 +263,7 @@ const LiveAttendanceMonitoring = () => {
       'Manual attendance'
     );
     setManualPunchTarget(null);
-    refetch();
+    await handleRefresh();
   };
 
   if (dailyLoading && !dailyData) {
@@ -265,7 +275,7 @@ const LiveAttendanceMonitoring = () => {
       <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
         <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
           <p>Could not load attendance for this date. Please try again.</p>
-          <button type="button" onClick={() => refetch()} className={`${DASHBOARD_BTN_PRIMARY} mt-3`}>
+          <button type="button" onClick={handleRefresh} className={`${DASHBOARD_BTN_PRIMARY} mt-3`}>
             Retry
           </button>
         </div>
@@ -275,7 +285,7 @@ const LiveAttendanceMonitoring = () => {
 
   return (
     <div className="mx-auto max-w-7xl space-y-6 px-4 py-8 sm:px-6 lg:px-8">
-      <div className="flex flex-col gap-4 sm:flex-row sm:flex-wrap sm:items-end sm:justify-between">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div className="min-w-0">
           <h1 className="text-3xl font-bold text-gray-900">Live attendance</h1>
           <p className="mt-1 text-sm text-gray-500">
@@ -283,36 +293,31 @@ const LiveAttendanceMonitoring = () => {
             <LiveAttendanceLiveClock active={isToday} />
           </p>
         </div>
-        <div className="flex w-full flex-col gap-3 sm:w-auto sm:flex-row sm:flex-wrap sm:items-center">
-          {isToday && (
-            <div className="flex items-center gap-2 text-xs font-medium text-emerald-600">
-              <span className="h-2 w-2 animate-pulse rounded-full bg-emerald-500" />
-              Live updates
-            </div>
-          )}
-          <div
-            className={clsx(
-              DASHBOARD_PANEL,
-              'flex w-full flex-col gap-3 px-3 py-2 sm:w-auto sm:flex-row sm:flex-wrap sm:items-center'
-            )}
-            data-tour="date-refresh"
-          >
-            <div className="flex min-w-0 flex-1 items-center gap-2 sm:flex-none">
-              <span className="text-[10px] font-medium uppercase tracking-wide text-gray-400">
-                Date
-              </span>
-              <DashboardDatePicker
-                id="attendance-date"
-                label="Attendance date"
-                value={selectedDay}
-                onChange={setSelectedDay}
-                maxDate={todayKey}
-              />
-            </div>
+        <PageTourButtons onTutorial={startTutorial} onInfo={startInfo} />
+      </div>
+
+      <div
+        data-tour="date-refresh"
+        className={clsx(DASHBOARD_PANEL, 'px-4 py-3')}
+      >
+        <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
+          <span className="shrink-0 text-xs font-medium text-gray-500">Date</span>
+          <div className="flex flex-wrap items-center gap-2">
+            <DashboardDatePicker
+              id="attendance-date"
+              label="Attendance date"
+              value={selectedDay}
+              onChange={setSelectedDay}
+              maxDate={todayKey}
+              className="w-full min-w-[220px] sm:w-auto"
+            />
             <button
               type="button"
-              onClick={() => refetch()}
-              className={clsx(DASHBOARD_BTN_SECONDARY, 'min-h-11 w-full justify-center sm:min-h-0 sm:w-auto')}
+              data-datepicker-sibling
+              onClick={handleRefresh}
+              disabled={dailyFetching}
+              aria-busy={dailyFetching}
+              className={clsx(DASHBOARD_BTN_SECONDARY, 'relative shrink-0 min-h-11 justify-center')}
             >
               <RefreshCw
                 className={clsx('h-4 w-4', dailyFetching && 'animate-spin')}
@@ -320,8 +325,13 @@ const LiveAttendanceMonitoring = () => {
               />
               Refresh
             </button>
+            {isToday && (
+              <div className="flex items-center gap-2 text-xs font-medium text-emerald-600">
+                <span className="h-2 w-2 animate-pulse rounded-full bg-emerald-500" />
+                Live updates
+              </div>
+            )}
           </div>
-          <PageTourButtons onTutorial={startTutorial} onInfo={startInfo} />
         </div>
       </div>
 
@@ -404,6 +414,7 @@ const LiveAttendanceMonitoring = () => {
         onOpenReport={openAttendanceReport}
         onManualPunch={openManualPunch}
         onClearFilters={clearFilters}
+        refreshKey={listRefreshKey}
       />
 
       <div data-tour="hourly-chart">

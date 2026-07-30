@@ -4,8 +4,9 @@ import clsx from 'clsx';
 import { Calendar, ChevronDown, ChevronLeft, ChevronRight } from 'lucide-react';
 
 const WEEKDAYS = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
-const POPUP_MIN_WIDTH = 300;
+const POPUP_WIDTH = 320;
 const POPUP_HEIGHT_ESTIMATE = 360;
+const POPUP_Z_INDEX = 9000;
 
 function normalizeDateKey(value) {
   if (!value) return '';
@@ -64,11 +65,15 @@ const DashboardDatePicker = ({
 
     const updatePosition = () => {
       const rect = rootRef.current.getBoundingClientRect();
-      const width = Math.min(
-        Math.max(rect.width, POPUP_MIN_WIDTH),
-        Math.max(POPUP_MIN_WIDTH, window.innerWidth - 16)
-      );
-      const left = Math.min(Math.max(8, rect.left), window.innerWidth - width - 8);
+      const width = Math.min(POPUP_WIDTH, window.innerWidth - 16);
+      const leftFromTrigger = Math.max(8, rect.left);
+      const leftFromRightEdge = rect.right - width;
+      // When the popup is wider than the trigger (e.g. date + Refresh in one row), align
+      // to the trigger's right edge so day cells don't sit over sibling buttons.
+      const wouldOverlapSiblings = rect.left + width > rect.right + 8;
+      const left = wouldOverlapSiblings
+        ? Math.min(Math.max(8, leftFromRightEdge), window.innerWidth - width - 8)
+        : Math.min(leftFromTrigger, window.innerWidth - width - 8);
       const spaceBelow = window.innerHeight - rect.bottom;
       const openAbove = spaceBelow < POPUP_HEIGHT_ESTIMATE && rect.top > spaceBelow;
       const top = openAbove
@@ -80,7 +85,7 @@ const DashboardDatePicker = ({
         left,
         top,
         width,
-        zIndex: 10000,
+        zIndex: POPUP_Z_INDEX,
       });
     };
 
@@ -90,22 +95,36 @@ const DashboardDatePicker = ({
       if (!popupRef.current || !rootRef.current) return;
       const rect = rootRef.current.getBoundingClientRect();
       const popupHeight = popupRef.current.getBoundingClientRect().height;
+      const width = Math.min(POPUP_WIDTH, window.innerWidth - 16);
       const spaceBelow = window.innerHeight - rect.bottom;
       const openAbove = spaceBelow < popupHeight + 16 && rect.top > spaceBelow;
       setPopupStyle((prev) => ({
         ...prev,
+        width,
         top: openAbove
           ? Math.max(8, rect.top - popupHeight - 8)
           : Math.min(rect.bottom + 8, window.innerHeight - popupHeight - 8),
       }));
     });
 
-    window.addEventListener('resize', updatePosition);
-    window.addEventListener('scroll', updatePosition, true);
+    const mainScroller = document.getElementById('main-content');
 
-    const handleClickOutside = (event) => {
+    // Reposition on scroll inside the admin scroller — do NOT close. Attendance (and
+    // other long pages) scroll inside #main-content; closing on scroll made day cells
+    // unclickable while Analytics often appeared fine on shorter layouts.
+    const handleScroll = () => updatePosition();
+
+    window.addEventListener('resize', updatePosition);
+    mainScroller?.addEventListener('scroll', handleScroll, { passive: true });
+
+    const handlePointerDownOutside = (event) => {
       const inTrigger = rootRef.current?.contains(event.target);
       const inPopup = popupRef.current?.contains(event.target);
+      const onSibling = event.target.closest?.('[data-datepicker-sibling]');
+      if (onSibling) {
+        setOpen(false);
+        return;
+      }
       if (!inTrigger && !inPopup) setOpen(false);
     };
 
@@ -113,13 +132,13 @@ const DashboardDatePicker = ({
       if (event.key === 'Escape') setOpen(false);
     };
 
-    document.addEventListener('mousedown', handleClickOutside);
+    document.addEventListener('pointerdown', handlePointerDownOutside, true);
     document.addEventListener('keydown', handleEscape);
     return () => {
       window.cancelAnimationFrame(raf);
       window.removeEventListener('resize', updatePosition);
-      window.removeEventListener('scroll', updatePosition, true);
-      document.removeEventListener('mousedown', handleClickOutside);
+      mainScroller?.removeEventListener('scroll', handleScroll);
+      document.removeEventListener('pointerdown', handlePointerDownOutside, true);
       document.removeEventListener('keydown', handleEscape);
     };
   }, [open]);
@@ -173,7 +192,7 @@ const DashboardDatePicker = ({
       role="dialog"
       aria-label={`${label} calendar`}
       style={popupStyle}
-      className="rounded-2xl border border-gray-200/60 bg-white shadow-[0_8px_32px_rgba(0,0,0,0.12)]"
+      className="pointer-events-auto rounded-2xl border border-gray-200/60 bg-white shadow-[0_8px_32px_rgba(0,0,0,0.12)]"
     >
       <div className="flex items-center justify-between border-b border-gray-100 px-3 py-2.5">
         <button
@@ -207,10 +226,10 @@ const DashboardDatePicker = ({
           ))}
         </div>
 
-        <div className="grid grid-cols-7 gap-1">
+        <div className="grid grid-cols-7 gap-1.5">
           {cells.map((cell, idx) => {
             if (cell.type === 'pad') {
-              return <div key={`pad-${idx}`} className="aspect-square w-full" aria-hidden="true" />;
+              return <div key={`pad-${idx}`} className="h-10 w-full" aria-hidden="true" />;
             }
 
             const disabled = isDisabled(cell.iso);
@@ -224,12 +243,12 @@ const DashboardDatePicker = ({
                 disabled={disabled}
                 onClick={() => handleSelect(cell.iso)}
                 className={clsx(
-                  'flex aspect-square w-full items-center justify-center rounded-lg border text-[11px] font-medium leading-none transition-colors',
+                  'flex h-10 w-full min-w-0 items-center justify-center rounded-lg border text-[11px] font-medium leading-none transition-colors touch-manipulation',
                   disabled && 'cursor-not-allowed border-gray-100 bg-gray-50 text-gray-300',
-                  !disabled && !isSelected && 'border-gray-100 bg-white text-gray-700 hover:bg-gray-50',
+                  !disabled && !isSelected && 'border-gray-100 bg-white text-gray-700 hover:bg-gray-50 active:bg-gray-100',
                   isSelected &&
                     'border-[#007AFF]/40 bg-[#007AFF]/15 font-semibold text-[#007AFF]',
-                  isToday && !isSelected && 'ring-1 ring-[#007AFF]/50 ring-offset-1'
+                  isToday && !isSelected && 'border-[#007AFF]/40 text-[#007AFF]'
                 )}
                 aria-label={formatDisplay(cell.iso)}
                 aria-pressed={isSelected}

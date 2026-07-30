@@ -30,6 +30,7 @@ const LiveAttendanceEmployeeSection = ({
   onOpenReport,
   onManualPunch,
   onClearFilters,
+  refreshKey = 0,
 }) => {
   const [currentTime, setCurrentTime] = useState(() => new Date());
 
@@ -45,6 +46,10 @@ const LiveAttendanceEmployeeSection = ({
   );
 
   const employeesCacheRef = useRef({ base: null, list: [] });
+
+  useEffect(() => {
+    employeesCacheRef.current = { base: null, list: [] };
+  }, [refreshKey]);
 
   const employees = useMemo(() => {
     if (!isToday) {
