@@ -41,6 +41,38 @@ const ActionButton = ({ onClick, title, children, className }) => (
 const isApprovableRow = (row) =>
   row.status === 'pending' && row.payment_type === 'monthly_salary';
 
+const salaryBreakdown = (row) => {
+  if (row.payment_type !== 'monthly_salary') return null;
+  return {
+    base: row.base_amount,
+    bonus: row.bonus_included,
+    balance: row.balance_applied,
+    net: row.amount,
+  };
+};
+
+const formatBreakdownCell = (value, { isDeduction = false } = {}) => {
+  if (value == null || Number(value) === 0) return '—';
+  if (isDeduction) {
+    return `−${formatMoney(Math.abs(Number(value)))}`;
+  }
+  return formatMoney(value);
+};
+
+const formatMobileBreakdownLine = (breakdown) => {
+  const parts = [];
+  if (breakdown.base != null && Number(breakdown.base) !== 0) {
+    parts.push(`Base ${formatMoney(breakdown.base)}`);
+  }
+  if (breakdown.bonus != null && Number(breakdown.bonus) !== 0) {
+    parts.push(`Bonus ${formatMoney(breakdown.bonus)}`);
+  }
+  if (breakdown.balance != null && Number(breakdown.balance) !== 0) {
+    parts.push(`Balance −${formatMoney(Math.abs(Number(breakdown.balance)))}`);
+  }
+  return parts.length > 0 ? parts.join(' · ') : null;
+};
+
 const PaymentTable = ({
   rows,
   totalCount = 0,
@@ -128,7 +160,7 @@ const PaymentTable = ({
               isFetching && 'pointer-events-none opacity-60'
             )}
           >
-            <table className="w-full min-w-[880px]">
+            <table className="w-full min-w-[1100px]">
               <thead>
                 <tr className="border-b border-gray-100">
                   {showApprovalColumn && (
@@ -147,7 +179,10 @@ const PaymentTable = ({
                   <th className={clsx(TH, 'min-w-28 hidden sm:table-cell')}>Code</th>
                   <th className={clsx(TH, 'min-w-32')}>Type</th>
                   <th className={clsx(TH, 'min-w-24')}>Status</th>
-                  <th className={clsx(TH, 'min-w-24')}>Amount</th>
+                  <th className={clsx(TH, 'min-w-24 hidden md:table-cell')}>Base</th>
+                  <th className={clsx(TH, 'min-w-24 hidden lg:table-cell')}>Bonus</th>
+                  <th className={clsx(TH, 'min-w-24 hidden lg:table-cell')}>Balance</th>
+                  <th className={clsx(TH, 'min-w-24')}>Net</th>
                   <th className={clsx(TH, 'min-w-28 hidden md:table-cell')}>Date</th>
                   <th className={clsx(TH, 'min-w-28 hidden lg:table-cell')}>Period</th>
                   <th className={clsx(TH, 'w-28')}>Actions</th>
@@ -157,6 +192,7 @@ const PaymentTable = ({
                 {rows.map((row) => {
                   const approvable = isApprovableRow(row);
                   const isSelected = selectedIds.includes(row.id);
+                  const breakdown = salaryBreakdown(row);
 
                   return (
                     <tr
@@ -217,6 +253,21 @@ const PaymentTable = ({
                           {PAYMENT_STATUS_LABELS[row.status] || row.status}
                         </span>
                       </td>
+                      <td className={clsx(TD, 'hidden md:table-cell')}>
+                        <span className="tabular-nums text-gray-600">
+                          {breakdown ? formatBreakdownCell(breakdown.base) : '—'}
+                        </span>
+                      </td>
+                      <td className={clsx(TD, 'hidden lg:table-cell')}>
+                        <span className="tabular-nums text-gray-600">
+                          {breakdown ? formatBreakdownCell(breakdown.bonus) : '—'}
+                        </span>
+                      </td>
+                      <td className={clsx(TD, 'hidden lg:table-cell')}>
+                        <span className="tabular-nums text-gray-600">
+                          {breakdown ? formatBreakdownCell(breakdown.balance, { isDeduction: true }) : '—'}
+                        </span>
+                      </td>
                       <td className={TD}>
                         <span className="tabular-nums font-medium">{formatMoney(row.amount)}</span>
                       </td>
@@ -260,6 +311,8 @@ const PaymentTable = ({
             {rows.map((row) => {
               const approvable = isApprovableRow(row);
               const isSelected = selectedIds.includes(row.id);
+              const breakdown = salaryBreakdown(row);
+              const mobileBreakdownLine = breakdown ? formatMobileBreakdownLine(breakdown) : null;
               return (
                 <div
                   key={row.id}
@@ -307,8 +360,17 @@ const PaymentTable = ({
                           {PAYMENT_STATUS_LABELS[row.status] || row.status}
                         </span>
                       </div>
+                      {mobileBreakdownLine && (
+                        <p className="mt-2 text-xs tabular-nums text-gray-500">{mobileBreakdownLine}</p>
+                      )}
                       <p className="mt-2 text-base font-semibold tabular-nums text-gray-900">
-                        {formatMoney(row.amount)}
+                        {breakdown ? (
+                          <>
+                            Net {formatMoney(breakdown.net)}
+                          </>
+                        ) : (
+                          formatMoney(row.amount)
+                        )}
                       </p>
                       <p className="mt-0.5 text-xs text-gray-500">
                         {formatDate(row.payment_date)}
